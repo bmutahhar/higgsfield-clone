@@ -1,5 +1,6 @@
 "use client";
 
+import { ActionButton, ROUND_ACTION } from "@/components/core/action-button";
 import {
   type LightboxDetail,
   MediaLightbox,
@@ -25,40 +26,40 @@ function detailsFor(settings: GenerationSettings): LightboxDetail[] {
   if (settings.kind === "image") {
     const values = settings.values;
     return [
-      { label: "Model", value: modelById(values.modelId).name },
-      { label: "Aspect ratio", value: values.aspectRatio },
-      { label: "Quality", value: values.quality },
-      { label: "Resolution", value: values.resolution },
-      { label: "Background", value: values.background },
-      { label: "Batch", value: String(values.batch) },
+      { label: "Aspect ratio", value: values.aspectRatio, icon: "maximize" },
+      { label: "Quality", value: values.quality, icon: "gem" },
+      { label: "Resolution", value: values.resolution, icon: "scan" },
+      { label: "Background", value: values.background, icon: "image" },
+      { label: "Batch", value: String(values.batch), icon: "layers" },
     ];
   }
 
   /*
    * Each video surface offered different controls, so each describes itself.
-   * The shared rows — model, and how much you attached — are written the same
-   * way so a reader moving between them is not re-learning the panel.
+   * The model is not among them: it names what made the generation rather than
+   * a setting chosen alongside the rest, so it rides in its own badge.
    */
-  const model = (id: string) => videoModelById(id)?.name ?? id;
 
   if (settings.kind === "video-edit") {
     const values = settings.values;
     const references = values.elements.length + (values.referenceVideo ? 1 : 0);
     return [
-      { label: "Model", value: model(values.modelId) },
-      { label: "Method", value: values.mode === "draw" ? "Draw" : "Prompt" },
-      { label: "Resolution", value: values.resolution },
-      { label: "Bitrate", value: values.bitrate },
-      { label: "Audio", value: values.audio ? "On" : "Off" },
-      { label: "References", value: String(references) },
+      {
+        label: "Method",
+        value: values.mode === "draw" ? "Draw" : "Prompt",
+        icon: "pencil",
+      },
+      { label: "Resolution", value: values.resolution, icon: "scan" },
+      { label: "Bitrate", value: values.bitrate, icon: "gauge" },
+      { label: "Audio", value: values.audio ? "On" : "Off", icon: "volume-2" },
+      { label: "References", value: String(references), icon: "paperclip" },
     ];
   }
 
   if (settings.kind === "video-motion") {
     const values = settings.values;
     return [
-      { label: "Model", value: model(values.modelId) },
-      { label: "Quality", value: values.quality },
+      { label: "Quality", value: values.quality, icon: "gem" },
       {
         label: "Scene control",
         value: values.sceneControl
@@ -102,10 +103,9 @@ function detailsFor(settings: GenerationSettings): LightboxDetail[] {
     values.referenceImages.length + (values.referenceVideo ? 1 : 0);
 
   return [
-    { label: "Model", value: model(values.modelId) },
-    { label: "Mode", value: MODES[values.mode].label },
-    { label: "Quality", value: values.quality },
-    { label: "References", value: String(references) },
+    { label: "Mode", value: MODES[values.mode].label, icon: "circle-dashed" },
+    { label: "Quality", value: values.quality, icon: "gem" },
+    { label: "References", value: String(references), icon: "paperclip" },
   ];
 }
 
@@ -136,7 +136,50 @@ export function GenerationLightbox({
         poster: generation.poster ?? generation.src,
         prompt: generation.prompt,
         details: detailsFor(generation.settings),
+        /*
+         * The model moves out of the settings list and into a chip of its own.
+         * It is what made this, not a setting you chose alongside the others,
+         * and it is the first thing you look for.
+         */
+        badge: {
+          label:
+            generation.kind === "image"
+              ? modelById(generation.modelId).name
+              : (videoModelById(generation.modelId)?.name ??
+                generation.modelId),
+          icon: "clapperboard",
+        },
+        detailsAs: "chips",
       }}
+      rail={
+        <>
+          <ActionButton
+            icon="heart"
+            label={generation.liked === true ? "Unlike" : "Like"}
+            pressed={generation.liked === true}
+            onAction={actions.toggleLike}
+            className={ROUND_ACTION}
+          />
+          <ActionButton
+            icon="copy"
+            label="Copy"
+            onAction={actions.copyImage}
+            className={ROUND_ACTION}
+          />
+          <ActionButton
+            icon="download"
+            label="Download"
+            onAction={actions.download}
+            className={ROUND_ACTION}
+          />
+          <ActionButton
+            icon="link"
+            label="Copy link"
+            onAction={actions.copyLink}
+            className={ROUND_ACTION}
+          />
+        </>
+      }
       onClose={onClose}
       onRecreate={() => {
         actions.recreate();
