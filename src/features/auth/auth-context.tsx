@@ -72,8 +72,18 @@ export function AuthProvider({
     setStack(["root"]);
   }, []);
 
+  /*
+   * From the root this pushes; from any other step it replaces. That is what
+   * the live dialog does, and it is only visible through the back button:
+   * following "Log in" from the signup step and then going back lands on the
+   * root, not on the signup step you came through. Pushing instead would make
+   * back retrace the cross-links, and the consent checkbox — whose state lives
+   * in the root step — would not reset the way it does on the live site.
+   */
   const goTo = useCallback((next: AuthStep) => {
-    setStack((prev) => [...prev, next]);
+    setStack((prev) =>
+      prev.length > 1 ? [...prev.slice(0, -1), next] : [...prev, next],
+    );
   }, []);
 
   const goBack = useCallback(() => {
