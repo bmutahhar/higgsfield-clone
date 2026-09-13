@@ -29,11 +29,11 @@ did not create it.
 
 ## Mechanism and files changed
 
-| File | Role |
-|---|---|
-| `.claude/settings.json` | Wires `UserPromptSubmit` → `capture.py prompt` and `Stop` → `capture.py response`. Committed to the repo, so it applies to **every** session started in this directory. |
-| `.claude/hooks/capture.py` | The capture script. Appends to `.agent-logs/<file>.md`. |
-| `.agent-logs/` | Output. Committed. Explicitly **not** in `.gitignore`. |
+| File                       | Role                                                                                                                                                                    |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `.claude/settings.json`    | Wires `UserPromptSubmit` → `capture.py prompt` and `Stop` → `capture.py response`. Committed to the repo, so it applies to **every** session started in this directory. |
+| `.claude/hooks/capture.py` | The capture script. Appends to `.agent-logs/<file>.md`.                                                                                                                 |
+| `.agent-logs/`             | Output. Committed. Explicitly **not** in `.gitignore`.                                                                                                                  |
 
 How it works:
 
@@ -124,7 +124,7 @@ actual assignment work.
 ## What I tried first that did not work
 
 1. **`claude -p` with normal auth.** Failed: `OAuth session expired and could not be
-   refreshed`. Notably, the `UserPromptSubmit` hook *still fired* before the auth
+refreshed`. Notably, the `UserPromptSubmit` hook _still fired_ before the auth
    failure and wrote
    `.agent-logs/2026-09-13_11-21-20_b66ca7c5-dd35-4d5d-bae0-27379d9237a2.md` with a
    PROMPT entry and no RESPONSE. That orphan file is left in the repo — it is the
@@ -152,7 +152,7 @@ actual assignment work.
 ## Known limitation
 
 The `model:` field on a PROMPT entry is resolved from the most recent assistant record
-in the transcript, because the model for the *upcoming* response is not known at
+in the transcript, because the model for the _upcoming_ response is not known at
 prompt-submit time. On the very first prompt of a session it falls back to the most
 recently used model in this project, and to `unknown` if there is none. RESPONSE
 entries always carry the model that actually produced the text.

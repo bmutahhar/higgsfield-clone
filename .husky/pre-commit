@@ -1,0 +1,5 @@
+# Lint + format staged files, then type-check the whole project.
+# tsc is deliberately project-wide: a staged file can break types elsewhere.
+# `next typegen` first, because Next 16 generates route/layout types that tsc needs.
+pnpm exec lint-staged
+pnpm run typecheck
