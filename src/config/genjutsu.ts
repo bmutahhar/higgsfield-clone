@@ -155,13 +155,22 @@ export const PANE_TABS = [
 
 export type PaneTab = (typeof PANE_TABS)[number]["id"];
 
-/** The form's own tabs are routes, not state — each is a different model. */
+/**
+ * The form's own tabs are routes, not state — each is a different model on a
+ * different surface. `active` is decided by whichever page renders them.
+ */
 export const FORM_TABS = [
-  { label: "Create Video", href: "/ai/video?model=genjutsu", active: true },
+  { id: "create", label: "Create Video", href: "/ai/video?model=genjutsu" },
   {
+    id: "edit",
     label: "Edit Video",
-    href: "/ai/video?model=seedance-2-5-edit",
-    active: false,
+    href: "/ai/video/edit?model=seedance_2_5_edit",
   },
-  { label: "Motion Control", href: "/ai/video/motion", active: false },
+  {
+    id: "motion",
+    label: "Motion Control",
+    href: "/ai/video/motion?model=kling-3-motion-control",
+  },
 ] as const;
+
+export type FormTabId = (typeof FORM_TABS)[number]["id"];

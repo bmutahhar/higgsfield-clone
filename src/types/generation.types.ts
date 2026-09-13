@@ -1,5 +1,13 @@
-import type { ImageGenerationValues } from "@/schemas/image-generation";
-import type { VideoGenerationValues } from "@/schemas/video-generation";
+import type {
+  ImageGenerationValues,
+  ImageSettings,
+} from "@/schemas/image-generation";
+import type { VideoEditValues } from "@/schemas/video-edit";
+import type {
+  VideoGenerationValues,
+  VideoSettings,
+} from "@/schemas/video-generation";
+import type { VideoMotionValues } from "@/schemas/video-motion";
 
 /**
  * A job accepted by the generation service. The frame is known the moment the
@@ -41,6 +49,22 @@ export type GenerationStatus =
 export type GenerationKind = "image" | "video" | "audio";
 
 /**
+ * The recipe behind a generation — every control the surface offered, minus
+ * the prompt, which the record carries in its own right.
+ *
+ * Discriminated on its own `kind` rather than leaning on the record's: that
+ * way narrowing to one surface's settings is a single check the compiler
+ * understands, without having to prove that two independent fields agree.
+ *
+ * Audio joins here when it exists.
+ */
+export type GenerationSettings =
+  | { kind: "image"; values: ImageSettings }
+  | { kind: "video"; values: VideoSettings }
+  | { kind: "video-edit"; values: Omit<VideoEditValues, "prompt"> }
+  | { kind: "video-motion"; values: Omit<VideoMotionValues, "prompt"> };
+
+/**
  * One generation, from the moment it is accepted to long after it lands.
  *
  * A single record covers every phase rather than a pending type and a finished
@@ -61,6 +85,22 @@ interface GenerationBase {
   w: number;
   h: number;
   createdAt: number;
+  /**
+   * What produced it, so "make this again" has something to read.
+   *
+   * Required rather than optional: a generation is born either from a
+   * submitted form or from a fixture, and both know their own recipe. Leaving
+   * it optional would put a guard for an impossible state at every call site
+   * that recreates one.
+   *
+   * Note that a video recipe holds the actual `File` objects that were
+   * attached. That is only sound because this store is never persisted — it
+   * keeps those blobs alive for the session, and nothing tries to serialise
+   * them.
+   */
+  settings: GenerationSettings;
+  /** Local only, and deliberately not persisted anywhere. */
+  liked?: boolean;
 }
 
 export type Generation =
@@ -71,12 +111,41 @@ export type Generation =
   | (GenerationBase & { status: "ready"; src: string; poster?: string });
 
 /**
- * A generation the user asked for before they were allowed to start it.
+ * A generation whose asset has landed.
+ *
+ * Named so a tile that can only render a finished one says so in its props,
+ * rather than taking the whole union and guarding a state its parent has
+ * already ruled out.
+ */
+export type ReadyGeneration = Extract<Generation, { status: "ready" }>;
+
+/**
+ * One surface's full composer values, tagged with the surface they came from.
  *
  * A union rather than one shape with a loose payload: narrowing on `kind` is
  * what keeps each surface's values typed by its own schema at the one place it
  * matters — the call that finally runs them. Audio joins here when it exists.
+ *
+ * Three things want precisely this shape, which is why it is one type and not
+ * three: the request handed to `enqueue`, a request parked while someone signs
+ * in, and a draft waiting to be loaded back into a composer.
  */
-export type PendingRequest =
+export type GenerationRequest =
   | { kind: "image"; values: ImageGenerationValues }
-  | { kind: "video"; values: VideoGenerationValues };
+  | { kind: "video"; values: VideoGenerationValues }
+  | { kind: "video-edit"; values: VideoEditValues }
+  | { kind: "video-motion"; values: VideoMotionValues };
+
+/**
+ * Values handed to a composer to load — what Recreate and Reuse send.
+ *
+ * Partial on purpose, and it is the difference between the two: Recreate sends
+ * the prompt along with the recipe, Reuse sends the recipe alone and leaves
+ * whatever is already in the box. A composer merges the draft over its own
+ * current values, so an absent field reads as "leave this one".
+ */
+export type ComposerDraft =
+  | { kind: "image"; values: Partial<ImageGenerationValues> }
+  | { kind: "video"; values: Partial<VideoGenerationValues> }
+  | { kind: "video-edit"; values: Partial<VideoEditValues> }
+  | { kind: "video-motion"; values: Partial<VideoMotionValues> };

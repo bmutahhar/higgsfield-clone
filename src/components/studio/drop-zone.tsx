@@ -20,6 +20,12 @@ export interface DropZoneProps {
   onBlur?: () => void;
   invalid?: boolean;
   describedBy?: string;
+  /**
+   * `solid` is Genjutsu's 160px tile; `dashed` is the Edit surface's shorter,
+   * outlined one. Only the frame differs — everything inside is identical, so
+   * this is a variant rather than a second component.
+   */
+  variant?: "solid" | "dashed";
 }
 
 /**
@@ -47,6 +53,7 @@ export function DropZone({
   onBlur,
   invalid,
   describedBy,
+  variant = "solid",
 }: DropZoneProps) {
   const inputId = useId();
   const input = useRef<HTMLInputElement>(null);
@@ -76,15 +83,19 @@ export function DropZone({
             accepted(event.dataTransfer.files);
         }}
         className={cn(
-          "relative flex flex-col items-center justify-center gap-3 self-stretch overflow-hidden rounded-q-200 p-4 transition-colors duration-150 motion-reduce:transition-none",
-          filled ? "min-h-40" : "h-40",
+          "relative flex flex-col items-center justify-center gap-3 self-stretch overflow-hidden p-4 transition-colors duration-150 motion-reduce:transition-none",
+          variant === "dashed"
+            ? "rounded-q-400 border border-dashed border-q-default"
+            : "rounded-q-200",
+          filled ? "min-h-30" : variant === "dashed" ? "h-30" : "h-40",
           dragging ? "bg-q-accent-10" : "bg-transparent",
         )}
       >
         <span
           aria-hidden
           className={cn(
-            "pointer-events-none absolute inset-0 rounded-q-200 border transition-colors duration-150 motion-reduce:transition-none",
+            "pointer-events-none absolute inset-0 border transition-colors duration-150 motion-reduce:transition-none",
+            variant === "dashed" ? "rounded-q-400" : "rounded-q-200",
             dragging
               ? "border-q-accent"
               : invalid

@@ -473,6 +473,19 @@ so the header keeps a constant height and the tabs never shift.
 Signed out this is an **empty canvas** — no empty-state illustration, no sign-in
 prompt, just the controls in the header. Reproduce that: an empty scroll region.
 
+**Departure: history tiles carry a hover rail.** The live surface gives them no
+per-item actions at all, only the prompt caption. Ours adds Like / Download /
+Recreate / More across the top of the tile — a row rather than the image feed's
+vertical stack, because a 16:9 tile runs out of height long before it runs out
+of width. The overflow menu holds Open, Reuse, Like, Copy frame, Copy link and
+Delete. A clip cannot go on a clipboard, so `Copy frame` copies the still the
+tile is holding.
+
+Clicking the clip opens the same lightbox as a preset
+(`components/overlays/media-lightbox.tsx`), listing the recipe that made it.
+Leaving the tiles inert would have meant a studio where nothing you generate
+can be saved, reused or deleted.
+
 Header controls, `flex items-center gap-3 rounded-2xl bg-q-bg-primary`:
 
 - a 24px icon button (diagonal expand arrows);

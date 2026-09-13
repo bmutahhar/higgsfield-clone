@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 
 import { Icon } from "@/components/core/icon";
+import { ComingSoon } from "@/components/overlays/coming-soon";
 import type { NavMenu as NavMenuData, NavMenuRow } from "@/config/nav-menus";
 import { cn } from "@/lib/cn";
 
@@ -86,11 +87,20 @@ function RowBadge({ badge }: { badge: string }) {
 }
 
 function Row({ row }: { row: NavMenuRow }) {
+  /*
+   * Dimmed per part rather than by fading the whole row. `opacity` applies to
+   * an element's entire subtree — the "Coming soon" bubble included — and it
+   * opens a stacking context, which would trap the bubble's z-index inside the
+   * row and let the Models column paint straight over it.
+   */
+  const dim = row.href ? undefined : "opacity-45";
+
   const content = (
     <>
       <span
         className={cn(
           "grid size-12 place-items-center rounded-media border bg-w-06 text-secondary",
+          dim,
           row.badge === undefined
             ? "border-transparent"
             : row.badge === "New"
@@ -105,7 +115,7 @@ function Row({ row }: { row: NavMenuRow }) {
         Both lines truncate so every row is the live panel's flat 64px,
         whatever the length of a model's one-liner.
       */}
-      <span className="min-w-0">
+      <span className={cn("min-w-0", dim)}>
         <span className="flex items-center gap-1.5">
           <span className="min-w-0 truncate text-[14px] font-medium text-primary">
             {row.label}
@@ -120,16 +130,14 @@ function Row({ row }: { row: NavMenuRow }) {
   );
 
   // Same treatment the nav row gives a surface this clone has not built: inert
-  // and dimmed, rather than a link to a 404.
+  // and dimmed, rather than a link to a 404. The bubble goes to the right: the
+  // panel is its own scroller, and this is the left of two columns, so there is
+  // room for it inside the panel's bounds.
   if (!row.href) {
     return (
-      <span
-        aria-disabled="true"
-        title={`${row.label} — not built in this clone`}
-        className={cn(ROW, "cursor-default opacity-45")}
-      >
+      <ComingSoon side="right" className={cn(ROW, "cursor-default")}>
         {content}
-      </span>
+      </ComingSoon>
     );
   }
 

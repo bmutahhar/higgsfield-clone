@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 
 import { Icon } from "@/components/core/icon";
-import { Dropdown, DropdownItem } from "@/components/studio/dropdown";
+import { Dropdown, DropdownItem } from "@/components/overlays/dropdown";
 import type { GenModel } from "@/config/models";
 import { cn } from "@/lib/cn";
 

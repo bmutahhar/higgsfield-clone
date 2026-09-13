@@ -1,6 +1,13 @@
 import { imageGenerationSchema } from "@/schemas/image-generation";
+import { videoEditRequestSchema } from "@/schemas/video-edit";
 import { videoGenerationRequestSchema } from "@/schemas/video-generation";
-import { createJobs, createVideoJobs } from "@/server/generation-jobs.server";
+import { videoMotionRequestSchema } from "@/schemas/video-motion";
+import {
+  createEditJobs,
+  createJobs,
+  createMotionJobs,
+  createVideoJobs,
+} from "@/server/generation-jobs.server";
 
 /*
  * Accepts a batch and returns its job ids immediately — the images are not
@@ -25,17 +32,39 @@ export async function POST(request: Request) {
       : "image";
 
   if (kind === "video") {
-    const parsed = videoGenerationRequestSchema.safeParse(body);
+    /*
+     * All three video surfaces produce a video, so they share a kind and the
+     * history that reads it. `surface` says which form sent the request, and
+     * so which schema to check it against. Absent means the original Genjutsu
+     * form, which predates the field.
+     */
+    const surface =
+      typeof body === "object" && body !== null && "surface" in body
+        ? body.surface
+        : "genjutsu";
+
+    const parsed =
+      surface === "edit"
+        ? videoEditRequestSchema.safeParse(body)
+        : surface === "motion"
+          ? videoMotionRequestSchema.safeParse(body)
+          : videoGenerationRequestSchema.safeParse(body);
+
     if (!parsed.success) {
       return Response.json(
         { error: "Invalid generation request", issues: parsed.error.issues },
         { status: 422 },
       );
     }
-    return Response.json(
-      { jobs: createVideoJobs(parsed.data) },
-      { status: 202 },
-    );
+
+    const jobs =
+      parsed.data.surface === "edit"
+        ? createEditJobs(parsed.data)
+        : parsed.data.surface === "motion"
+          ? createMotionJobs(parsed.data)
+          : createVideoJobs(parsed.data);
+
+    return Response.json({ jobs }, { status: 202 });
   }
 
   const parsed = imageGenerationSchema.safeParse(body);

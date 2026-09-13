@@ -2,23 +2,23 @@
 
 import Image from "next/image";
 
+import { ActionButton, ROUND_ACTION } from "@/components/core/action-button";
 import { Icon, type IconName } from "@/components/core/icon";
 import { TileMenu } from "@/components/feed/tile-menu";
 import { Tooltip } from "@/components/overlays/tooltip";
-import type { FeedItem } from "@/config/image-studio";
+import { useGenerationActions } from "@/hooks/use-generation-actions";
 import { cn } from "@/lib/cn";
+import type { ReadyGeneration } from "@/types/generation.types";
 
 export interface FeedTileProps {
-  item: FeedItem;
+  generation: ReadyGeneration;
   selected: boolean;
   /** True once anything is selected: every checkbox then stays visible. */
   selecting: boolean;
   onToggle: () => void;
-  onDelete: () => void;
+  /** Opens the full-size view. The picture itself is the trigger. */
+  onExpand: () => void;
 }
-
-const ROUND_BTN =
-  "pointer-events-auto flex size-8 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm transition-colors hover:bg-black/65 focus-visible:bg-black/65 focus-visible:outline-none";
 
 const CLUSTER_BTN =
   "border-q-hairline pointer-events-auto flex h-8 items-center justify-center border bg-black/40 px-2.5 text-white backdrop-blur-sm transition-colors hover:bg-black/65 focus-visible:bg-black/65 focus-visible:outline-none";
@@ -36,12 +36,15 @@ const REVEAL =
   "opacity-0 transition-opacity duration-200 group-hover/tile:opacity-100 group-focus-within/tile:opacity-100 motion-reduce:transition-none";
 
 export function FeedTile({
-  item,
+  generation,
   selected,
   selecting,
   onToggle,
-  onDelete,
+  onExpand,
 }: FeedTileProps) {
+  const actions = useGenerationActions(generation);
+  const liked = generation.liked === true;
+
   return (
     <figure
       className={cn(
@@ -51,21 +54,39 @@ export function FeedTile({
       )}
       // Ratio comes from the data, so it cannot be a utility class. It is what
       // gives the column its height before the image has loaded.
-      style={{ aspectRatio: `${String(item.w)} / ${String(item.h)}` }}
+      style={{
+        aspectRatio: `${String(generation.w)} / ${String(generation.h)}`,
+      }}
     >
       <Image
-        src={item.src}
-        alt={item.prompt}
+        src={generation.src}
+        alt={generation.prompt}
         fill
         sizes="(max-width: 768px) 50vw, 25vw"
         className="object-cover"
+      />
+
+      {/*
+        The whole picture opens the expanded view. A real button rather than a
+        handler on the figure: this is the tile's primary action and has to be
+        reachable by keyboard like every other one — focusing it also reveals
+        the rail, through the same `group-focus-within` the controls use.
+      */}
+      <button
+        type="button"
+        aria-label={`Open ${generation.prompt}`}
+        onClick={onExpand}
+        className="absolute inset-0 cursor-pointer focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-white"
       />
 
       <div className="[container-type:size] pointer-events-none absolute inset-0">
         <div className="q-tile-scrim absolute inset-x-0 top-0 h-1/4" />
         <div className="q-tile-scrim absolute inset-x-0 bottom-0 h-1/4 rotate-180" />
 
-        {/* Right rail: what to do with this image. */}
+        {/*
+          Right rail: what to do with this image. Four buttons, as measured —
+          copying lives in the overflow menu rather than taking a fifth slot.
+        */}
         <div className="absolute top-0 right-0 z-10 flex h-full flex-col items-end pt-2.5 pr-2.5 pl-8">
           <div
             className={cn(
@@ -74,11 +95,35 @@ export function FeedTile({
               REVEAL,
             )}
           >
-            <RailButton icon="heart" label="Like" />
-            <RailButton icon="download" label="Download" />
-            <RailButton icon="copy" label="Recreate" />
+            <Tooltip label={liked ? "Unlike" : "Like"} side="left">
+              <ActionButton
+                icon="heart"
+                label={liked ? "Unlike" : "Like"}
+                pressed={liked}
+                onAction={actions.toggleLike}
+              />
+            </Tooltip>
+            <Tooltip label="Download" side="left">
+              <ActionButton
+                icon="download"
+                label="Download"
+                onAction={actions.download}
+              />
+            </Tooltip>
+            {/* The copy glyph is upstream's, and this is what it always meant. */}
+            <Tooltip label="Recreate" side="left">
+              <ActionButton
+                icon="copy"
+                label="Recreate"
+                onAction={actions.recreate}
+              />
+            </Tooltip>
             <Tooltip label="More actions" side="left">
-              <TileMenu triggerClassName={ROUND_BTN} onDelete={onDelete} />
+              <TileMenu
+                triggerClassName={ROUND_ACTION}
+                actions={actions}
+                liked={liked}
+              />
             </Tooltip>
           </div>
         </div>
@@ -121,7 +166,7 @@ export function FeedTile({
           type="checkbox"
           checked={selected}
           onChange={onToggle}
-          aria-label={`Select ${item.prompt}`}
+          aria-label={`Select ${generation.prompt}`}
           className="hf-sr-only peer"
         />
         <span className="flex size-4 items-center justify-center rounded-[4px] border border-white/70 bg-black/30 transition-colors peer-checked:border-white peer-checked:bg-white peer-focus-visible:ring-2 peer-focus-visible:ring-white/60 peer-checked:[&>svg]:opacity-100">
@@ -129,16 +174,6 @@ export function FeedTile({
         </span>
       </label>
     </figure>
-  );
-}
-
-function RailButton({ icon, label }: { icon: IconName; label: string }) {
-  return (
-    <Tooltip label={label} side="left">
-      <button type="button" aria-label={label} className={ROUND_BTN}>
-        <Icon name={icon} size={16} />
-      </button>
-    </Tooltip>
   );
 }
 

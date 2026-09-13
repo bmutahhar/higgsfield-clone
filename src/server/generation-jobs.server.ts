@@ -4,7 +4,9 @@ import { ASPECT_RATIOS } from "@/config/image-studio";
 import { PRESETS } from "@/config/media";
 import { HIGGSFIELD_PRESETS } from "@/config/presets";
 import type { ImageGenerationValues } from "@/schemas/image-generation";
+import type { VideoEditRequest } from "@/schemas/video-edit";
 import type { VideoGenerationRequest } from "@/schemas/video-generation";
+import type { VideoMotionRequest } from "@/schemas/video-motion";
 import type { GenerationJob, GenerationStatus } from "@/types/generation.types";
 
 /*
@@ -127,21 +129,42 @@ const VIDEO_GENERATING_MS = 4500;
 /** Genjutsu renders 16:9; the frame does not depend on the request. */
 const VIDEO_FRAME = { w: 16, h: 9 };
 
+/*
+ * One clip per request on every video surface, so there is no stagger to apply:
+ * the deadline is a base plus jitter and nothing else. The base differs by
+ * surface because the work does — an edit re-renders an existing clip, while
+ * motion transfer solves a pose track before it renders anything.
+ */
+function createClipJob(prompt: string, baseMs = VIDEO_BASE_MS): GenerationJob {
+  return {
+    id: encodeId(
+      "video",
+      Date.now() + baseMs + Math.round(Math.random() * VIDEO_JITTER_MS),
+      Math.floor(Math.random() * HIGGSFIELD_PRESETS.length),
+    ),
+    ...VIDEO_FRAME,
+    prompt,
+  };
+}
+
 export function createVideoJobs(
   values: VideoGenerationRequest,
 ): GenerationJob[] {
+  return [createClipJob(values.prompt)];
+}
+
+export function createEditJobs(values: VideoEditRequest): GenerationJob[] {
+  return [createClipJob(values.prompt, 5200)];
+}
+
+export function createMotionJobs(values: VideoMotionRequest): GenerationJob[] {
   return [
-    {
-      id: encodeId(
-        "video",
-        Date.now() +
-          VIDEO_BASE_MS +
-          Math.round(Math.random() * VIDEO_JITTER_MS),
-        Math.floor(Math.random() * HIGGSFIELD_PRESETS.length),
-      ),
-      ...VIDEO_FRAME,
-      prompt: values.prompt,
-    },
+    createClipJob(
+      values.sceneControl
+        ? `Motion transfer, scene from ${values.sceneSource ?? "image"}`
+        : "Motion transfer",
+      9000,
+    ),
   ];
 }
 

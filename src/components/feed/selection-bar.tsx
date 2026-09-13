@@ -3,6 +3,7 @@
 import Image from "next/image";
 
 import { Icon, type IconName } from "@/components/core/icon";
+import { ComingSoon } from "@/components/overlays/coming-soon";
 import { cn } from "@/lib/cn";
 
 export interface SelectionBarProps {
@@ -10,6 +11,8 @@ export interface SelectionBarProps {
   /** Thumbnail of the most recently selected tile. */
   poster: string;
   onClear: () => void;
+  /** Saves every selected image, one after another. */
+  onDownload: () => void;
   onDelete: () => void;
 }
 
@@ -32,6 +35,7 @@ export function SelectionBar({
   count,
   poster,
   onClear,
+  onDownload,
   onDelete,
 }: SelectionBarProps) {
   return (
@@ -53,8 +57,8 @@ export function SelectionBar({
         </div>
 
         <div className="hf-scrollbar-none flex min-w-0 items-center gap-1 overflow-x-auto">
-          <Action icon="download" label="Download" />
-          <Action icon="folder-plus" label="Add to" chevron />
+          <Action icon="download" label="Download" onClick={onDownload} />
+          <FolderAction />
           <Action icon="at-sign" label="Assign to element" iconOnly />
           <Action
             icon="trash-2"
@@ -62,7 +66,6 @@ export function SelectionBar({
             iconOnly
             onClick={onDelete}
           />
-          <Action icon="ellipsis" label="More actions" iconOnly />
         </div>
 
         <button
@@ -82,13 +85,11 @@ function Action({
   icon,
   label,
   iconOnly = false,
-  chevron = false,
   onClick,
 }: {
   icon: IconName;
   label: string;
   iconOnly?: boolean;
-  chevron?: boolean;
   onClick?: () => void;
 }) {
   return (
@@ -103,7 +104,28 @@ function Action({
       {!iconOnly && (
         <span className="text-q-body-sm whitespace-nowrap">{label}</span>
       )}
-      {chevron && <Icon name="chevron-down" size={14} />}
     </button>
+  );
+}
+
+/**
+ * `Add to` has nowhere to go: this clone has no folders.
+ *
+ * Rendered inert rather than as a disabled button, matching how every other
+ * unbuilt surface here behaves — a control that takes the click and swallows
+ * it reads as broken, where a dimmed one that says why does not. Dimmed
+ * through colour alpha, never `opacity-*`, or the bubble fades with it.
+ */
+function FolderAction() {
+  return (
+    <ComingSoon side="above-bar" tone="studio">
+      <span
+        className={cn(ACTION, "cursor-default text-q-body/45 hover:bg-q-w-05")}
+      >
+        <Icon name="folder-plus" size={18} />
+        <span className="text-q-body-sm whitespace-nowrap">Add to</span>
+        <Icon name="chevron-down" size={14} />
+      </span>
+    </ComingSoon>
   );
 }

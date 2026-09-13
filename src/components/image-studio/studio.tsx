@@ -48,14 +48,24 @@ export function ImageStudio({ modelId }: ImageStudioProps) {
   // Actions never change identity, so selecting them needs no shallow compare.
   const enqueue = useGenerationStore((state) => state.enqueue);
   const applyStatus = useGenerationStore((state) => state.applyStatus);
-  const remove = useGenerationStore((state) => state.remove);
   const holdRequest = useGenerationStore((state) => state.holdRequest);
   const takeRequest = useGenerationStore((state) => state.takeRequest);
+  /*
+   * What Recreate on a tile hands over. Read here rather than in the composer
+   * so this component stays the one that knows the store.
+   */
+  const draft = useGenerationStore((state) => state.draft);
 
   const { mutate: generate } = useMutation({
     mutationFn: requestGeneration,
-    onSuccess: (accepted) => {
-      enqueue("image", modelId, accepted);
+    /*
+     * The submitted values arrive as the mutation's second argument, so the
+     * recipe stored against each image is the one that was actually sent.
+     * This used to record the route's model instead, which meant changing the
+     * model in the composer and generating credited the wrong one.
+     */
+    onSuccess: (accepted, values) => {
+      enqueue({ kind: "image", values }, accepted);
     },
   });
 
@@ -127,6 +137,7 @@ export function ImageStudio({ modelId }: ImageStudioProps) {
         <StudioEmptyState />
         <Composer
           modelId={modelId}
+          draft={draft}
           /*
            * The values arrive already validated, so an empty prompt still
            * fails in the composer rather than asking someone to sign in
@@ -143,8 +154,8 @@ export function ImageStudio({ modelId }: ImageStudioProps) {
 
   return (
     <>
-      <ImageFeed generations={generations} onRemove={remove} />
-      <Composer modelId={modelId} onGenerate={generate} />
+      <ImageFeed generations={generations} />
+      <Composer modelId={modelId} draft={draft} onGenerate={generate} />
     </>
   );
 }

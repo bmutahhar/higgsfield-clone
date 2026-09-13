@@ -1,5 +1,4 @@
 import type { IconName } from "@/components/core/icon";
-import { PRESETS } from "@/config/media";
 
 /*
  * The /ai/image studio's catalogue.
@@ -457,47 +456,3 @@ export const DEFAULT_ZOOM = 3;
  */
 export const MIN_TILE_WIDTH = 240;
 export const MIN_COLUMNS = 2;
-
-export interface FeedItem {
-  id: string;
-  src: string;
-  /** Intrinsic ratio, so the masonry can lay out before the image loads. */
-  w: number;
-  h: number;
-  prompt: string;
-}
-
-/*
- * Stand-in generation history. The live feed is the signed-in user's own
- * output; these are Higgsfield's public stills at assorted ratios, which is
- * what the masonry needs to be exercised properly.
- */
-const RATIOS: [number, number][] = [
-  [3, 4],
-  [2, 3],
-  [1, 1],
-  [4, 5],
-  [3, 4],
-  [16, 9],
-  [2, 3],
-  [1, 1],
-  [3, 4],
-  [4, 3],
-  [2, 3],
-  [1, 1],
-  [3, 4],
-  [9, 16],
-  [3, 2],
-  [2, 3],
-];
-
-export const FEED_ITEMS: FeedItem[] = PRESETS.map((preset, i) => {
-  const [w, h] = RATIOS[i % RATIOS.length];
-  return {
-    id: preset.slug,
-    src: preset.poster,
-    w,
-    h,
-    prompt: preset.name,
-  };
-});

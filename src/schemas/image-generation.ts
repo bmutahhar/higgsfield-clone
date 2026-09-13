@@ -61,3 +61,14 @@ export const imageGenerationSchema = z
   });
 
 export type ImageGenerationValues = z.infer<typeof imageGenerationSchema>;
+
+/**
+ * A generation's recipe: everything the composer submitted except the prompt,
+ * which lives on the generation record itself.
+ *
+ * Derived from the schema rather than restated, so seeded history and live
+ * generations can only ever hold a shape the composer could actually have
+ * produced — a field added above is a compile error at every call site that
+ * builds one.
+ */
+export type ImageSettings = Omit<ImageGenerationValues, "prompt">;

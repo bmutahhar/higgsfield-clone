@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { Icon } from "@/components/core/icon";
+import { ComingSoon } from "@/components/overlays/coming-soon";
 import { MOBILE_TABS, type MobileTab } from "@/config/site";
 import { cn } from "@/lib/cn";
 
@@ -75,13 +76,16 @@ export function MobileTabBar() {
                   {glyph}
                 </Link>
               ) : (
-                <span
-                  aria-disabled="true"
-                  title={`${tab.label} — not built in this clone`}
-                  className={cn(CREATE, "cursor-default opacity-45")}
+                // Faded through its own colours, not `opacity`, which would
+                // take the "Coming soon" bubble down with it.
+                <ComingSoon
+                  className={cn(
+                    CREATE,
+                    "cursor-default bg-accent/45 text-[#2F3907]/45",
+                  )}
                 >
                   {glyph}
-                </span>
+                </ComingSoon>
               )}
             </div>
           );
@@ -91,14 +95,12 @@ export function MobileTabBar() {
         // href does the deciding rather than a per-tab flag.
         if (!tab.href) {
           return (
-            <span
+            <ComingSoon
               key={tab.label}
-              aria-disabled="true"
-              title={`${tab.label} — not built in this clone`}
               className={cn(TAB, "cursor-default text-[#898A8B]/45")}
             >
               <TabFace tab={tab} />
-            </span>
+            </ComingSoon>
           );
         }
 
