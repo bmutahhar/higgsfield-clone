@@ -8,6 +8,8 @@ import {
 import { RouteProgress } from "@/components/layout/route-progress";
 import { PromoBanner } from "@/components/marketing/promo-banner";
 import { SiteHeader } from "@/components/marketing/site-header";
+import { AuthProvider } from "@/features/auth/auth-context";
+import { readSession } from "@/server/auth/current-user.server";
 
 import type { Metadata, Viewport } from "next";
 
@@ -63,7 +65,14 @@ export const viewport: Viewport = {
   colorScheme: "dark",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  /*
+   * Read here rather than inside the provider: the session cookie is httpOnly,
+   * so only the server can see it, and seeding the provider from here is what
+   * stops the header painting signed-out and then correcting itself.
+   */
+  const user = await readSession();
+
   return (
     <html
       lang="en"
@@ -80,10 +89,18 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
        * content pages scroll normally.
        */}
       <body className="flex h-dvh flex-col overflow-hidden">
-        <PromoBanner />
-        <RouteProgress />
-        <SiteHeader />
-        {children}
+        {/*
+         * AuthProvider wraps the whole app, including the studio layout's own
+         * QueryProvider. The two nest and neither needs the other — React
+         * Query stays scoped to the generation surfaces on purpose, so the
+         * marketing pages do not pay for a client they never read.
+         */}
+        <AuthProvider initialUser={user}>
+          <PromoBanner />
+          <RouteProgress />
+          <SiteHeader />
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );
