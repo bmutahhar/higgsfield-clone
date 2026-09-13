@@ -9,6 +9,7 @@ import {
 } from "@/components/pricing/audience-tabs";
 import { BillingSwitch } from "@/components/pricing/billing-switch";
 import { BusinessCard } from "@/components/pricing/business-card";
+import { ComparisonTable } from "@/components/pricing/comparison-table";
 import { FaqList } from "@/components/pricing/faq-list";
 import { PlanCard } from "@/components/pricing/plan-card";
 import { PlanCta } from "@/components/pricing/plan-cta";
@@ -122,6 +123,13 @@ export function PricingPlans() {
             {PRICING_COPY.disclaimer}
           </p>
         </div>
+
+        {/*
+         * Individual only. The live site keeps the same three-column
+         * comparison on both tabs, but it compares Basic/Pro/Max, which
+         * says nothing about Team or Scale.
+         */}
+        {audience === "individual" ? <ComparisonTable period={period} /> : null}
 
         {/*
          * The FAQ swaps with the audience tab rather than staying put — eight

@@ -723,9 +723,24 @@ Toggle button: 152 × 48, transparent, `border-2 rgba(255,255,255,0.1)` →
 hover `rgba(255,255,255,0.2)`, `rounded-xl`, `px-3`, `14/20 w600 #fff`,
 `gap-2`, label **"Compare Features" ⇄ "Close Features"**.
 
-**Per-section "View More".** Each category (Video, Image, Lipsync Studio,
-Character, Credits & Usage, Access & Features) shows a few rows and hides the
-rest. Hidden rows are `h-0 opacity-0 -translate-y-2`; revealed rows are
+**The table is two shapes, not one.** Video and Image share the wide bordered
+frame under the sticky header. The other four — Lipsync Studio, Character,
+Credits & Usage, Access & Features — are rendered _below_ it as four separate
+`rounded-2xl` cards, each with its own border and its own label column.
+
+**Header cells are Inter, title case, 24/32 w700** — not the Grotesk uppercase
+the plan cards use, and the cadence line is a bare "Billed annually", not the
+cards' "per month, billed annually". The `Get Plan` buttons are 40px and rank
+the plans: Basic and Pro sit on `#2a2d32` with a `1px rgba(0,0,0,0.06)` edge,
+and **only Max** carries the brand fill (`radial-gradient(in oklab, #effe17 40%,
+#d1fe17 100%)`, dark ink).
+
+**Per-section "View More".** Every section shows its **first four rows** and
+hides the rest — measured, and uniform across all six. Sections with four rows
+or fewer (Character, Credits & Usage: two each) show no toggle at all. The
+outer "Compare Features" cap and these per-section toggles are independent: an
+expanded block can still have collapsed sections, so the first press of
+"Compare Features" does not dump 125 rows on you. Hidden rows are `h-0 opacity-0 -translate-y-2`; revealed rows are
 `h-16 opacity-100 translate-y-0`; `transition: all .5s ease-in-out`. The
 trigger is itself a 244 × 64 row in the label column,
 `cursor-pointer flex items-center gap-2 h-16 w-full text-start

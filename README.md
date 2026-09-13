@@ -35,6 +35,80 @@ The easiest way to deploy your Next.js app is to use the [Vercel Platform](https
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
 
+## Building against the live site
+
+Surfaces in here are rebuilt to 1:1 parity with higgsfield.ai. The method is
+always the same: drive the live page in a browser, read `getComputedStyle` and
+`getBoundingClientRect` off the real DOM, and write the numbers into a spec in
+`docs/superpowers/specs/` before writing any component. Screenshots are for
+confirming, never for measuring — a rotated 2px strike-through measures 8px
+tall in a screenshot, and a badge skewed 10.89° looks like 10°.
+
+A few things that repeatedly caught us out, recorded so they catch the next
+person less.
+
+### The live site A/B tests its own content
+
+The mobile pricing offer serves different numbers to different loads. Two loads
+minutes apart gave "$5 / 70 credits" and "$9 / 120 credits" for the same Basic
+pick, and moved Pro between its 600 and 900 credit tiers.
+
+Transcribing whichever variant you happened to load bakes one arm of somebody
+else's experiment into our source, and guarantees the mobile and desktop
+surfaces drift apart the first time either is touched. So
+`pricing-mobile.constants.ts` **derives** its three picks from the same `PLANS`
+matrix the desktop cards use, and `pricing-mobile.constants.test.ts` pins them
+together. If you see a price in the live DOM that disagrees with ours, check
+for an experiment before "fixing" it.
+
+The same caution applies to anything promotional: banner copy, countdown
+offers, and the `% OFF` badges are campaign state, not design.
+
+### Things that change when you are not looking at them
+
+- **The FAQ is two lists.** It swaps wholesale with the Individual/Business
+  tab — eight consumer questions against thirteen procurement ones, with no
+  overlap. Nothing in the section's own chrome hints at it, so a single-list
+  build looks correct until someone clicks the other tab.
+- **Discount percentages are per credit tier, not per plan.** Max reads
+  25% / 27% / 30% as its slider rises.
+- **Monthly is not always the undiscounted price.** Max's upper tiers carry an
+  intro price and say "Billed monthly, renews at $158".
+- **Below 768px the site is not responsive — it swaps trees.** `.pricing-page`
+  unmounts and a standalone offer page mounts in its place, with no site
+  chrome. There is nothing to reflow.
+
+### Values, not vibes
+
+Anything measured goes in a constants file or a token, never inline in a
+component. A component that hard-codes a price, a credit count or a hex is a
+bug even when it looks right, because the next measurement pass has nowhere to
+land. The token layer pins both halves — the declaration in
+`src/styles/tokens/` and its projection in `globals.css` — with tests, because
+a token that exists but is never projected produces a class that silently does
+nothing.
+
+Two silent-failure modes worth knowing about, both of which bit us and both of
+which are now covered by tests in `src/styles/tokens/q-pricing-tokens.test.ts`:
+
+1. **A name registered in two Tailwind namespaces.** `--color-q-plan` and
+   `--text-q-plan` both existed, so `text-q-plan` resolved to a _colour_: the
+   plan name rendered at the inherited size in near-black on a near-black card
+   and the card lost 5px of height. No build error, no console warning.
+2. **A custom scale that `cn()` does not know about.** `tailwind-merge` cannot
+   tell a custom font-size from a custom text colour — both are `text-*` — so
+   it drops one of them. New scales must be registered in `src/lib/cn.ts`.
+
+### Where the accessibility differs on purpose
+
+We do not copy the live markup where it is inaccessible, only the pixels. The
+plan credit slider is a real `<input type="range">` under the painted track
+(the live one is a bare `<div>` stack with no role, tabindex or keyboard
+path); the mobile plan picker is a real `radiogroup`; the FAQ stays on native
+`<details>`; the comparison table is a real `<table>` with `<th scope>` so a
+cell like "960 videos" is announced with the plan it belongs to. Each of these
+is listed as a deliberate deviation in the spec.
+
 ## Tooling
 
 | Script              | What it does                                             |
