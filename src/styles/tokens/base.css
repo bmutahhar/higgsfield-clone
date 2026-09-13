@@ -74,3 +74,10 @@ a:hover {
 .hf-scrollbar::-webkit-scrollbar-track {
   background: transparent;
 }
+
+/* Shared keyframes. Loaders run linear; nothing else in the system spins. */
+@keyframes hf-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
