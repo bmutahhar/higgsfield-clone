@@ -1,0 +1,117 @@
+/*
+ * Higgsfield colour tokens.
+ * Imported from the Claude Design project (higgsfield-design).
+ * Brand primitives are verified against the brandfetch record and the site's
+ * own meta theme-color; the ramps are derived.
+ */
+:root {
+  /* ---- Brand primitives ---- */
+  --hf-lime: #d1fe17; /* "Electric Lime" — the single brand accent */
+  --hf-sand: #fad0a9; /* "Corvette" — warm secondary accent */
+  --hf-woodsmoke: #0f1113; /* "Woodsmoke" — panel base */
+  --hf-void: #030304; /* site meta theme-color — page base */
+
+  /* ---- Lime ramp ---- */
+  --lime-50: #f6ffd6;
+  --lime-100: #ecffb0;
+  --lime-200: #e2ff7a;
+  --lime-300: #d9fe47;
+  --lime-400: #d1fe17;
+  --lime-500: #b9e20b;
+  --lime-600: #96b808;
+  --lime-700: #6e8705;
+  --lime-800: #47570a;
+  --lime-900: #252e08;
+
+  /* ---- Sand ramp ---- */
+  --sand-100: #fff2e4;
+  --sand-200: #fde2c8;
+  --sand-300: #fad0a9;
+  --sand-400: #edb57f;
+  --sand-500: #d2915a;
+  --sand-600: #a06b3f;
+
+  /* ---- Neutrals: cold, near-black, low-chroma ---- */
+  --n-0: #030304;
+  --n-1: #08090a;
+  --n-2: #0f1113;
+  --n-3: #16181b;
+  --n-4: #1d2024;
+  --n-5: #262a2e;
+  --n-6: #33383d;
+  --n-7: #4a5057;
+  --n-8: #6b7279;
+  --n-9: #8e959c;
+  --n-10: #b4bac0;
+  --n-11: #d8dce0;
+  --n-12: #ffffff;
+
+  /* ---- Alpha inks (borders/overlays over media) ---- */
+  --w-04: rgba(255, 255, 255, 0.04);
+  --w-06: rgba(255, 255, 255, 0.06);
+  --w-08: rgba(255, 255, 255, 0.08);
+  --w-12: rgba(255, 255, 255, 0.12);
+  --w-16: rgba(255, 255, 255, 0.16);
+  --w-24: rgba(255, 255, 255, 0.24);
+  --w-40: rgba(255, 255, 255, 0.4);
+  --w-60: rgba(255, 255, 255, 0.6);
+  --w-80: rgba(255, 255, 255, 0.8);
+  --b-24: rgba(0, 0, 0, 0.24);
+  --b-40: rgba(0, 0, 0, 0.4);
+  --b-60: rgba(0, 0, 0, 0.6);
+  --b-80: rgba(0, 0, 0, 0.8);
+
+  /* ---- Semantic status ---- */
+  --status-success: #4ade80;
+  --status-warning: #fbbf24;
+  --status-danger: #ff4d4d;
+  --status-info: #7dd3fc;
+
+  /* ---- Semantic aliases: surfaces ---- */
+  --surface-page: var(--n-0);
+  --surface-panel: var(--n-2);
+  --surface-card: var(--n-3);
+  --surface-raised: var(--n-4);
+  --surface-input: var(--n-3);
+  --surface-hover: var(--w-06);
+  --surface-active: var(--w-12);
+  --surface-scrim: var(--b-80);
+  --surface-glass: rgba(15, 17, 19, 0.72);
+
+  /* ---- Semantic aliases: text ---- */
+  --text-primary: var(--n-12);
+  --text-secondary: var(--n-10);
+  --text-muted: var(--n-9);
+  --text-disabled: var(--n-7);
+  --text-accent: var(--hf-lime);
+  --text-on-accent: var(--n-0);
+  --text-link: var(--n-12);
+  --text-link-hover: var(--hf-lime);
+
+  /* ---- Semantic aliases: borders ---- */
+  --border-hairline: var(--w-08);
+  --border-strong: var(--w-16);
+  --border-focus: var(--hf-lime);
+  --border-input: var(--w-12);
+
+  /* ---- Semantic aliases: accent surfaces ---- */
+  --accent-solid: var(--hf-lime);
+  --accent-solid-hover: var(--lime-300);
+  --accent-solid-active: var(--lime-500);
+  --accent-soft: rgba(209, 254, 23, 0.14);
+  --accent-ring: rgba(209, 254, 23, 0.4);
+}
+
+/* The system is dark-only. This scope exists for surfaces printed on white. */
+:root[data-theme="light"] {
+  --surface-page: #ffffff;
+  --surface-panel: #f4f5f6;
+  --surface-card: #ffffff;
+  --surface-raised: #ffffff;
+  --text-primary: var(--n-0);
+  --text-secondary: #4a5057;
+  --text-muted: #6b7279;
+  --border-hairline: rgba(3, 3, 4, 0.1);
+  --border-strong: rgba(3, 3, 4, 0.18);
+  --text-on-accent: var(--n-0);
+}

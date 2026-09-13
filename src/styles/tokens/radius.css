@@ -1,0 +1,28 @@
+/*
+ * Higgsfield radius tokens.
+ * The pill-vs-10px split is the system's main shape rhythm:
+ * round for invitations, soft-rect for work.
+ */
+:root {
+  --r-2: 2px;
+  --r-4: 4px;
+  --r-6: 6px;
+  --r-8: 8px;
+  --r-10: 10px;
+  --r-12: 12px;
+  --r-16: 16px;
+  --r-20: 20px;
+  --r-24: 24px;
+  --r-pill: 999px;
+  --r-circle: 50%;
+
+  /* Semantic */
+  --r-control: 10px; /* inputs, selects, secondary buttons */
+  --r-cta: 999px; /* primary marketing CTA is a pill */
+  --r-chip: 999px;
+  --r-card: 14px; /* content cards */
+  --r-media: 12px; /* media tiles inside grids */
+  --r-panel: 16px; /* floating panels, composer */
+  --r-modal: 20px;
+  --r-thumb: 8px; /* small reference thumbnails */
+}

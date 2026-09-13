@@ -1,0 +1,38 @@
+/*
+ * Higgsfield elevation tokens.
+ * Depth on dark comes from a 1px hairline; shadow is secondary and always a
+ * pure black spread. Never a coloured or glowing shadow, except --glow-accent,
+ * which is reserved for a single lime CTA at hero scale.
+ */
+:root {
+  --shadow-none: none;
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-2: 0 4px 16px rgba(0, 0, 0, 0.48);
+  --shadow-3: 0 12px 40px rgba(0, 0, 0, 0.56);
+  --shadow-4: 0 24px 80px rgba(0, 0, 0, 0.64);
+  --inset-hairline: inset 0 0 0 1px var(--w-08);
+  --inset-hairline-strong: inset 0 0 0 1px var(--w-16);
+  --ring-focus: 0 0 0 2px var(--accent-ring);
+  --glow-accent: 0 0 24px rgba(209, 254, 23, 0.28);
+
+  /* Protection gradients — legibility over media. Text gets a scrim, a
+     control gets a glass capsule. */
+  --scrim-bottom: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.88) 0%,
+    rgba(0, 0, 0, 0.55) 38%,
+    rgba(0, 0, 0, 0) 100%
+  );
+  --scrim-top: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.72) 0%,
+    rgba(0, 0, 0, 0) 100%
+  );
+  --scrim-hover: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.72) 0%,
+    rgba(0, 0, 0, 0.1) 60%,
+    rgba(0, 0, 0, 0) 100%
+  );
+  --blur-glass: saturate(140%) blur(20px);
+}

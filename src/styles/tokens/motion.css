@@ -1,0 +1,37 @@
+/*
+ * Higgsfield motion tokens.
+ * Fades and scales, never bounces. Media reveals are slow; everything else is
+ * quick. prefers-reduced-motion zeroes every duration.
+ */
+:root {
+  --dur-instant: 80ms;
+  --dur-fast: 140ms;
+  --dur-base: 220ms;
+  --dur-slow: 380ms;
+  --dur-media: 640ms;
+
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1); /* quick out, long settle */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1); /* panels, sheets */
+  --ease-in: cubic-bezier(0.5, 0, 0.9, 0.2);
+  --ease-linear: linear; /* progress, marquees, loaders */
+
+  --t-control:
+    background var(--dur-fast) var(--ease-standard),
+    color var(--dur-fast) var(--ease-standard),
+    border-color var(--dur-fast) var(--ease-standard),
+    transform var(--dur-fast) var(--ease-standard),
+    opacity var(--dur-fast) var(--ease-standard);
+  --t-media:
+    transform var(--dur-media) var(--ease-out),
+    opacity var(--dur-base) var(--ease-standard);
+  --press-scale: 0.97;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-fast: 0ms;
+    --dur-base: 0ms;
+    --dur-slow: 0ms;
+    --dur-media: 0ms;
+  }
+}

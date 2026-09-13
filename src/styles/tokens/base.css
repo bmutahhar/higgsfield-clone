@@ -1,0 +1,76 @@
+/* Higgsfield base layer: resets, link colours and the shared utility classes. */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--surface-page);
+  color: var(--text-primary);
+  font: var(--text-body);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizelegibility;
+}
+
+h1,
+h2,
+h3,
+h4,
+p {
+  margin: 0;
+}
+
+a {
+  color: var(--text-link);
+  text-decoration: none;
+  transition: var(--t-control);
+}
+
+a:hover {
+  color: var(--text-link-hover);
+}
+
+::selection {
+  background: var(--hf-lime);
+  color: var(--n-0);
+}
+
+:focus-visible {
+  outline: none;
+  box-shadow: var(--ring-focus);
+}
+
+/* Eyebrows mark a section; they never carry meaning alone. */
+.hf-eyebrow {
+  font: var(--fw-medium) var(--fs-eyebrow) / 1 var(--font-ui);
+  letter-spacing: var(--ls-eyebrow);
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* Every number is mono — credits, seeds, durations, resolutions, model ids. */
+.hf-mono {
+  font-family: var(--font-mono);
+  font-size: var(--fs-mono);
+  letter-spacing: var(--ls-mono);
+}
+
+.hf-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.hf-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--w-12);
+  border-radius: var(--r-pill);
+}
+
+.hf-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}

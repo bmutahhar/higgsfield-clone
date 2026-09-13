@@ -1,26 +1,45 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* Higgsfield design-system tokens, imported from the Claude Design project. */
+@import "../styles/tokens/colors.css";
+@import "../styles/tokens/typography.css";
+@import "../styles/tokens/spacing.css";
+@import "../styles/tokens/radius.css";
+@import "../styles/tokens/elevation.css";
+@import "../styles/tokens/motion.css";
+@import "../styles/tokens/base.css";
 
+/*
+ * Bridge the design-system variables into Tailwind's theme so utilities like
+ * bg-surface-card, text-muted and rounded-card resolve to the same tokens the
+ * components use inline. One source of truth, two ways to reach it.
+ */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-page: var(--surface-page);
+  --color-panel: var(--surface-panel);
+  --color-card: var(--surface-card);
+  --color-raised: var(--surface-raised);
+  --color-accent: var(--accent-solid);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-hairline: var(--border-hairline);
+
+  --font-display: var(--font-archivo), "Helvetica Neue", arial, sans-serif;
+  --font-sans: var(--font-archivo), "Helvetica Neue", arial, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, menlo, monospace;
+
+  --radius-control: var(--r-control);
+  --radius-card: var(--r-card);
+  --radius-media: var(--r-media);
+  --radius-panel: var(--r-panel);
+  --radius-modal: var(--r-modal);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/*
+ * The system is dark-only: a black cinema wall with one acid-lime switch.
+ * Declared explicitly rather than via prefers-color-scheme.
+ */
+html {
+  color-scheme: dark;
 }

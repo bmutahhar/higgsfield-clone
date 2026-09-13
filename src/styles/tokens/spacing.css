@@ -1,0 +1,38 @@
+/* Higgsfield spacing tokens. 4px base; 2 and 6 exist for control internals. */
+:root {
+  --sp-0: 0px;
+  --sp-2: 2px;
+  --sp-4: 4px;
+  --sp-6: 6px;
+  --sp-8: 8px;
+  --sp-10: 10px;
+  --sp-12: 12px;
+  --sp-16: 16px;
+  --sp-20: 20px;
+  --sp-24: 24px;
+  --sp-32: 32px;
+  --sp-40: 40px;
+  --sp-48: 48px;
+  --sp-64: 64px;
+  --sp-80: 80px;
+  --sp-96: 96px;
+  --sp-128: 128px;
+
+  /* Control heights */
+  --control-sm: 28px;
+  --control-md: 36px;
+  --control-lg: 44px;
+  --control-xl: 52px;
+
+  /* Layout */
+  --gutter-page: 24px;
+  --gutter-page-lg: 40px;
+  --max-content: 1440px;
+  --max-prose: 680px;
+  --grid-gap: 12px; /* media grids run tight */
+  --rail-left: 72px; /* icon rail */
+  --rail-left-open: 248px; /* expanded nav */
+  --panel-right: 340px; /* generation settings panel */
+  --topbar-h: 56px;
+  --composer-h: 96px;
+}
