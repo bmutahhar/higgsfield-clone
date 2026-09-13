@@ -51,6 +51,28 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 A husky `pre-commit` hook runs `lint-staged` (ESLint `--fix --max-warnings=0`
 then Prettier on staged files) followed by a project-wide `pnpm typecheck`.
 
+### Editor setup (format + fix on save)
+
+`.vscode/settings.json` is committed and works in both VS Code and Cursor. It
+enables `editor.formatOnSave` with Prettier, plus `source.fixAll.eslint` on
+save, which is what applies import sorting automatically.
+
+Install the recommended extensions when prompted (`dbaeumer.vscode-eslint`,
+`esbenp.prettier-vscode`, `bradlc.vscode-tailwindcss`) — without the ESLint
+extension, nothing fixes on save.
+
+Formatting problems (stray blank lines, spacing, quotes) are surfaced as
+**ESLint errors** via `eslint-plugin-prettier`, so they get underlined in the
+editor rather than only being silently corrected on save. The trade-off is
+slower lint runs; to go back to Prettier-only formatting, swap
+`eslint-plugin-prettier/recommended` for `eslint-config-prettier/flat` in
+`eslint.config.mjs`.
+
+Import order is enforced by `import/order` (statement order, grouped
+builtin → external → `@/` internal → relative, with `react` and `next/*`
+pinned first) and `sort-imports` (named members inside the braces). Both are
+auto-fixable.
+
 ### Pinned versions — do not bump blindly
 
 - **ESLint is pinned to the 9.x line.** ESLint 10 is the current `latest`, but

@@ -1,8 +1,8 @@
 import { defineConfig, globalIgnores } from "eslint/config";
 import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTs from "eslint-config-next/typescript";
-import prettierConfig from "eslint-config-prettier/flat";
 import importPlugin from "eslint-plugin-import";
+import prettierRecommended from "eslint-plugin-prettier/recommended";
 import unusedImports from "eslint-plugin-unused-imports";
 import tseslint from "typescript-eslint";
 
@@ -89,6 +89,9 @@ const eslintConfig = defineConfig([
             { pattern: "@/**", group: "internal" },
           ],
           pathGroupsExcludedImportTypes: ["react", "next/**"],
+          // Keep react / next/* / other externals in ONE block rather than
+          // splitting each pathGroup into its own blank-line-separated group.
+          distinctGroup: false,
           "newlines-between": "always",
           alphabetize: { order: "asc", caseInsensitive: true },
         },
@@ -96,11 +99,26 @@ const eslintConfig = defineConfig([
       "import/no-duplicates": "error",
       "import/first": "error",
       "import/newline-after-import": "error",
+
+      // import/order sorts the statements; this sorts the named members
+      // *inside* the braces. Both are auto-fixable.
+      "sort-imports": [
+        "error",
+        {
+          ignoreDeclarationSort: true,
+          ignoreMemberSort: false,
+          ignoreCase: true,
+          allowSeparatedGroups: true,
+        },
+      ],
     },
   },
 
-  // Must stay last: turns off every rule that fights Prettier.
-  prettierConfig,
+  // Must stay last. Turns off every rule that fights Prettier (via
+  // eslint-config-prettier) AND surfaces Prettier's own formatting
+  // violations — stray blank lines, spacing, quotes — as fixable ESLint
+  // errors, so the editor underlines them instead of silently fixing them.
+  prettierRecommended,
 ]);
 
 export default eslintConfig;
