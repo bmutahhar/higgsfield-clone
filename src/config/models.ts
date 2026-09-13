@@ -262,7 +262,13 @@ export const BITRATES = ["Standard", "High", "Max"];
  * or a validation failure to report.
  */
 export function videoModelById(id: string): GenModel | undefined {
-  return VIDEO_MODELS.find((model) => model.id === id);
+  /*
+   * The live edit route spells its model `seedance_2_5_edit` while the rest of
+   * the catalogue is hyphenated. Normalising here rather than adding a second
+   * id means a pasted link resolves instead of silently falling back.
+   */
+  const normalised = id.replaceAll("_", "-");
+  return VIDEO_MODELS.find((model) => model.id === normalised);
 }
 
 /** Resolution options on the Genjutsu form's Quality select. */

@@ -23,13 +23,33 @@ export function StudioPane({
   tab,
   onTabChange,
   generations,
-  onGate,
+  onRecreate,
+  tabs = PANE_TABS,
+  empty,
+  library,
 }: {
   tab: PaneTab;
   onTabChange: (next: PaneTab) => void;
   /** This studio's own output, newest first. Rendered by the History tab. */
   generations: Generation[];
-  onGate: () => void;
+  /**
+   * Load a preset's recipe into the form. Signed out this still opens the
+   * sign-in dialog — the studio decides which, because it is the part that
+   * knows whether there is a user.
+   */
+  onRecreate: (preset: Preset) => void;
+  /**
+   * Which tabs this surface offers. Only Genjutsu has a preset library, so the
+   * set is a prop rather than a constant.
+   */
+  tabs?: readonly (typeof PANE_TABS)[number][];
+  /**
+   * What History shows before anything exists. Genjutsu leaves it blank; the
+   * edit and motion surfaces explain themselves instead.
+   */
+  empty?: React.ReactNode;
+  /** The library tab's contents, on the one surface that has a library. */
+  library?: React.ReactNode;
 }) {
   const [expanded, setExpanded] = useState<Preset | null>(null);
   const [layout, setLayout] = useState<"list" | "grid">("list");
@@ -48,7 +68,7 @@ export function StudioPane({
           <header className="flex items-center justify-between self-stretch pt-2 pb-3">
             <QTabs
               label="Page view"
-              items={PANE_TABS.map((t) => ({
+              items={tabs.map((t) => ({
                 id: t.id,
                 label: t.label,
                 icon: t.icon,
@@ -79,9 +99,12 @@ export function StudioPane({
                   generations={generations}
                   zoom={zoom}
                   layout={layout}
+                  empty={empty}
                 />
               ) : (
-                <MotionLibrary onOpen={setExpanded} onRecreate={onGate} />
+                (library ?? (
+                  <MotionLibrary onOpen={setExpanded} onRecreate={onRecreate} />
+                ))
               )}
             </div>
           )}
@@ -93,8 +116,9 @@ export function StudioPane({
           preset={expanded}
           onClose={() => setExpanded(null)}
           onRecreate={() => {
+            // Closed first, so the form it just filled is the thing you see.
             setExpanded(null);
-            onGate();
+            onRecreate(expanded);
           }}
         />
       ) : null}

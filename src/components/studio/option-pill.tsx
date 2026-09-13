@@ -1,7 +1,7 @@
 "use client";
 
 import { Icon, type IconName } from "@/components/core/icon";
-import { Dropdown, DropdownItem } from "@/components/studio/dropdown";
+import { Dropdown, DropdownItem } from "@/components/overlays/dropdown";
 import { cn } from "@/lib/cn";
 
 export interface OptionPillProps {

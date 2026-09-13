@@ -25,7 +25,7 @@ export function MotionLibrary({
   onRecreate,
 }: {
   onOpen: (preset: Preset) => void;
-  onRecreate: () => void;
+  onRecreate: (preset: Preset) => void;
 }) {
   const [source, setSource] = useState<PresetSource>("community");
   const presets = presetsFor(source);

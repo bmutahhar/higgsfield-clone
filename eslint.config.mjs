@@ -14,6 +14,9 @@ const eslintConfig = defineConfig([
     "coverage/**",
     "next-env.d.ts",
     ".agent-logs/**",
+    // Sibling worktrees carry their own `.next`, which this glob list would
+    // otherwise walk — `.next/**` above only matches the one at the root.
+    ".claude/worktrees/**",
   ]),
 
   // Next.js: core web vitals, React, react-hooks, jsx-a11y, import resolution.

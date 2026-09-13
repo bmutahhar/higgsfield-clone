@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Icon } from "@/components/core/icon";
 import { ModelBadge } from "@/components/image-studio/model-badge";
 import { PILL_CLASS } from "@/components/image-studio/setting-pill";
-import { Dropdown } from "@/components/studio/dropdown";
+import { Dropdown } from "@/components/overlays/dropdown";
 import {
   IMAGE_MODELS,
   type ImageModel,

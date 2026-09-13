@@ -28,7 +28,8 @@ export function PresetCard({
 }: {
   preset: Preset;
   onOpen: (preset: Preset) => void;
-  onRecreate: () => void;
+  /** Loads this preset's prompt and mode into the form. */
+  onRecreate: (preset: Preset) => void;
 }) {
   const video = useRef<HTMLVideoElement>(null);
   const menuRoot = useRef<HTMLDivElement>(null);
@@ -193,7 +194,7 @@ export function PresetCard({
         <button
           type="button"
           aria-label={`Recreate ${preset.title}`}
-          onClick={onRecreate}
+          onClick={() => onRecreate(preset)}
           className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-q-200 bg-q-accent px-2.5 text-q-label-xs font-semibold text-q-inverse transition-opacity duration-150 outline-none hover:opacity-80 focus-visible:ring-2 focus-visible:ring-white motion-reduce:transition-none [@container_(max-width:20rem)]:h-7 [@container_(max-width:20rem)]:px-2"
         >
           <Icon name="refresh-cw" size={14} />

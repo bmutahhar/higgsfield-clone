@@ -560,6 +560,30 @@ Like · Share ▸ · Add to folder ▸
 Download · Delete (danger)
 ```
 
+**Two deliberate departures from the measured menu**, both made when the
+actions were implemented:
+
+- **`Copy image` is added**, after `Reuse`. The rail is four buttons and every
+  one of them is spoken for, so there is nowhere to put copying without
+  breaking the count above — and an image you cannot get onto the clipboard is
+  a worse gap than an extra row here.
+- **`Share ▸` became `Copy link`** and lost its chevron. Copying the link is
+  the one thing that submenu would have offered that works without a backend,
+  and a chevron promising a sub-surface that does not exist is worse than a row
+  that does something.
+
+`Regenerate` and `Reuse` both load the composer rather than generating:
+`Regenerate` sends the prompt and the settings, `Reuse` sends the settings and
+leaves whatever prompt is written. Nothing in this menu spends a generation on
+one click.
+
+**The tile itself opens a full-size view.** Clicking the picture — a
+full-bleed button under the controls — opens the same lightbox the Genjutsu
+library uses for its presets (`components/overlays/media-lightbox.tsx`), with
+the generation's own recipe listed under Details. The live site has no such
+view on this surface; sharing the one that already existed was cheaper than
+building a second.
+
 ---
 
 ## 7. Zoom control

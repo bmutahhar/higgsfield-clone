@@ -8,6 +8,7 @@ import { Icon } from "@/components/core/icon";
 import { LogoMark } from "@/components/layout/logo-mark";
 import { AccountMenu } from "@/components/marketing/account-menu";
 import { NavMenu } from "@/components/marketing/nav-menu";
+import { ComingSoon } from "@/components/overlays/coming-soon";
 import { NAV_MENUS } from "@/config/nav-menus";
 import { PRIMARY_NAV } from "@/config/site";
 import { useAuth } from "@/features/auth/auth-context";
@@ -148,13 +149,12 @@ export function SiteHeader() {
               {content}
             </Link>
           ) : (
-            <span
-              aria-disabled="true"
-              title={`${link.label} — not built in this clone`}
+            <ComingSoon
+              side="under-header"
               className={cn(NAV_LINK, "cursor-default text-[#A8A8A8]/45")}
             >
               {content}
-            </span>
+            </ComingSoon>
           );
 
           // Four items open a panel on the live site; the two whose surfaces

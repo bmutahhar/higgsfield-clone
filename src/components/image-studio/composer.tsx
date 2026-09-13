@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useRef } from "react";
+import { useEffect, useId, useRef } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm, useWatch } from "react-hook-form";
 
@@ -24,6 +24,7 @@ import {
   imageGenerationSchema,
   type ImageGenerationValues,
 } from "@/schemas/image-generation";
+import type { ComposerDraft } from "@/types/generation.types";
 
 export interface ComposerProps {
   /**
@@ -31,6 +32,12 @@ export interface ComposerProps {
    * header's hover menu can deep-link straight into a model.
    */
   modelId: string;
+  /**
+   * A recipe to load, sent by Recreate or Reuse on a tile. Merged over
+   * whatever is currently in the bar, so a draft without a prompt leaves the
+   * written one alone.
+   */
+  draft?: ComposerDraft | null;
   /** Called with validated values. Wire to the generation service. */
   onGenerate?: (values: ImageGenerationValues) => void;
 }
@@ -51,7 +58,7 @@ export interface ComposerProps {
  * settings are custom popovers rather than native inputs, which is why they go
  * through `Controller` instead of `register`.
  */
-export function Composer({ modelId, onGenerate }: ComposerProps) {
+export function Composer({ modelId, draft, onGenerate }: ComposerProps) {
   const errorId = useId();
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -59,6 +66,9 @@ export function Composer({ modelId, onGenerate }: ComposerProps) {
     control,
     handleSubmit,
     setValue,
+    getValues,
+    reset,
+    setFocus,
     formState: { errors },
   } = useForm<ImageGenerationValues>({
     resolver: zodResolver(imageGenerationSchema),
@@ -84,6 +94,38 @@ export function Composer({ modelId, onGenerate }: ComposerProps) {
       batch: 1,
     },
   });
+
+  /*
+   * Recreate, arriving from a tile.
+   *
+   * A whole-form reset rather than field-by-field `setValue`: a recipe is one
+   * object, and `reset` also clears an error left over from a failed submit.
+   * Merging over the current values is what lets Reuse send the settings
+   * without a prompt and leave whatever is already written.
+   *
+   * Keyed on the draft's identity, which is new on every press — so recreating
+   * the same tile twice works, and StrictMode's double-invoked effects are
+   * harmless because the reset is idempotent.
+   *
+   * The model is left to the form here, not pushed to the URL: this bar reads
+   * every option off its own field, so nothing downstream is looking at the
+   * route. The video panel is the opposite and does the opposite.
+   */
+  useEffect(() => {
+    if (draft?.kind !== "image") return;
+    reset({ ...getValues(), ...draft.values });
+    /*
+     * Deferred a tick. `reset` re-registers the fields, so focusing in the
+     * same turn asks for a ref the reset is in the middle of replacing and
+     * the caret never lands — verified in the browser, not assumed.
+     */
+    const landing = setTimeout(() => {
+      setFocus("prompt");
+    }, 0);
+    return () => {
+      clearTimeout(landing);
+    };
+  }, [draft, reset, getValues, setFocus]);
 
   /*
    * `useWatch` rather than the `watch()` returned by useForm: watch() is a

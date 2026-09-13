@@ -7,6 +7,8 @@ import { useMutation, useQueries } from "@tanstack/react-query";
 import { GenerateForm } from "@/components/studio/generate-form";
 import { StudioPane } from "@/components/studio/studio-pane";
 import type { PaneTab } from "@/config/genjutsu";
+import { GENJUTSU_QUALITY_DEFAULT } from "@/config/models";
+import type { Preset } from "@/config/presets";
 import { useAuth } from "@/features/auth/auth-context";
 import { fetchGeneration } from "@/services/image-generation";
 import { requestVideoGeneration } from "@/services/video-generation";
@@ -51,15 +53,42 @@ export function GenjutsuStudio({ modelId }: { modelId: string }) {
   const applyStatus = useGenerationStore((state) => state.applyStatus);
   const holdRequest = useGenerationStore((state) => state.holdRequest);
   const takeRequest = useGenerationStore((state) => state.takeRequest);
+  const loadDraft = useGenerationStore((state) => state.loadDraft);
+  const draft = useGenerationStore((state) => state.draft);
 
   const { mutate: generate } = useMutation({
     mutationFn: requestVideoGeneration,
-    onSuccess: (accepted) => {
-      enqueue("video", modelId, accepted);
+    /*
+     * The submitted values arrive as the mutation's second argument, so the
+     * recipe stored against the clip is the one that was actually sent — and,
+     * because this store is never serialised, that includes the reference
+     * files themselves. Recreating a clip you made this session brings its
+     * attachments back with it.
+     */
+    onSuccess: (accepted, values) => {
+      enqueue({ kind: "video", values }, accepted);
       // Send them where the work actually appears; the library hides it.
       setTab("history");
     },
   });
+
+  /*
+   * A recreated clip names a model, and on this surface the model lives in
+   * the URL rather than in the form — the panel derives its quality options
+   * from the route. So the draft's model is pushed here and the panel's own
+   * URL-sync effect lands it in the field, which leaves exactly one writer
+   * for it instead of two racing.
+   *
+   * `replace` rather than `push`: filling the form is not a navigation, and
+   * the back button should not be walking through recipes.
+   */
+  useEffect(() => {
+    if (draft?.kind !== "video") return;
+    const next = draft.values.modelId;
+    if (next !== undefined && next !== modelId) {
+      router.replace(`/ai/video?model=${next}`);
+    }
+  }, [draft, modelId, router]);
 
   /*
    * Picking up where signing in left off. Submitting while signed out parks
@@ -111,6 +140,7 @@ export function GenjutsuStudio({ modelId }: { modelId: string }) {
     <div className="relative mx-auto grid w-full max-w-480 min-w-0 grid-cols-[1fr] gap-2 px-4 pb-2 md:grid-cols-[20rem_1fr]">
       <GenerateForm
         modelId={modelId}
+        draft={draft}
         onModelChange={(id) => {
           router.push(`/ai/video?model=${id}`);
         }}
@@ -139,8 +169,30 @@ export function GenjutsuStudio({ modelId }: { modelId: string }) {
          * work. The seeded back catalogue belongs to a signed-in session.
          */
         generations={user ? generations : []}
-        onGate={() => {
-          openAuth("signup");
+        /*
+         * A preset is a recipe like any other, so recreating one fills the
+         * panel instead of doing nothing. Signed out it still gates: there is
+         * no history to put it beside and the generation could not run.
+         */
+        onRecreate={(preset: Preset) => {
+          if (!user) {
+            openAuth("signup");
+            return;
+          }
+          loadDraft({
+            kind: "video",
+            values: {
+              mode: preset.mode,
+              modelId: "genjutsu",
+              quality: GENJUTSU_QUALITY_DEFAULT,
+              promptEnabled: true,
+              prompt: preset.prompt,
+              // `preset.model` is a display string, not a catalogue id, and a
+              // preset carries no files — only the idea.
+              referenceVideo: null,
+              referenceImages: [],
+            },
+          });
         }}
       />
     </div>

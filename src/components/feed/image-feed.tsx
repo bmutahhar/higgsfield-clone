@@ -6,14 +6,16 @@ import { FeedTile } from "@/components/feed/feed-tile";
 import { PendingTile } from "@/components/feed/pending-tile";
 import { SelectionBar } from "@/components/feed/selection-bar";
 import { ZoomControl } from "@/components/feed/zoom-control";
+import { GenerationLightbox } from "@/components/overlays/generation-lightbox";
 import { MIN_COLUMNS, MIN_TILE_WIDTH } from "@/config/image-studio";
 import { useFeedColumns } from "@/hooks/use-feed-columns";
 import { balanceColumns } from "@/lib/masonry";
-import type { Generation } from "@/types/generation.types";
+import { downloadAsset } from "@/services/asset-transfer";
+import { useGenerationStore } from "@/stores/generation-store";
+import type { Generation, ReadyGeneration } from "@/types/generation.types";
 
 export interface ImageFeedProps {
   generations: Generation[];
-  onRemove: (ids: string[]) => void;
 }
 
 /*
@@ -32,9 +34,16 @@ export interface ImageFeedProps {
  * A generation that has not reached `ready` is one still running, and renders
  * as a held frame rather than a picture.
  */
-export function ImageFeed({ generations, onRemove }: ImageFeedProps) {
+export function ImageFeed({ generations }: ImageFeedProps) {
   const { zoom, setZoom, columns } = useFeedColumns();
+  const remove = useGenerationStore((state) => state.remove);
   const [selected, setSelected] = useState<string[]>([]);
+  /*
+   * Held by id, not by record: the expanded tile can be liked or deleted while
+   * it is open, and a captured object would go stale the moment either
+   * happened.
+   */
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   /*
    * The zoom stop is a ceiling. A narrow window overrides it so the tiles keep
@@ -68,10 +77,29 @@ export function ImageFeed({ generations, onRemove }: ImageFeedProps) {
 
   const buckets = balanceColumns(generations, fitted);
 
+  /*
+   * The live selection is derived, not pruned.
+   *
+   * A tile can now leave the feed from its own overflow menu as well as from
+   * this bar, and a running one can be cancelled. Filtering against what is
+   * actually here means none of those paths has to reach in and clear an id —
+   * a deleted tile simply stops counting.
+   */
+  const chosen = selected.filter((id) =>
+    generations.some((generation) => generation.id === id),
+  );
+
   // Only finished images are selectable, so the bar always has a thumbnail.
   const lastSelected = generations.find(
     (generation) =>
-      generation.id === selected.at(-1) && generation.src !== undefined,
+      generation.id === chosen.at(-1) && generation.src !== undefined,
+  );
+
+  // A predicate, not a plain callback: `find` cannot narrow the union on its
+  // own, and the lightbox only renders something that has landed.
+  const expanded = generations.find(
+    (generation): generation is ReadyGeneration =>
+      generation.id === expandedId && generation.status === "ready",
   );
 
   function toggle(id: string) {
@@ -80,9 +108,16 @@ export function ImageFeed({ generations, onRemove }: ImageFeedProps) {
     );
   }
 
-  function remove(ids: string[]) {
-    onRemove(ids);
-    setSelected((prev) => prev.filter((id) => !ids.includes(id)));
+  async function downloadChosen() {
+    for (const id of chosen) {
+      const generation = generations.find((item) => item.id === id);
+      if (generation?.status !== "ready") continue;
+      /*
+       * One at a time. Browsers throttle a burst of simultaneous saves and
+       * some drop all but the first without saying so.
+       */
+      await downloadAsset(generation.src, generation.prompt);
+    }
   }
 
   return (
@@ -119,20 +154,14 @@ export function ImageFeed({ generations, onRemove }: ImageFeedProps) {
                   ) : (
                     <FeedTile
                       key={generation.id}
-                      item={{
-                        id: generation.id,
-                        src: generation.src,
-                        w: generation.w,
-                        h: generation.h,
-                        prompt: generation.prompt,
-                      }}
-                      selected={selected.includes(generation.id)}
-                      selecting={selected.length > 0}
+                      generation={generation}
+                      selected={chosen.includes(generation.id)}
+                      selecting={chosen.length > 0}
                       onToggle={() => {
                         toggle(generation.id);
                       }}
-                      onDelete={() => {
-                        remove([generation.id]);
+                      onExpand={() => {
+                        setExpandedId(generation.id);
                       }}
                     />
                   ),
@@ -143,18 +172,30 @@ export function ImageFeed({ generations, onRemove }: ImageFeedProps) {
         </div>
       </div>
 
-      {selected.length > 0 && lastSelected?.src && (
+      {chosen.length > 0 && lastSelected?.src && (
         <SelectionBar
-          count={selected.length}
+          count={chosen.length}
           poster={lastSelected.src}
           onClear={() => {
             setSelected([]);
           }}
+          onDownload={() => {
+            void downloadChosen();
+          }}
           onDelete={() => {
-            remove(selected);
+            remove(chosen);
           }}
         />
       )}
+
+      {expanded ? (
+        <GenerationLightbox
+          generation={expanded}
+          onClose={() => {
+            setExpandedId(null);
+          }}
+        />
+      ) : null}
     </div>
   );
 }

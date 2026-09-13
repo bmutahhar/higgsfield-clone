@@ -1,10 +1,15 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 
+import { ActionButton, ROUND_ACTION } from "@/components/core/action-button";
 import { Icon } from "@/components/core/icon";
+import { GenerationLightbox } from "@/components/overlays/generation-lightbox";
+import { Tooltip } from "@/components/overlays/tooltip";
+import { ClipMenu } from "@/components/studio/clip-menu";
+import { useGenerationActions } from "@/hooks/use-generation-actions";
 import { cn } from "@/lib/cn";
-import type { Generation } from "@/types/generation.types";
+import type { Generation, ReadyGeneration } from "@/types/generation.types";
 
 /** What each phase says while a clip is still being made. */
 const PHASE_LABEL: Record<string, string> = {
@@ -17,6 +22,11 @@ export interface VideoHistoryProps {
   /** 0–5 from the pane toolbar; fewer columns means larger tiles. */
   zoom: number;
   layout: "list" | "grid";
+  /**
+   * Shown when nothing has been generated. A slot rather than a fixed state:
+   * Genjutsu leaves this blank, the other two surfaces explain themselves.
+   */
+  empty?: React.ReactNode;
 }
 
 /**
@@ -31,6 +41,19 @@ export interface VideoHistoryProps {
  * blank until you have made something.
  */
 export function VideoHistory({ generations, zoom, layout }: VideoHistoryProps) {
+  /*
+   * Held by id, not by record: the expanded clip can be liked or deleted while
+   * it is open, and a captured object would go stale the moment either
+   * happened. Declared above the empty-state return so the hook order holds.
+   */
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  // A predicate, not a plain callback: `find` cannot narrow the union alone.
+  const expanded = generations.find(
+    (generation): generation is ReadyGeneration =>
+      generation.id === expandedId && generation.status === "ready",
+  );
+
   if (generations.length === 0) {
     return (
       <div
@@ -45,23 +68,48 @@ export function VideoHistory({ generations, zoom, layout }: VideoHistoryProps) {
   const columns = layout === "list" ? 1 : Math.max(1, 6 - zoom);
 
   return (
-    <ul
-      className="grid gap-3 p-3"
-      // The column count is a live numeric value, so it cannot be a class.
-      style={{
-        gridTemplateColumns: `repeat(${String(columns)}, minmax(0, 1fr))`,
-      }}
-    >
-      {generations.map((generation) => (
-        <HistoryTile key={generation.id} generation={generation} />
-      ))}
-    </ul>
+    <>
+      <ul
+        className="grid gap-3 p-3"
+        // The column count is a live numeric value, so it cannot be a class.
+        style={{
+          gridTemplateColumns: `repeat(${String(columns)}, minmax(0, 1fr))`,
+        }}
+      >
+        {generations.map((generation) => (
+          <HistoryTile
+            key={generation.id}
+            generation={generation}
+            onExpand={() => {
+              setExpandedId(generation.id);
+            }}
+          />
+        ))}
+      </ul>
+
+      {expanded ? (
+        <GenerationLightbox
+          generation={expanded}
+          onClose={() => {
+            setExpandedId(null);
+          }}
+        />
+      ) : null}
+    </>
   );
 }
 
-function HistoryTile({ generation }: { generation: Generation }) {
+function HistoryTile({
+  generation,
+  onExpand,
+}: {
+  generation: Generation;
+  onExpand: () => void;
+}) {
   const video = useRef<HTMLVideoElement>(null);
+  const actions = useGenerationActions(generation);
   const ready = generation.status === "ready";
+  const liked = generation.liked === true;
 
   function play() {
     const node = video.current;
@@ -95,6 +143,67 @@ function HistoryTile({ generation }: { generation: Generation }) {
             aria-label={generation.prompt || "Generated clip"}
             className="size-full object-cover"
           />
+
+          {/*
+            The clip itself opens the expanded view, the same way the picture
+            does in the image feed. A real button so it is reachable by
+            keyboard, and below the rail so the controls still win the click.
+          */}
+          <button
+            type="button"
+            aria-label={`Open ${generation.prompt || "generated clip"}`}
+            onClick={onExpand}
+            className="absolute inset-0 z-0 cursor-pointer focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-white"
+          />
+
+          {/*
+            A row across the top rather than the image feed's vertical rail.
+            These tiles are 16:9 — they run out of height long before they run
+            out of width, so a stacked rail would overflow a tile that a
+            horizontal one sits comfortably inside.
+
+            Hovering a button still counts as hovering the tile, so the clip
+            keeps playing underneath.
+          */}
+          <div
+            className={cn(
+              "absolute top-2 right-2 z-20 flex items-center gap-1",
+              "opacity-0 transition-opacity duration-200 motion-reduce:transition-none",
+              "group-focus-within/tile:opacity-100 group-hover/tile:opacity-100",
+            )}
+          >
+            <Tooltip label={liked ? "Unlike" : "Like"} side="bottom">
+              <ActionButton
+                icon="heart"
+                label={liked ? "Unlike" : "Like"}
+                pressed={liked}
+                onAction={actions.toggleLike}
+              />
+            </Tooltip>
+            <Tooltip label="Download" side="bottom">
+              <ActionButton
+                icon="download"
+                label="Download"
+                onAction={actions.download}
+              />
+            </Tooltip>
+            {/* The same glyph the preset cards use for the same idea. */}
+            <Tooltip label="Recreate" side="bottom">
+              <ActionButton
+                icon="refresh-cw"
+                label="Recreate"
+                onAction={actions.recreate}
+              />
+            </Tooltip>
+            <Tooltip label="More actions" side="bottom">
+              <ClipMenu
+                actions={actions}
+                liked={liked}
+                triggerClassName={ROUND_ACTION}
+              />
+            </Tooltip>
+          </div>
+
           <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/70 to-transparent p-3 opacity-0 transition-opacity group-hover/tile:opacity-100 motion-reduce:transition-none">
             <p className="line-clamp-2 text-q-label-xs text-white">
               {generation.prompt || "No prompt"}

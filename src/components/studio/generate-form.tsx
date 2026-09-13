@@ -5,26 +5,31 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm, useWatch } from "react-hook-form";
 
 import { DropZone } from "@/components/studio/drop-zone";
-import { FormTabs } from "@/components/studio/form-tabs";
-import { GenerateButton } from "@/components/studio/generate-button";
 import { GenjutsuModelSelect } from "@/components/studio/genjutsu-model-select";
 import { ModePreview } from "@/components/studio/mode-preview";
-import { PromoCard } from "@/components/studio/promo-card";
 import { PromptField } from "@/components/studio/prompt-field";
 import { QSelect } from "@/components/studio/q-select";
 import { QTabs } from "@/components/studio/q-tabs";
 import { readVideoDuration } from "@/components/studio/read-video-duration";
-import { type GenjutsuMode, MODE_ORDER, MODES } from "@/config/genjutsu";
+import { StudioPanel } from "@/components/studio/studio-panel";
+import { type GenjutsuMode, MODE_ORDER, MODES, PROMO } from "@/config/genjutsu";
 import { GENJUTSU_QUALITY, videoModelById } from "@/config/models";
 import {
   videoGenerationSchema,
   type VideoGenerationValues,
 } from "@/schemas/video-generation";
+import type { ComposerDraft } from "@/types/generation.types";
 
 export interface GenerateFormProps {
   /** Resolved from `?model=` by the route, so a model is deep-linkable. */
   modelId: string;
   onModelChange: (id: string) => void;
+  /**
+   * A recipe to load, sent by Recreate on a history tile or a preset card.
+   * Merged over whatever is currently in the panel, so a draft without a
+   * prompt leaves the written one alone.
+   */
+  draft?: ComposerDraft | null;
   onHowItWorks: () => void;
   /** Called with validated values only. */
   onSubmit: (values: VideoGenerationValues) => void;
@@ -48,6 +53,7 @@ export interface GenerateFormProps {
 export function GenerateForm({
   modelId,
   onModelChange,
+  draft,
   onHowItWorks,
   onSubmit,
 }: GenerateFormProps) {
@@ -58,6 +64,7 @@ export function GenerateForm({
     handleSubmit,
     setValue,
     getValues,
+    reset,
     formState: { errors },
   } = useForm<VideoGenerationValues>({
     resolver: zodResolver(videoGenerationSchema),
@@ -96,6 +103,26 @@ export function GenerateForm({
     }
   }, [modelId, getValues, setValue]);
 
+  /*
+   * Recreate, arriving from a history tile or a preset card.
+   *
+   * `modelId` is deliberately dropped and re-read from the form: on this
+   * surface the model belongs to the URL — `qualities` below is derived from
+   * the route, not from the field — so the studio pushes it and the effect
+   * directly above lands it. Writing it here as well would be two effects
+   * fighting over one value.
+   *
+   * Everything else is merged over the current values, which is what lets
+   * Reuse send settings without a prompt and leave what is already written.
+   * Keyed on the draft's identity, so recreating the same tile twice works
+   * and StrictMode's double-invoke is harmless.
+   */
+  useEffect(() => {
+    if (draft?.kind !== "video") return;
+    const { modelId: _routed, ...rest } = draft.values;
+    reset({ ...getValues(), ...rest });
+  }, [draft, reset, getValues]);
+
   // The preview is a portal pinned to a measured tab, so it needs coordinates.
   const [peek, setPeek] = useState<GenjutsuMode | null>(null);
   const [anchor, setAnchor] = useState({ top: 0, left: 0 });
@@ -130,197 +157,180 @@ export function GenerateForm({
   const message = failure?.message;
 
   return (
-    <div className="hidden max-h-full min-h-0 min-w-0 flex-col self-start overflow-hidden rounded-q-500 border border-q-hairline bg-q-panel md:flex">
-      <FormTabs />
+    <StudioPanel
+      activeTab="create"
+      promo={{
+        ...PROMO,
+        action: { label: "How it works", onClick: onHowItWorks },
+      }}
+      onSubmit={() => {
+        void handleSubmit(onSubmit)();
+      }}
+      message={message}
+      errorId={errorId}
+      cost={{ list: model?.listCredits, net: model?.credits }}
+      aside={
+        <ModePreview
+          mode={peeked}
+          open={Boolean(peeked)}
+          top={anchor.top}
+          left={anchor.left}
+        />
+      }
+    >
+      <div ref={tabsRef}>
+        <Controller
+          control={control}
+          name="mode"
+          render={({ field }) => (
+            <QTabs
+              label="Generation mode"
+              items={MODE_ORDER.map((id) => ({
+                id,
+                label: MODES[id].label,
+                icon: MODES[id].icon === "swap" ? "replace" : "circle-dashed",
+              }))}
+              value={field.value}
+              onValueChange={field.onChange}
+              onItemPeek={onPeek}
+              fill
+            />
+          )}
+        />
+      </div>
 
-      <form
-        noValidate
-        onSubmit={(event) => {
-          void handleSubmit(onSubmit)(event);
-        }}
-        className="flex min-h-0 shrink-0 flex-col overflow-hidden"
-      >
-        <div className="hf-scrollbar-none flex max-h-[calc(100vh-16rem)] shrink-0 flex-col gap-4 overflow-x-visible overflow-y-auto p-2">
-          <PromoCard onHowItWorks={onHowItWorks} />
+      <div className="relative mt-2 flex flex-col gap-2">
+        <Controller
+          control={control}
+          name="referenceVideo"
+          render={({ field }) => (
+            <DropZone
+              title={copy.videoTitle}
+              hint={copy.videoHint}
+              icons={["video"]}
+              accept="video/*"
+              files={field.value ? [field.value.file] : []}
+              onFilesChange={(files) => {
+                const file = files[0];
+                if (!file) {
+                  field.onChange(null);
+                  return;
+                }
+                /*
+                 * Land the file immediately and fill the duration in when
+                 * the decode returns — waiting would leave the zone empty
+                 * for a beat after an obviously successful pick.
+                 */
+                field.onChange({ file, duration: null });
+                void readVideoDuration(file).then((duration) => {
+                  field.onChange({ file, duration });
+                });
+              }}
+              onBlur={field.onBlur}
+              invalid={errors.referenceVideo !== undefined}
+              describedBy={
+                failedField === "referenceVideo" && message !== undefined
+                  ? errorId
+                  : undefined
+              }
+            />
+          )}
+        />
 
-          <div className="flex flex-col">
-            <div ref={tabsRef}>
-              <Controller
-                control={control}
-                name="mode"
-                render={({ field }) => (
-                  <QTabs
-                    label="Generation mode"
-                    items={MODE_ORDER.map((id) => ({
-                      id,
-                      label: MODES[id].label,
-                      icon:
-                        MODES[id].icon === "swap" ? "replace" : "circle-dashed",
-                    }))}
-                    value={field.value}
-                    onValueChange={field.onChange}
-                    onItemPeek={onPeek}
-                    fill
-                  />
-                )}
-              />
-            </div>
+        <Controller
+          control={control}
+          name="referenceImages"
+          render={({ field }) => (
+            <DropZone
+              title={copy.imageTitle}
+              hint={`Up to ${String(copy.imageLimit)} images`}
+              icons={["user-round", "shirt", "package"]}
+              accept="image/*"
+              multiple
+              files={field.value}
+              onFilesChange={field.onChange}
+              onBlur={field.onBlur}
+              invalid={errors.referenceImages !== undefined}
+              describedBy={
+                failedField === "referenceImages" && message !== undefined
+                  ? errorId
+                  : undefined
+              }
+            />
+          )}
+        />
 
-            <div className="relative mt-2 flex flex-col gap-2">
-              <Controller
-                control={control}
-                name="referenceVideo"
-                render={({ field }) => (
-                  <DropZone
-                    title={copy.videoTitle}
-                    hint={copy.videoHint}
-                    icons={["video"]}
-                    accept="video/*"
-                    files={field.value ? [field.value.file] : []}
-                    onFilesChange={(files) => {
-                      const file = files[0];
-                      if (!file) {
-                        field.onChange(null);
-                        return;
-                      }
-                      /*
-                       * Land the file immediately and fill the duration in when
-                       * the decode returns — waiting would leave the zone empty
-                       * for a beat after an obviously successful pick.
-                       */
-                      field.onChange({ file, duration: null });
-                      void readVideoDuration(file).then((duration) => {
-                        field.onChange({ file, duration });
-                      });
-                    }}
-                    onBlur={field.onBlur}
-                    invalid={errors.referenceVideo !== undefined}
-                    describedBy={
-                      failedField === "referenceVideo" && message !== undefined
-                        ? errorId
-                        : undefined
-                    }
-                  />
-                )}
-              />
-
-              <Controller
-                control={control}
-                name="referenceImages"
-                render={({ field }) => (
-                  <DropZone
-                    title={copy.imageTitle}
-                    hint={`Up to ${String(copy.imageLimit)} images`}
-                    icons={["user-round", "shirt", "package"]}
-                    accept="image/*"
-                    multiple
-                    files={field.value}
-                    onFilesChange={field.onChange}
-                    onBlur={field.onBlur}
-                    invalid={errors.referenceImages !== undefined}
-                    describedBy={
-                      failedField === "referenceImages" && message !== undefined
-                        ? errorId
-                        : undefined
-                    }
-                  />
-                )}
-              />
-
-              <Controller
-                control={control}
-                name="promptEnabled"
-                render={({ field: toggle }) => (
-                  <Controller
-                    control={control}
-                    name="prompt"
-                    render={({ field: text }) => (
-                      <PromptField
-                        enabled={toggle.value}
-                        onEnabledChange={toggle.onChange}
-                        value={text.value}
-                        onValueChange={text.onChange}
-                        onBlur={text.onBlur}
-                        ref={text.ref}
-                        placeholder={copy.promptPlaceholder}
-                        invalid={errors.prompt !== undefined}
-                        describedBy={
-                          failedField === "prompt" && message !== undefined
-                            ? errorId
-                            : undefined
-                        }
-                      />
-                    )}
-                  />
-                )}
-              />
-            </div>
-
-            <div className="mt-3 flex flex-col self-stretch md:mt-4">
-              <GenjutsuModelSelect
-                modelId={modelId}
-                onSelect={(id) => {
-                  setValue("modelId", id, { shouldValidate: false });
-                  /*
-                   * A model that does not offer the current quality falls back
-                   * to its own first, rather than leaving the pill showing
-                   * something the model cannot render.
-                   */
-                  const next = videoModelById(id);
-                  const supported = next?.resolutions;
-                  if (supported && !supported.includes(quality)) {
-                    setValue("quality", supported[0] ?? GENJUTSU_QUALITY[0], {
-                      shouldValidate: true,
-                    });
-                  }
-                  onModelChange(id);
-                }}
-              />
-            </div>
-
+        <Controller
+          control={control}
+          name="promptEnabled"
+          render={({ field: toggle }) => (
             <Controller
               control={control}
-              name="quality"
-              render={({ field }) => (
-                <QSelect
-                  label="Quality"
-                  name={field.name}
-                  value={field.value}
-                  options={qualities}
-                  onChange={field.onChange}
-                  invalid={errors.quality !== undefined}
+              name="prompt"
+              render={({ field: text }) => (
+                <PromptField
+                  enabled={toggle.value}
+                  onEnabledChange={toggle.onChange}
+                  value={text.value}
+                  onValueChange={text.onChange}
+                  onBlur={text.onBlur}
+                  ref={text.ref}
+                  placeholder={copy.promptPlaceholder}
+                  invalid={errors.prompt !== undefined}
                   describedBy={
-                    failedField === "quality" && message !== undefined
+                    failedField === "prompt" && message !== undefined
                       ? errorId
                       : undefined
                   }
-                  className="mt-2"
                 />
               )}
             />
-          </div>
-        </div>
-
-        <div className="relative w-full shrink-0 space-y-2 rounded-b-q-500 px-2 py-3">
-          {message !== undefined && (
-            <p
-              id={errorId}
-              role="alert"
-              className="px-1 text-q-label-xs text-q-danger"
-            >
-              {message}
-            </p>
           )}
-          <GenerateButton list={model?.listCredits} net={model?.credits} />
-        </div>
-      </form>
+        />
+      </div>
 
-      <ModePreview
-        mode={peeked}
-        open={Boolean(peeked)}
-        top={anchor.top}
-        left={anchor.left}
+      <div className="mt-3 flex flex-col self-stretch md:mt-4">
+        <GenjutsuModelSelect
+          modelId={modelId}
+          onSelect={(id) => {
+            setValue("modelId", id, { shouldValidate: false });
+            /*
+             * A model that does not offer the current quality falls back
+             * to its own first, rather than leaving the pill showing
+             * something the model cannot render.
+             */
+            const next = videoModelById(id);
+            const supported = next?.resolutions;
+            if (supported && !supported.includes(quality)) {
+              setValue("quality", supported[0] ?? GENJUTSU_QUALITY[0], {
+                shouldValidate: true,
+              });
+            }
+            onModelChange(id);
+          }}
+        />
+      </div>
+
+      <Controller
+        control={control}
+        name="quality"
+        render={({ field }) => (
+          <QSelect
+            label="Quality"
+            name={field.name}
+            value={field.value}
+            options={qualities}
+            onChange={field.onChange}
+            invalid={errors.quality !== undefined}
+            describedBy={
+              failedField === "quality" && message !== undefined
+                ? errorId
+                : undefined
+            }
+            className="mt-2"
+          />
+        )}
       />
-    </div>
+    </StudioPanel>
   );
 }

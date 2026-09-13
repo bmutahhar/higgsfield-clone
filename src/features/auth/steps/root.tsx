@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 
 import { Icon } from "@/components/core/icon";
+import { ComingSoon } from "@/components/overlays/coming-soon";
 import { SOCIAL_PROVIDERS } from "@/config/auth";
 import { useAuth } from "@/features/auth/auth-context";
 import { ProviderMark } from "@/features/auth/provider-mark";
@@ -141,21 +142,19 @@ export function RootStep() {
               </span>
               <span className="min-w-0 flex-1 text-left text-xs leading-4 text-q-fg">
                 I agree to the{" "}
-                <Link
-                  href="/terms-of-use-agreement"
-                  target="_blank"
-                  className="font-medium underline"
-                >
+                {/*
+                  Inert rather than linked: neither policy page exists here, so
+                  these were navigating to a 404. Dropping the anchor also
+                  takes them out of the tab order, which is the right place for
+                  a control whose only behaviour was to break.
+                */}
+                <ComingSoon tone="studio" className="font-medium underline">
                   Terms of Use
-                </Link>
+                </ComingSoon>
                 , acknowledge the{" "}
-                <Link
-                  href="/privacy-policy"
-                  target="_blank"
-                  className="font-medium underline"
-                >
+                <ComingSoon tone="studio" className="font-medium underline">
                   Privacy Policy
-                </Link>
+                </ComingSoon>
                 , and confirm I&apos;m at least 18 years old.
               </span>
             </label>

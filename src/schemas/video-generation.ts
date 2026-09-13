@@ -148,6 +148,12 @@ export type ReferenceVideo = z.infer<typeof referenceVideoSchema>;
  */
 export const videoGenerationRequestSchema = z.object({
   kind: z.literal("video"),
+  /*
+   * Which form sent this. Defaulted rather than required: the field was added
+   * when the edit and motion surfaces arrived, and requests already in flight
+   * from this form do not carry it.
+   */
+  surface: z.literal("genjutsu").default("genjutsu"),
   mode: z.enum(MODE_IDS),
   modelId: z.enum(MODEL_IDS),
   quality: z.string().min(1),
@@ -178,6 +184,7 @@ export function toVideoRequest(
 ): VideoGenerationRequest {
   return {
     kind: "video",
+    surface: "genjutsu",
     mode: values.mode,
     modelId: values.modelId,
     quality: values.quality,
@@ -192,3 +199,12 @@ export function toVideoRequest(
     referenceImageCount: values.referenceImages.length,
   };
 }
+
+/**
+ * A clip's recipe: everything the panel submitted except the prompt, which
+ * lives on the generation record itself.
+ *
+ * `promptEnabled` stays — whether the prompt was used at all is a setting, and
+ * dropping it would silently turn every recreated clip into a prompted one.
+ */
+export type VideoSettings = Omit<VideoGenerationValues, "prompt">;

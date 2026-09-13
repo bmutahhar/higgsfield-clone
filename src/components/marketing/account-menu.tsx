@@ -1,7 +1,7 @@
 "use client";
 
 import { Avatar } from "@/components/display/avatar";
-import { Dropdown } from "@/components/studio/dropdown";
+import { Dropdown } from "@/components/overlays/dropdown";
 import { useAuth } from "@/features/auth/auth-context";
 
 /*

@@ -3,7 +3,7 @@
 import { Icon, type IconName } from "@/components/core/icon";
 import { RatioGlyph } from "@/components/image-studio/ratio-glyph";
 import { PILL_CLASS } from "@/components/image-studio/setting-pill";
-import { Dropdown } from "@/components/studio/dropdown";
+import { Dropdown } from "@/components/overlays/dropdown";
 import { cn } from "@/lib/cn";
 
 export interface SettingOption {
