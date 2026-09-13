@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 
 import { Icon } from "@/components/core/icon";
 import { LogoMark } from "@/components/layout/logo-mark";
+import { AccountMenu } from "@/components/marketing/account-menu";
 import { NavMenu } from "@/components/marketing/nav-menu";
 import { NAV_MENUS } from "@/config/nav-menus";
 import { PRIMARY_NAV } from "@/config/site";
@@ -63,7 +64,7 @@ function NavBadge({ children }: { children: string }) {
 export function SiteHeader() {
   const pathname = usePathname();
   const headerRef = useCompactHeader<HTMLElement>(pathname);
-  const { openAuth } = useAuth();
+  const { user, openAuth } = useAuth();
 
   // Explore's href is "/" on the live site, so plain path matching is enough.
   const isActive = (href?: string) =>
@@ -176,28 +177,34 @@ export function SiteHeader() {
           <Icon name="globe" size={17} />
         </button>
 
-        <button
-          type="button"
-          onClick={() => {
-            openAuth("login");
-          }}
-          className={cn(BUTTON, "bg-lime/8 text-lime")}
-        >
-          Login
-        </button>
+        {user ? (
+          <AccountMenu />
+        ) : (
+          <>
+            <button
+              type="button"
+              onClick={() => {
+                openAuth("login");
+              }}
+              className={cn(BUTTON, "bg-lime/8 text-lime")}
+            >
+              Login
+            </button>
 
-        <button
-          type="button"
-          onClick={() => {
-            openAuth("signup");
-          }}
-          className={cn(
-            BUTTON,
-            "bg-accent text-[#1A1A1A] hover:bg-accent-hover",
-          )}
-        >
-          Sign up
-        </button>
+            <button
+              type="button"
+              onClick={() => {
+                openAuth("signup");
+              }}
+              className={cn(
+                BUTTON,
+                "bg-accent text-[#1A1A1A] hover:bg-accent-hover",
+              )}
+            >
+              Sign up
+            </button>
+          </>
+        )}
       </div>
     </header>
   );
