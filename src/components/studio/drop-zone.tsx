@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 
 import { Icon, type IconName } from "@/components/core/icon";
 import { GlassBadge } from "@/components/studio/glass-badge";
@@ -187,21 +187,41 @@ function FilledState({
 }) {
   /*
    * Object URLs are a manual allocation: each pins its blob in memory until it
-   * is revoked. Derived rather than held in state — storing them would render
-   * once without previews and again with them — and released together whenever
-   * the list changes.
+   * is revoked, so creating and revoking have to share one lifecycle.
+   *
+   * They previously did not — created in a memo, revoked in an effect cleanup —
+   * and React re-runs an effect without recomputing a memo. StrictMode does
+   * precisely that on mount (setup, cleanup, setup), so the cleanup revoked the
+   * URLs the memo had already handed to the rendered <img> and nothing
+   * recreated them: every thumbnail rendered broken. The clip escaped it only
+   * because its caller passed a fresh array each render, which recomputed the
+   * memo constantly and churned a new URL every time.
+   *
+   * Keyed on the files' identities rather than the array's, so a caller that
+   * rebuilds the array each render — as the single-file zone does — does not
+   * re-run this and make the preview flicker.
    */
-  const previews = useMemo(
-    () => files.map((file) => URL.createObjectURL(file)),
-    [files],
-  );
+  const key = files
+    .map(
+      (file) =>
+        `${file.name}:${String(file.size)}:${String(file.lastModified)}`,
+    )
+    .join("|");
 
-  useEffect(
-    () => () => {
-      for (const url of previews) URL.revokeObjectURL(url);
-    },
-    [previews],
-  );
+  const [previews, setPreviews] = useState<string[]>([]);
+
+  useEffect(() => {
+    const urls = files.map((file) => URL.createObjectURL(file));
+    // Synchronising React with an external resource is what an effect is for,
+    // and the URLs cannot exist before it runs.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setPreviews(urls);
+    return () => {
+      for (const url of urls) URL.revokeObjectURL(url);
+    };
+    // `key` stands in for `files`: identity-stable, contents-sensitive.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key]);
 
   if (!multiple) {
     const file = files[0];
