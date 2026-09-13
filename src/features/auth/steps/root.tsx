@@ -31,7 +31,15 @@ export function RootStep() {
   const [agreed, setAgreed] = useState(false);
   const [blocked, setBlocked] = useState(false);
 
-  function guard(action: () => void) {
+  /*
+   * Only the email route is gated. The social buttons are one-click by
+   * design: clicking one signs you in immediately, with no consent step and
+   * nothing else in between. The live dialog blocks them on the checkbox too,
+   * but there the click leaves for a real provider; here it is the whole
+   * authentication, so an interstitial would be friction with nothing behind
+   * it.
+   */
+  function guardEmail(action: () => void) {
     if (signupMode && !agreed) {
       setBlocked(true);
       return;
@@ -59,9 +67,7 @@ export function RootStep() {
               key={provider.id}
               type="button"
               disabled={status === "pending"}
-              onClick={() => {
-                guard(() => void signInWithProvider(provider.id));
-              }}
+              onClick={() => void signInWithProvider(provider.id)}
               className={PROVIDER_BUTTON}
             >
               <ProviderMark provider={provider.id} />
@@ -79,7 +85,7 @@ export function RootStep() {
           type="button"
           disabled={status === "pending"}
           onClick={() => {
-            guard(() => {
+            guardEmail(() => {
               goTo(signupMode ? "signup" : "login");
             });
           }}

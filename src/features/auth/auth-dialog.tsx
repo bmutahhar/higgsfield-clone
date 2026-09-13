@@ -2,7 +2,6 @@
 
 import { useEffect, useRef } from "react";
 
-import { Icon } from "@/components/core/icon";
 import { useAuth } from "@/features/auth/auth-context";
 import { AuthMedia } from "@/features/auth/auth-media";
 import { EmailLoginStep } from "@/features/auth/steps/email-login";
@@ -23,6 +22,53 @@ import { cn } from "@/lib/cn";
  */
 const CHROME_BUTTON =
   "absolute z-10 flex size-7 items-center justify-center rounded-2xl border border-q-w-04 bg-q-w-05 text-q-fg transition-colors hover:bg-q-w-10 focus-visible:ring-2 focus-visible:ring-q-focus focus-visible:outline-none motion-reduce:transition-none md:size-8";
+
+/*
+ * These two are inline rather than <Icon>. That component renders lucide's
+ * DynamicIcon, which code-splits every glyph into its own chunk and paints
+ * nothing until it resolves — so the button drew its outline with an empty
+ * middle, most visibly on the back arrow, which mounts on a step change rather
+ * than with the dialog. Chrome this small should not depend on a fetch.
+ */
+function ArrowLeftGlyph() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      className="shrink-0"
+    >
+      <path d="m12 19-7-7 7-7" />
+      <path d="M19 12H5" />
+    </svg>
+  );
+}
+
+function CloseGlyph() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      className="shrink-0"
+    >
+      <path d="M18 6 6 18" />
+      <path d="m6 6 12 12" />
+    </svg>
+  );
+}
 
 export function AuthDialog() {
   const { open, closeAuth, canGoBack, goBack, step } = useAuth();
@@ -54,7 +100,12 @@ export function AuthDialog() {
       }}
       aria-labelledby="auth-step-title"
       className={cn(
-        "h-155 max-h-[calc(100dvh-24px)] w-[calc(100%-24px)] max-w-88 overflow-hidden p-0",
+        /*
+         * m-auto is load-bearing. The UA centres a modal <dialog> with
+         * `margin: auto`, and Tailwind's preflight resets margin to 0 on every
+         * element — which pins the dialog to the top-left corner.
+         */
+        "m-auto h-155 max-h-[calc(100dvh-24px)] w-[calc(100%-24px)] max-w-88 overflow-hidden p-0",
         "rounded-q-500 border border-q-hairline bg-q-panel text-q-body shadow-q-dialog outline-none",
         "backdrop:bg-q-scrim",
         "md:h-175 md:max-h-[calc(100dvh-48px)] md:w-140 md:max-w-[calc(100vw-48px)] md:rounded-q-600",
@@ -72,7 +123,7 @@ export function AuthDialog() {
             "top-3 left-3 md:top-5 md:left-5 xl:left-[calc(50%+1.25rem)]",
           )}
         >
-          <Icon name="arrow-left" size={16} />
+          <ArrowLeftGlyph />
         </button>
       )}
 
@@ -82,7 +133,7 @@ export function AuthDialog() {
         onClick={closeAuth}
         className={cn(CHROME_BUTTON, "top-3 right-3 md:top-5 md:right-5")}
       >
-        <Icon name="x" size={16} />
+        <CloseGlyph />
       </button>
 
       {/* Below xl this does not render at all rather than shrinking. */}
