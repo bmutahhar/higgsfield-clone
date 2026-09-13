@@ -1,5 +1,8 @@
 import type { AudioMode } from "@/config/audio";
 
+/** Which illustration a card carries. Drawn in `how-it-works-media.tsx`. */
+export type AudioCardMedia = "voices" | "panel" | "swap" | "languages";
+
 /*
  * The How-it-works copy, one entry per tab.
  *
@@ -14,7 +17,7 @@ export const AUDIO_COPY: Record<
   {
     headline: string;
     sub: string;
-    cards: { title: string; body: string }[];
+    cards: { title: string; body: string; media: AudioCardMedia }[];
   }
 > = {
   tts: {
@@ -24,10 +27,12 @@ export const AUDIO_COPY: Record<
       {
         title: "Pick or clone a voice",
         body: "Choose a preset, clone your own, or pick a model",
+        media: "voices",
       },
       {
         title: "Write, describe and generate",
         body: "Type your script, describe how it sounds, and create",
+        media: "panel",
       },
     ],
   },
@@ -38,6 +43,7 @@ export const AUDIO_COPY: Record<
       {
         title: "Bring your own take",
         body: "Upload a clip and the voice you want it to carry",
+        media: "swap",
       },
     ],
   },
@@ -48,6 +54,7 @@ export const AUDIO_COPY: Record<
       {
         title: "One clip, many languages",
         body: "Pick a target language and keep the timing intact",
+        media: "languages",
       },
     ],
   },

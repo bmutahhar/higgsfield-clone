@@ -64,7 +64,10 @@ export function LanguagePopover({
       />
 
       <QPopover anchorRef={anchor} open={open} width={316}>
-        <div ref={panel}>
+        <div
+          ref={panel}
+          className="q-menu-surface overflow-hidden rounded-q-400 border border-q-card"
+        >
           <div className="flex shrink-0 items-center gap-2 border-b border-q-card px-3">
             <Icon name="search" size={20} className="shrink-0 text-q-soft" />
             <input

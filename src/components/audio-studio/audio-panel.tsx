@@ -76,7 +76,12 @@ export function AudioPanel({
                   document.getElementById(`audio-tab-${next.id}`)?.focus();
                 }}
                 className={cn(
-                  "flex h-9 shrink-0 items-start border-b-2 text-q-caption-l font-medium whitespace-nowrap transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-q-focus motion-reduce:transition-none",
+                  /*
+                   * `text-q-menu` (14/20), not `text-q-caption-l` (12/18) —
+                   * the live tab row is 14px and the caption ramp is two
+                   * steps too small for it.
+                   */
+                  "flex h-9 shrink-0 items-start border-b-2 text-q-menu whitespace-nowrap transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-q-focus motion-reduce:transition-none",
                   active
                     ? "border-b-white text-q-fg"
                     : "border-b-transparent text-q-idle hover:text-q-fg",

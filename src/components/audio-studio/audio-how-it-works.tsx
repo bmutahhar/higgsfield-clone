@@ -1,4 +1,11 @@
+import {
+  LanguageShowcase,
+  PanelPreview,
+  SwapShowcase,
+  VoiceShowcase,
+} from "@/components/audio-studio/how-it-works-media";
 import type { AudioMode } from "@/config/audio";
+import type { AudioCardMedia } from "@/config/audio-copy";
 import { AUDIO_COPY } from "@/config/audio-copy";
 
 /**
@@ -7,6 +14,13 @@ import { AUDIO_COPY } from "@/config/audio-copy";
  * A container query, not a media query: the card reflows on its own width,
  * which is what keeps it correct with the 342px panel open beside it.
  */
+const MEDIA: Record<AudioCardMedia, () => React.JSX.Element> = {
+  voices: VoiceShowcase,
+  panel: PanelPreview,
+  swap: SwapShowcase,
+  languages: LanguageShowcase,
+};
+
 export function AudioHowItWorks({ mode }: { mode: AudioMode }) {
   const copy = AUDIO_COPY[mode];
 
@@ -34,7 +48,9 @@ export function AudioHowItWorks({ mode }: { mode: AudioMode }) {
                 */}
                 <p className="text-q-body-md text-q-muted">{card.body}</p>
               </div>
-              <div className="relative h-75 w-full overflow-hidden rounded-q-300 bg-q-w-05" />
+              <div className="relative h-75 w-full overflow-hidden rounded-q-300">
+                {MEDIA[card.media]()}
+              </div>
             </div>
           ))}
         </div>
