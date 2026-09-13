@@ -5,11 +5,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm, useWatch } from "react-hook-form";
 
 import { Icon } from "@/components/core/icon";
-import { BatchStepper } from "@/components/image-studio/batch-stepper";
+import { BatchStepper } from "@/components/forms/batch-stepper";
 import { GenerateCta } from "@/components/image-studio/generate-cta";
 import { ModelDialog } from "@/components/image-studio/model-dialog";
 import { PromptEditor } from "@/components/image-studio/prompt-editor";
 import { ScrollRail } from "@/components/image-studio/scroll-rail";
+import { PILL_CLASS } from "@/components/image-studio/setting-pill";
 import { SettingPopover } from "@/components/image-studio/setting-popover";
 import {
   ASPECT_RATIOS,
@@ -306,6 +307,10 @@ export function Composer({ modelId, draft, onGenerate }: ComposerProps) {
                       value={field.value}
                       max={MAX_BATCH}
                       onChange={field.onChange}
+                      /* The composer's own control shape, which the stepper
+                         no longer assumes — the audio panel draws a different
+                         one around the same buttons. */
+                      className={PILL_CLASS}
                     />
                   )}
                 />

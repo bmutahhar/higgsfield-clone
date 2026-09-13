@@ -1,7 +1,7 @@
 "use client";
 
 import { Icon } from "@/components/core/icon";
-import { QSwitch } from "@/components/studio/q-switch";
+import { QSwitch } from "@/components/forms/q-switch";
 
 export interface PromptBlockProps {
   value: string;

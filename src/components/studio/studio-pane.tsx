@@ -2,11 +2,11 @@
 
 import { useState } from "react";
 
+import { QTabs } from "@/components/navigation/q-tabs";
 import { HowItWorks } from "@/components/studio/how-it-works";
 import { MotionLibrary } from "@/components/studio/motion-library";
 import { PaneToolbar } from "@/components/studio/pane-toolbar";
 import { PresetLightbox } from "@/components/studio/preset-lightbox";
-import { QTabs } from "@/components/studio/q-tabs";
 import { VideoHistory } from "@/components/studio/video-history";
 import { PANE_TABS, type PaneTab } from "@/config/genjutsu";
 import type { Preset } from "@/config/presets";
