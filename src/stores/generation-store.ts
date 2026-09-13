@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { useShallow } from "zustand/react/shallow";
 
 import { DEFAULT_MODEL_ID, FEED_ITEMS } from "@/config/image-studio";
+import { HIGGSFIELD_PRESETS } from "@/config/presets";
 import type {
   Generation,
   GenerationJob,
@@ -23,8 +24,8 @@ import type {
  * stale ids pointing at jobs the server has long forgotten.
  */
 
-/** Seed history, so the feed opens with something rather than blank. */
-const SEED: Generation[] = FEED_ITEMS.map((item, index) => ({
+/** Seed history, so the feeds open with something rather than blank. */
+const IMAGE_SEED: Generation[] = FEED_ITEMS.map((item, index) => ({
   id: item.id,
   kind: "image",
   modelId: DEFAULT_MODEL_ID,
@@ -36,6 +37,32 @@ const SEED: Generation[] = FEED_ITEMS.map((item, index) => ({
   // Descending, so seeded items sort below anything generated this session.
   createdAt: -index,
 }));
+
+/*
+ * The video studio's back catalogue, built from the same clips the Motion
+ * Library shows. Reusing them rather than inventing a second asset list keeps
+ * one set of URLs to fix when the origin rotates them, and a returning user's
+ * history plausibly resembles what they generated from.
+ *
+ * Only the signed-in studio reads these: signed out, the History tab stays the
+ * blank canvas the live surface shows, so the pane is handed an empty list.
+ */
+const VIDEO_SEED: Generation[] = HIGGSFIELD_PRESETS.slice(0, 6).map(
+  (preset, index) => ({
+    id: `seed-video-${preset.id}`,
+    kind: "video",
+    modelId: "genjutsu",
+    status: "ready",
+    prompt: preset.prompt,
+    w: 16,
+    h: 9,
+    src: preset.video ?? preset.poster,
+    poster: preset.poster,
+    createdAt: -index,
+  }),
+);
+
+const SEED: Generation[] = [...IMAGE_SEED, ...VIDEO_SEED];
 
 interface GenerationState {
   generations: Generation[];

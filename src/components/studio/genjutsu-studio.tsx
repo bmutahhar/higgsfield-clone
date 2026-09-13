@@ -133,7 +133,12 @@ export function GenjutsuStudio({ modelId }: { modelId: string }) {
       <StudioPane
         tab={tab}
         onTabChange={setTab}
-        generations={generations}
+        /*
+         * Signed out there is no history of yours to show, and the live studio
+         * leaves the canvas blank rather than filling it with someone else's
+         * work. The seeded back catalogue belongs to a signed-in session.
+         */
+        generations={user ? generations : []}
         onGate={() => {
           openAuth("signup");
         }}
