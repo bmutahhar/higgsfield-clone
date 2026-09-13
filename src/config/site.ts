@@ -31,7 +31,7 @@ export const PRIMARY_NAV: NavLink[] = [
   { label: "Explore", href: "/" },
   { label: "Image", href: "/ai/image", menu: "image" },
   { label: "Video", href: "/ai/video", menu: "video" },
-  { label: "Audio", href: "/audio" },
+  { label: "Audio", href: "/audio", menu: "audio" },
   { label: "MCP" },
   { label: "ChatGPT Plugin", badge: "New" },
   { label: "Genjutsu", href: "/ai/video?model=genjutsu", badge: "New" },

@@ -21,8 +21,13 @@ import {
  * on the reference, so putting one in would be a divergence dressed up as a
  * feature. The video studio does the opposite because its tabs are routes.
  */
-export function AudioStudio() {
-  const [mode, setMode] = useState<AudioMode>("tts");
+export function AudioStudio({
+  initialMode = "tts",
+}: {
+  /** Resolved from `?tab=` by the route, so the nav menu can deep-link a tab. */
+  initialMode?: AudioMode;
+}) {
+  const [mode, setMode] = useState<AudioMode>(initialMode);
   const [modelId] = useState(DEFAULT_AUDIO_MODEL_ID);
   const [attachments, setAttachments] = useState<File[]>([]);
 

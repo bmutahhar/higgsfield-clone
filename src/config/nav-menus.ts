@@ -1,4 +1,5 @@
 import type { IconName } from "@/components/core/icon";
+import { AUDIO_MODELS } from "@/config/audio";
 import {
   IMAGE_MODELS,
   type ImageModel,
@@ -47,7 +48,7 @@ export interface NavMenu {
   columns: NavMenuColumn[];
 }
 
-export type NavMenuId = "image" | "video";
+export type NavMenuId = "image" | "video" | "audio";
 
 const IMAGE_FEATURES: NavMenuRow[] = [
   {
@@ -215,6 +216,54 @@ const VIDEO_MODEL_ROWS: NavMenuRow[] = VIDEO_MODELS.map((model) => ({
   href: `/ai/video?model=${model.id}`,
 }));
 
+/*
+ * The three audio tabs plus the surfaces around them. Each of the built three
+ * deep-links straight to its own tab, which is what the live menu does — the
+ * route reads the tab from the query string.
+ */
+const AUDIO_FEATURES: NavMenuRow[] = [
+  {
+    label: "Text to Speech",
+    blurb: "Turn a script into lifelike speech",
+    icon: "audio-lines",
+    href: "/audio",
+  },
+  {
+    label: "Voice Change",
+    blurb: "Swap the voice and keep the performance",
+    icon: "mic",
+    href: "/audio?tab=voice-change",
+  },
+  {
+    label: "Translate",
+    blurb: "Dub a clip into another language",
+    icon: "languages",
+    href: "/audio?tab=translate",
+  },
+  {
+    label: "Voice Cloning",
+    blurb: "Build a reusable voice from a sample",
+    icon: "user-round",
+  },
+  {
+    label: "Sound Effects",
+    blurb: "Generate ambience and one-shots",
+    icon: "waves",
+  },
+];
+
+/*
+ * Derived from the catalogue rather than restated, the same way the video
+ * column is: a model added in config/audio.ts appears here with no second
+ * edit, and one removed stops being advertised.
+ */
+const AUDIO_MODEL_ROWS: NavMenuRow[] = AUDIO_MODELS.map((model) => ({
+  label: model.name,
+  blurb: model.description,
+  icon: "audio-lines",
+  href: "/audio",
+}));
+
 export const NAV_MENUS: Record<NavMenuId, NavMenu> = {
   image: {
     label: "Image",
@@ -228,6 +277,13 @@ export const NAV_MENUS: Record<NavMenuId, NavMenu> = {
     columns: [
       { heading: "Features", rows: VIDEO_FEATURES },
       { heading: "Models", rows: VIDEO_MODEL_ROWS },
+    ],
+  },
+  audio: {
+    label: "Audio",
+    columns: [
+      { heading: "Features", rows: AUDIO_FEATURES },
+      { heading: "Models", rows: AUDIO_MODEL_ROWS },
     ],
   },
 };
