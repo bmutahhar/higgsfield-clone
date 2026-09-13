@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import { createPortal } from "react-dom";
 
 import { Icon, type IconName } from "@/components/core/icon";
 import { cn } from "@/lib/cn";
@@ -135,7 +136,18 @@ export function MediaLightbox({
   // One thumbnail is not a choice, so the switcher needs at least two.
   const switchable = variants.length > 1;
 
-  return (
+  /*
+   * Portalled to the body rather than rendered where it is called.
+   *
+   * A dialog's z-index only competes inside its own stacking context, and the
+   * video pane sets `isolate` so its background lattice stays put — which
+   * trapped this underneath the site header while the image feed, having no
+   * such ancestor, covered it correctly. Mounting at the body means a modal no
+   * longer depends on who rendered it.
+   */
+  if (typeof document === "undefined") return null;
+
+  return createPortal(
     <div
       ref={dialog}
       role="dialog"
@@ -437,6 +449,7 @@ export function MediaLightbox({
           </div>
         </section>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

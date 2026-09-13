@@ -7,6 +7,7 @@ import { Icon } from "@/components/core/icon";
 import { GenerationLightbox } from "@/components/overlays/generation-lightbox";
 import { Tooltip } from "@/components/overlays/tooltip";
 import { ClipMenu } from "@/components/studio/clip-menu";
+import { GenerationDetails } from "@/components/studio/generation-details";
 import { useGenerationActions } from "@/hooks/use-generation-actions";
 import { cn } from "@/lib/cn";
 import type { Generation, ReadyGeneration } from "@/types/generation.types";
@@ -40,7 +41,12 @@ export interface VideoHistoryProps {
  * That is deliberate and matches the live studio, which leaves the canvas
  * blank until you have made something.
  */
-export function VideoHistory({ generations, zoom, layout }: VideoHistoryProps) {
+export function VideoHistory({
+  generations,
+  zoom,
+  layout,
+  empty,
+}: VideoHistoryProps) {
   /*
    * Held by id, not by record: the expanded clip can be liked or deleted while
    * it is open, and a captured object would go stale the moment either
@@ -55,6 +61,7 @@ export function VideoHistory({ generations, zoom, layout }: VideoHistoryProps) {
   );
 
   if (generations.length === 0) {
+    if (empty !== undefined) return <>{empty}</>;
     return (
       <div
         role="status"
@@ -64,22 +71,34 @@ export function VideoHistory({ generations, zoom, layout }: VideoHistoryProps) {
     );
   }
 
-  // The toolbar's zoom is a column count, inverted: more zoom, larger tiles.
-  const columns = layout === "list" ? 1 : Math.max(1, 6 - zoom);
+  const list = layout === "list";
+
+  /*
+   * Zoom is a size, so it reads inverted as a column count: more zoom, fewer
+   * and larger tiles. Clamped at two, because one column of tiles is just the
+   * list view without its panel — which is what made the Grid button look
+   * broken at the default zoom.
+   */
+  const columns = Math.min(6, Math.max(2, 6 - zoom));
 
   return (
     <>
       <ul
-        className="grid gap-3 p-3"
-        // The column count is a live numeric value, so it cannot be a class.
-        style={{
-          gridTemplateColumns: `repeat(${String(columns)}, minmax(0, 1fr))`,
-        }}
+        className={cn("p-3", list ? "flex flex-col gap-6" : "grid gap-3")}
+        // A live numeric value, so it cannot be a class.
+        style={
+          list
+            ? undefined
+            : {
+                gridTemplateColumns: `repeat(${String(columns)}, minmax(0, 1fr))`,
+              }
+        }
       >
         {generations.map((generation) => (
           <HistoryTile
             key={generation.id}
             generation={generation}
+            withDetails={list}
             onExpand={() => {
               setExpandedId(generation.id);
             }}
@@ -102,9 +121,15 @@ export function VideoHistory({ generations, zoom, layout }: VideoHistoryProps) {
 function HistoryTile({
   generation,
   onExpand,
+  withDetails,
 }: {
   generation: Generation;
   onExpand: () => void;
+  /**
+   * List view puts the recipe beside the clip. Grid view is tiles alone — the
+   * panel needs a width the grid does not have.
+   */
+  withDetails: boolean;
 }) {
   const video = useRef<HTMLVideoElement>(null);
   const actions = useGenerationActions(generation);
@@ -120,8 +145,8 @@ function HistoryTile({
     });
   }
 
-  return (
-    <li
+  const media = (
+    <div
       onMouseEnter={ready ? play : undefined}
       onMouseLeave={() => video.current?.pause()}
       className={cn(
@@ -226,6 +251,15 @@ function HistoryTile({
           </span>
         </div>
       )}
+    </div>
+  );
+
+  if (!withDetails) return <li>{media}</li>;
+
+  return (
+    <li className="grid grid-cols-1 gap-3 lg:grid-cols-[1fr_20rem]">
+      {media}
+      <GenerationDetails generation={generation} />
     </li>
   );
 }
