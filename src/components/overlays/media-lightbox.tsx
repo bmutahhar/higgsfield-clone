@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 
-import { Icon } from "@/components/core/icon";
+import { Icon, type IconName } from "@/components/core/icon";
 import { cn } from "@/lib/cn";
 
 function clock(seconds: number) {
@@ -13,10 +13,16 @@ function clock(seconds: number) {
   return `${m}:${String(s).padStart(2, "0")}`;
 }
 
-/** One row under Details. */
+/** One setting the generation was made with. */
 export interface LightboxDetail {
   label: string;
   value: string;
+  /**
+   * Shown instead of the label when the details render as chips. A setting is
+   * recognisable from its glyph and its value alone, and the pair fits a rail
+   * the label would not.
+   */
+  icon?: IconName;
 }
 
 /**
@@ -40,6 +46,16 @@ export interface LightboxMedia {
    */
   variants?: string[];
   details: LightboxDetail[];
+  /**
+   * A chip above the prompt naming what made this — the model, on a
+   * generation. Presets have no such thing and omit it.
+   */
+  badge?: { label: string; icon?: IconName };
+  /**
+   * `rows` is the labelled list a preset shows; `chips` is the compact rail a
+   * generation shows, where the settings are glanced at rather than read.
+   */
+  detailsAs?: "rows" | "chips";
 }
 
 export interface MediaLightboxProps {
@@ -47,6 +63,12 @@ export interface MediaLightboxProps {
   onClose: () => void;
   onRecreate: () => void;
   onDownload: () => void | Promise<void>;
+  /**
+   * Actions floated over the media, revealed on hover. Supplied by the caller
+   * because what you can do to a generation of your own is not what you can do
+   * to someone else's preset.
+   */
+  rail?: React.ReactNode;
 }
 
 /**
@@ -62,6 +84,7 @@ export function MediaLightbox({
   onClose,
   onRecreate,
   onDownload,
+  rail,
 }: MediaLightboxProps) {
   const dialog = useRef<HTMLDivElement>(null);
   const video = useRef<HTMLVideoElement>(null);
@@ -130,7 +153,18 @@ export function MediaLightbox({
 
       <div className="relative size-full overflow-y-auto md:grid md:grid-cols-[1fr_23rem] md:overflow-hidden">
         <div className="relative h-[65vh] min-h-0 min-w-0 overflow-hidden p-3 md:h-full">
-          <div className="relative size-full overflow-hidden rounded-q-400 bg-black">
+          <div className="group/media relative size-full overflow-hidden rounded-q-400 bg-black">
+            {/*
+              The action rail. Floated over the media and revealed on hover or
+              focus, so a resting frame is just the picture — the controls are
+              there when you reach for them and gone when you are watching.
+            */}
+            {rail !== undefined && (
+              <div className="absolute top-3 right-3 z-30 flex flex-col items-end gap-2 opacity-0 transition-opacity duration-150 group-focus-within/media:opacity-100 group-hover/media:opacity-100 motion-reduce:transition-none [@media(hover:none)]:opacity-100">
+                {rail}
+              </div>
+            )}
+
             {media.video === undefined ? (
               /*
                * A still has no transport, so it gets the frame and nothing
@@ -269,6 +303,15 @@ export function MediaLightbox({
             <div className="grid min-h-0 grid-rows-[1fr_auto] gap-2">
               <div className="hf-scrollbar-none min-h-0 overflow-x-hidden overflow-y-auto">
                 <div className="flex w-full flex-col items-start gap-2 rounded-q-300 bg-q-w-05 p-2">
+                  {media.badge && (
+                    <span className="inline-flex items-center gap-1.5 rounded-q-200 bg-q-w-05 px-2 py-1.5 text-q-label-xs text-q-fg">
+                      {media.badge.icon && (
+                        <Icon name={media.badge.icon} size={14} />
+                      )}
+                      {media.badge.label}
+                    </span>
+                  )}
+
                   <section className="flex w-full flex-col gap-2">
                     <div className="flex items-center justify-between px-1">
                       <p className="text-q-caption-xs text-q-muted uppercase">
@@ -305,42 +348,68 @@ export function MediaLightbox({
                     </p>
                   </section>
 
-                  <section className="w-full">
-                    <button
-                      type="button"
-                      aria-expanded={detailsOpen}
-                      onClick={() => setDetailsOpen((v) => !v)}
-                      className="flex w-full items-center justify-between px-1 py-2 text-q-caption-xs text-q-muted uppercase outline-none focus-visible:ring-2 focus-visible:ring-q-focus"
-                    >
-                      Details
-                      <Icon
-                        name="chevron-down"
-                        size={14}
-                        className={cn(
-                          "transition-transform duration-150 motion-reduce:transition-none",
-                          detailsOpen && "rotate-180",
-                        )}
-                      />
-                    </button>
+                  {media.detailsAs === "chips" ? (
+                    /*
+                     * A wrapped rail rather than a list: these are glanced at,
+                     * not read in order, and the value carries the meaning —
+                     * `720p` needs no label to be understood.
+                     */
+                    <ul className="flex w-full flex-wrap gap-1.5 px-1 pb-1">
+                      {media.details.map((detail) => (
+                        <li
+                          key={detail.label}
+                          className="inline-flex items-center gap-1.5 rounded-q-200 bg-q-w-05 px-2 py-1.5 text-q-label-xs text-q-fg"
+                        >
+                          {detail.icon && (
+                            <Icon
+                              name={detail.icon}
+                              size={14}
+                              className="shrink-0 text-q-muted"
+                            />
+                          )}
+                          <span className="sr-only">{detail.label}: </span>
+                          {detail.value}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <section className="w-full">
+                      <button
+                        type="button"
+                        aria-expanded={detailsOpen}
+                        onClick={() => setDetailsOpen((v) => !v)}
+                        className="flex w-full items-center justify-between px-1 py-2 text-q-caption-xs text-q-muted uppercase outline-none focus-visible:ring-2 focus-visible:ring-q-focus"
+                      >
+                        Details
+                        <Icon
+                          name="chevron-down"
+                          size={14}
+                          className={cn(
+                            "transition-transform duration-150 motion-reduce:transition-none",
+                            detailsOpen && "rotate-180",
+                          )}
+                        />
+                      </button>
 
-                    {detailsOpen ? (
-                      <dl className="flex flex-col gap-px overflow-hidden rounded-q-200">
-                        {media.details.map((detail) => (
-                          <div
-                            key={detail.label}
-                            className="flex items-center justify-between gap-2 bg-q-w-05 px-3 py-2"
-                          >
-                            <dt className="shrink-0 text-q-label-xs text-q-muted">
-                              {detail.label}
-                            </dt>
-                            <dd className="truncate text-q-label-xs text-q-fg">
-                              {detail.value}
-                            </dd>
-                          </div>
-                        ))}
-                      </dl>
-                    ) : null}
-                  </section>
+                      {detailsOpen ? (
+                        <dl className="flex flex-col gap-px overflow-hidden rounded-q-200">
+                          {media.details.map((detail) => (
+                            <div
+                              key={detail.label}
+                              className="flex items-center justify-between gap-2 bg-q-w-05 px-3 py-2"
+                            >
+                              <dt className="shrink-0 text-q-label-xs text-q-muted">
+                                {detail.label}
+                              </dt>
+                              <dd className="truncate text-q-label-xs text-q-fg">
+                                {detail.value}
+                              </dd>
+                            </div>
+                          ))}
+                        </dl>
+                      ) : null}
+                    </section>
+                  )}
                 </div>
               </div>
 
