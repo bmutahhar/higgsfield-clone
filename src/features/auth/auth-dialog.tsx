@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 
 import { Icon } from "@/components/core/icon";
 import { useAuth } from "@/features/auth/auth-context";
+import { RootStep } from "@/features/auth/steps/root";
 import { cn } from "@/lib/cn";
 
 /*
@@ -20,7 +21,7 @@ const CHROME_BUTTON =
   "absolute z-10 flex size-7 items-center justify-center rounded-2xl border border-q-w-04 bg-q-w-05 text-q-fg transition-colors hover:bg-q-w-10 focus-visible:ring-2 focus-visible:ring-q-focus focus-visible:outline-none motion-reduce:transition-none md:size-8";
 
 export function AuthDialog() {
-  const { open, closeAuth, canGoBack, goBack } = useAuth();
+  const { open, closeAuth, canGoBack, goBack, step } = useAuth();
   const ref = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
@@ -85,7 +86,8 @@ export function AuthDialog() {
 
       <div className="hf-scrollbar-none flex flex-1 flex-col items-center overflow-y-auto px-5 py-6 md:px-22 md:py-8">
         <div className="w-full">
-          {/* Tasks 10 and 11 fill this, switching on the current step. */}
+          {step === "root" && <RootStep />}
+          {/* Task 11 adds the signup, login and reset steps. */}
         </div>
       </div>
     </dialog>
