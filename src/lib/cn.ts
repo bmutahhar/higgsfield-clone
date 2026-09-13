@@ -44,6 +44,12 @@ const FONT_SIZES = [
   "q-title",
   "q-badge",
   "q-caption-l",
+  // The audio surface. Same reasoning as every entry above.
+  "q-accent-2xl",
+  "q-heading-sm",
+  "q-body-lg",
+  "q-body-md",
+  "q-cta",
 ];
 
 const RADII = [

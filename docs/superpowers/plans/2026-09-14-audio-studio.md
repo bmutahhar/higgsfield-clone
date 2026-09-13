@@ -3843,11 +3843,11 @@ export function AudioCta({
           aria-hidden
           className="pointer-events-none absolute inset-0 rounded-[inherit] shadow-[inset_0_-3px_0_0_var(--q-brand-lime-line)]"
         />
-        <span className="text-q-cta text-q-on-brand flex items-center px-1.5">
+        <span className="flex items-center px-1.5 text-q-cta text-q-on-brand">
           Generate
         </span>
         {cost !== null ? (
-          <span className="text-q-cta text-q-on-brand flex items-center gap-1">
+          <span className="flex items-center gap-1 text-q-cta text-q-on-brand">
             <svg
               aria-hidden
               viewBox="0 0 20 20"
@@ -4493,17 +4493,17 @@ export function AudioHowItWorks({ mode }: { mode: AudioMode }) {
     <div className="@container w-full overflow-hidden rounded-q-300 border border-q-subtle bg-q-panel">
       <div className="flex min-h-160 flex-col px-8 pt-10.5 pb-8 @max-[640px]:px-4 @max-[640px]:pt-7">
         <div className="flex flex-col items-center gap-2">
-          <h2 className="text-q-accent-2xl text-center font-q-display text-q-fg uppercase [font-feature-settings:'ss04'] @max-[640px]:text-[28px]">
+          <h2 className="text-center font-q-display text-q-accent-2xl text-q-fg uppercase [font-feature-settings:'ss04'] @max-[640px]:text-[28px]">
             {copy.headline}
           </h2>
-          <p className="text-q-body-lg text-center text-q-soft">{copy.sub}</p>
+          <p className="text-center text-q-body-lg text-q-soft">{copy.sub}</p>
         </div>
 
         <div className="mt-9.5 flex w-full flex-col gap-5 @[640px]:flex-row">
           {copy.cards.map((card) => (
             <div
               key={card.title}
-              className="bg-q-section flex min-w-0 flex-1 flex-col items-center justify-center gap-6 overflow-hidden rounded-q-600 border border-q-card px-4 pt-5 pb-4"
+              className="flex min-w-0 flex-1 flex-col items-center justify-center gap-6 overflow-hidden rounded-q-600 border border-q-card bg-q-section px-4 pt-5 pb-4"
             >
               <div className="flex w-full flex-col gap-2 px-2">
                 <h3 className="text-q-heading-sm text-q-fg">{card.title}</h3>

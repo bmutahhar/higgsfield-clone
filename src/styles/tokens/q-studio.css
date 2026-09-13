@@ -27,6 +27,10 @@
   --q-bg-composer: rgba(15, 17, 19, 0.96); /* the composer's outer ring */
   --q-bg-modal: #1b1b1b; /* titled setting popovers */
   --q-bg-pill: #222222; /* settings pills at rest */
+  /* The audio how-it-works cards. The pricing page measured this first and
+     called it --q-bg-plan, but it is not a plan colour — it is the section
+     surface, and audio is the second thing to sit on it. */
+  --q-bg-section: #18191c;
 
   /* ---- Borders ---- */
   --q-border-subtle: rgba(255, 255, 255, 0.05);
@@ -44,6 +48,9 @@
   --q-text-inverse: #14151a;
   --q-text-brand: #d1fe17;
   --q-text-danger: #e72930;
+  /* Ink on the audio CTA. Deliberately not --q-text-inverse (#14151a): that
+     one leans blue, this one is neutral, and they sit side by side. */
+  --q-text-on-brand: #1b1b1b;
   --q-surface-danger: rgba(231, 41, 48, 0.2);
   /* Panel tab and segmented-tab idle states are white alphas, not greys. */
   --q-text-idle: rgba(255, 255, 255, 0.6);
@@ -147,7 +154,7 @@
   --q-info: #9ce6f3; /* "Access to Supercomputer", the one info-ink row */
 
   /* ---- Plan-card grounds ---- */
-  --q-bg-plan: #18191c; /* PRO / MAX base, beneath the tint */
+  --q-bg-plan: var(--q-bg-section); /* PRO / MAX base, beneath the tint */
   --q-bg-plan-basic-a: #1d1f20; /* BASIC frame gradient, top */
   --q-bg-plan-basic-b: #17191b; /* BASIC frame gradient, bottom */
 
@@ -298,6 +305,24 @@
     var(--q-brand-hi) 40%,
     var(--q-brand) 100%
   );
+}
+
+/*
+ * The audio CTA. Unlike `.q-cta-fill`'s radial wash this is two stacked
+ * linear gradients: a vertical transparent-to-highlight pass over a flat brand
+ * base, which is what lights the top edge rather than the centre.
+ */
+.q-cta-audio {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 20, 0) 0%,
+      var(--q-brand-lime-hi) 100%
+    ),
+    linear-gradient(90deg, var(--q-brand) 0%, var(--q-brand) 100%);
+  box-shadow:
+    0 32px 24px 0 rgba(0, 0, 0, 0.15),
+    0 6px 4px 0 rgba(0, 0, 0, 0.25);
 }
 
 /*
