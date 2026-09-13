@@ -94,6 +94,70 @@ export const LANGUAGES = [
   { id: "ar", name: "Arabic", flag: "🇸🇦" },
 ] as const;
 
+/**
+ * The voices a generation can be attributed to.
+ *
+ * History rows lead with the voice, not the script — which means a generation
+ * needs a voice identity even before voice cloning exists as a surface.
+ *
+ * The avatar is a gradient pair rather than an image: it renders from two hex
+ * values, needs no hosting, and cannot 404. Swap it for a real portrait when
+ * there are real voices to portray.
+ */
+export interface Voice {
+  id: string;
+  name: string;
+  /** Shown under the name in the picker; not in the history row. */
+  register: string;
+  /** `[from, to]`, painted as a 135° linear gradient. */
+  avatar: readonly [string, string];
+}
+
+export const VOICES: readonly Voice[] = [
+  {
+    id: "rowan",
+    name: "Rowan",
+    register: "Male voice",
+    avatar: ["#4ade80", "#0f9d58"],
+  },
+  {
+    id: "marisol",
+    name: "Marisol",
+    register: "Female voice",
+    avatar: ["#a3e635", "#3f8f2e"],
+  },
+  {
+    id: "ingrid",
+    name: "Ingrid",
+    register: "Female voice",
+    avatar: ["#67e8f9", "#0e7490"],
+  },
+  {
+    id: "caspian",
+    name: "Caspian",
+    register: "Male voice",
+    avatar: ["#c4b5fd", "#6d28d9"],
+  },
+  {
+    id: "nadia",
+    name: "Nadia",
+    register: "Female voice",
+    avatar: ["#fda4af", "#be123c"],
+  },
+  {
+    id: "bo",
+    name: "Bo",
+    register: "Neutral voice",
+    avatar: ["#fcd34d", "#b45309"],
+  },
+];
+
+export const DEFAULT_VOICE_ID = "rowan";
+
+export function voiceById(id: string): Voice | undefined {
+  return VOICES.find((voice) => voice.id === id);
+}
+
 export const MAX_BATCH = 4;
 export const MAX_ATTACHMENTS = 3;
 /** No visible limit on the reference; this is a sanity bound, not a counter. */
