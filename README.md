@@ -34,3 +34,32 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Tooling
+
+| Script              | What it does                                             |
+| ------------------- | -------------------------------------------------------- |
+| `pnpm dev`          | Dev server                                               |
+| `pnpm build`        | Production build                                         |
+| `pnpm lint`         | ESLint (`eslint .` — `next lint` was removed in Next 16) |
+| `pnpm lint:fix`     | ESLint with `--fix`                                      |
+| `pnpm format`       | Prettier write                                           |
+| `pnpm format:check` | Prettier check                                           |
+| `pnpm typecheck`    | `next typegen && tsc --noEmit`                           |
+| `pnpm check`        | All three, as CI would run them                          |
+
+A husky `pre-commit` hook runs `lint-staged` (ESLint `--fix --max-warnings=0`
+then Prettier on staged files) followed by a project-wide `pnpm typecheck`.
+
+### Pinned versions — do not bump blindly
+
+- **ESLint is pinned to the 9.x line.** ESLint 10 is the current `latest`, but
+  `eslint-plugin-react@7.37.5` (a dependency of `eslint-config-next`) crashes on
+  it: `contextOrFilename.getFilename is not a function`. Revisit once
+  `eslint-plugin-react` ships a stable ESLint 10 release.
+- **TypeScript stays on 5.x.** TypeScript 7 is published, but
+  `typescript-eslint@8` declares `typescript >=4.8.4 <6.1.0`, so type-aware
+  linting would stop working.
+
+`.agent-logs/` is listed in `.prettierignore`: the capture log is append-only
+and must never be reformatted.
