@@ -3,7 +3,12 @@
 import { useState } from "react";
 
 import { AudioPanel } from "@/components/audio-studio/audio-panel";
-import { type AudioMode, DEFAULT_AUDIO_MODEL_ID } from "@/config/audio";
+import { UploadZone } from "@/components/audio-studio/upload-zone";
+import {
+  type AudioMode,
+  DEFAULT_AUDIO_MODEL_ID,
+  MAX_ATTACHMENTS,
+} from "@/config/audio";
 
 /*
  * Composition root for the audio studio.
@@ -19,6 +24,7 @@ import { type AudioMode, DEFAULT_AUDIO_MODEL_ID } from "@/config/audio";
 export function AudioStudio() {
   const [mode, setMode] = useState<AudioMode>("tts");
   const [modelId] = useState(DEFAULT_AUDIO_MODEL_ID);
+  const [attachments, setAttachments] = useState<File[]>([]);
 
   return (
     <div className="relative grid size-full min-h-0 grid-cols-[1fr] px-4 md:grid-cols-[max-content_1fr]">
@@ -30,7 +36,24 @@ export function AudioStudio() {
             aria-labelledby={`audio-tab-${mode}`}
             className="flex flex-col gap-3"
           >
-            {/* Tasks 9-12 fill this. */}
+            {/* Tasks 10-12 fill the rest. */}
+            <UploadZone
+              title="Upload media"
+              hint="Up to 3 Voices/Audios or Image"
+              badge="Optional"
+              max={MAX_ATTACHMENTS}
+              files={attachments}
+              onFilesChange={setAttachments}
+              pickers={[
+                {
+                  icon: "audio-lines",
+                  accept: "audio/*",
+                  label: "Add a voice",
+                },
+                { icon: "music", accept: "audio/*", label: "Add audio" },
+                { icon: "image", accept: "image/*", label: "Add an image" },
+              ]}
+            />
             <p className="text-q-caption-l text-q-soft">
               {mode} fields land here. Model: {modelId}
             </p>
