@@ -8,10 +8,8 @@ import { cn } from "@/lib/cn";
 
 export interface DropZoneProps {
   title: [string, string];
-  /** Shown while the zone is empty. */
+  /** Shown while the zone is empty; an attached zone shows the media itself. */
   hint: string;
-  /** Replaces `hint` once something is attached — a count, a duration. */
-  filledHint?: string;
   /** One badge per icon; several overlap into a stack. */
   icons: IconName[];
   accept: string;
@@ -41,7 +39,6 @@ export interface DropZoneProps {
 export function DropZone({
   title,
   hint,
-  filledHint,
   icons,
   accept,
   multiple,
@@ -161,23 +158,19 @@ export function DropZone({
           </>
         )}
       </div>
-
-      {filled && filledHint !== undefined && (
-        <p className="w-full px-2 pb-1 text-center text-q-label-xs text-q-muted">
-          {filledHint}
-        </p>
-      )}
     </div>
   );
 }
 
 /**
- * What an attached zone looks like. Images get a thumbnail grid; a single clip
- * gets a name chip, since a poster frame would need a decode we do not
- * otherwise need.
+ * What an attached zone looks like.
  *
- * Provisional: the reference site gates this behind a sign-in, so the layout
- * is built from the studio's own vocabulary rather than measured off it.
+ * The two zones diverge here. A reference clip is one thing, so it gets one
+ * card, tilted and white-edged like a photo dropped on the panel — the tilt is
+ * what says "this is your material" rather than "this is a form field". The
+ * character images are a set, so they get a row of square tiles with the add
+ * control leading it, which keeps adding a second image in the same place as
+ * adding the first.
  */
 function FilledState({
   files,
@@ -194,16 +187,13 @@ function FilledState({
 }) {
   /*
    * Object URLs are a manual allocation: each pins its blob in memory until it
-   * is revoked. Derived rather than held in state — putting them in state would
-   * mean rendering once with no previews and again with them, and the effect
-   * that set them would fire on every list change for no benefit. The effect
-   * below exists only to release the previous batch.
-   *
-   * Images only; a video preview would cost a decode we do not otherwise need.
+   * is revoked. Derived rather than held in state — storing them would render
+   * once without previews and again with them — and released together whenever
+   * the list changes.
    */
   const previews = useMemo(
-    () => (multiple ? files.map((file) => URL.createObjectURL(file)) : []),
-    [files, multiple],
+    () => files.map((file) => URL.createObjectURL(file)),
+    [files],
   );
 
   useEffect(
@@ -213,59 +203,74 @@ function FilledState({
     [previews],
   );
 
-  return (
-    <div className="relative z-10 flex w-full flex-col gap-2">
-      {multiple ? (
-        <ul className="grid grid-cols-4 gap-1.5">
-          {files.map((file, i) => (
-            <li
-              key={`${file.name}-${String(i)}`}
-              className="group/thumb relative"
-            >
-              <span className="block aspect-square overflow-hidden rounded-q-150 bg-q-card">
-                {previews[i] !== undefined && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    alt=""
-                    src={previews[i]}
-                    className="size-full object-cover"
-                  />
-                )}
-              </span>
-              <RemoveButton
-                label={`Remove ${file.name}`}
-                onClick={() => onRemove(i)}
-              />
-            </li>
-          ))}
-        </ul>
-      ) : (
-        files.map((file, i) => (
-          <div
-            key={file.name}
-            className="relative flex items-center gap-2 rounded-q-200 bg-q-card px-2.5 py-2"
-          >
-            <Icon name="film" size={16} className="shrink-0 text-q-muted" />
-            <span className="min-w-0 flex-1 truncate text-q-label-xs text-q-fg">
-              {file.name}
-            </span>
-            <RemoveButton
-              label={`Remove ${file.name}`}
-              onClick={() => onRemove(i)}
-            />
-          </div>
-        ))
-      )}
+  if (!multiple) {
+    const file = files[0];
+    const preview = previews[0];
+    if (!file || preview === undefined) return null;
 
-      <button
-        type="button"
-        onClick={onAdd}
-        className="inline-flex h-8 items-center justify-center gap-1.5 self-center rounded-q-200 bg-q-w-05 px-3 text-q-label-xs text-q-fg transition-colors duration-150 outline-none hover:bg-q-w-08 focus-visible:ring-2 focus-visible:ring-q-focus motion-reduce:transition-none"
-      >
-        <Icon name="plus" size={14} />
-        {multiple ? "Add more" : label}
-      </button>
-    </div>
+    return (
+      <div className="relative z-10 flex w-full items-center justify-center">
+        <figure className="group/card relative w-[82%] -rotate-3 rounded-q-300 bg-white p-1 shadow-[0_8px_24px_rgba(0,0,0,0.45)]">
+          {/*
+            A video element rather than an image: the browser paints the first
+            frame once metadata loads, which costs no decode of our own and
+            needs no poster we would have to generate.
+          */}
+          <video
+            src={preview}
+            preload="metadata"
+            muted
+            playsInline
+            aria-label={file.name}
+            className="block aspect-video w-full rounded-[0.5rem] object-cover"
+          />
+          <RemoveButton
+            label={`Remove ${file.name}`}
+            onClick={() => onRemove(0)}
+          />
+        </figure>
+      </div>
+    );
+  }
+
+  return (
+    <ul className="relative z-10 flex w-full flex-wrap items-center justify-center gap-2">
+      {/*
+        The add tile leads the row rather than trailing it, so the control does
+        not move further away with every image attached.
+      */}
+      <li>
+        <button
+          type="button"
+          aria-label={label}
+          onClick={onAdd}
+          className="flex size-14 items-center justify-center rounded-q-300 bg-q-w-05 text-q-muted transition-colors duration-150 outline-none hover:bg-q-w-08 hover:text-q-fg focus-visible:ring-2 focus-visible:ring-q-focus motion-reduce:transition-none"
+        >
+          <span className="flex size-6 items-center justify-center rounded-full bg-q-w-08">
+            <Icon name="plus" size={14} />
+          </span>
+        </button>
+      </li>
+
+      {files.map((file, i) => (
+        <li key={`${file.name}-${String(i)}`} className="group/thumb relative">
+          <span className="block size-14 overflow-hidden rounded-q-300 bg-q-card">
+            {previews[i] !== undefined && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                alt=""
+                src={previews[i]}
+                className="size-full object-cover"
+              />
+            )}
+          </span>
+          <RemoveButton
+            label={`Remove ${file.name}`}
+            onClick={() => onRemove(i)}
+          />
+        </li>
+      ))}
+    </ul>
   );
 }
 
@@ -281,7 +286,7 @@ function RemoveButton({
       type="button"
       aria-label={label}
       onClick={onClick}
-      className="absolute -top-1.5 -right-1.5 flex size-5 items-center justify-center rounded-full border border-q-subtle bg-q-card-strong text-q-fg shadow-q-glass transition-colors duration-150 outline-none hover:bg-q-raised focus-visible:ring-2 focus-visible:ring-q-focus motion-reduce:transition-none"
+      className="absolute -top-1.5 -right-1.5 flex size-5 items-center justify-center rounded-full border border-q-subtle bg-q-card-strong text-q-fg opacity-0 shadow-q-glass transition-[opacity,background-color] duration-150 outline-none group-hover/card:opacity-100 group-hover/thumb:opacity-100 hover:bg-q-raised focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-q-focus motion-reduce:transition-none"
     >
       <Icon name="x" size={12} />
     </button>

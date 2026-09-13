@@ -174,11 +174,6 @@ export function GenerateForm({
                   <DropZone
                     title={copy.videoTitle}
                     hint={copy.videoHint}
-                    filledHint={
-                      field.value?.duration == null
-                        ? undefined
-                        : `${field.value.duration.toFixed(1)}s`
-                    }
                     icons={["video"]}
                     accept="video/*"
                     files={field.value ? [field.value.file] : []}
@@ -216,7 +211,6 @@ export function GenerateForm({
                   <DropZone
                     title={copy.imageTitle}
                     hint={`Up to ${String(copy.imageLimit)} images`}
-                    filledHint={`${String(field.value.length)} of ${String(copy.imageLimit)} images`}
                     icons={["user-round", "shirt", "package"]}
                     accept="image/*"
                     multiple
