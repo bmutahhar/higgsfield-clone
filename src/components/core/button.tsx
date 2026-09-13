@@ -1,176 +1,117 @@
-"use client";
-
-import { useState } from "react";
-import type { CSSProperties, ElementType, ReactNode } from "react";
+import type { ButtonHTMLAttributes, ReactNode } from "react";
+import { cva, type VariantProps } from "class-variance-authority";
 
 import { Icon, type IconName } from "@/components/core/icon";
+import { cn } from "@/lib/cn";
 
-export type ButtonVariant =
-  "primary" | "secondary" | "ghost" | "outline" | "glass" | "danger";
-export type ButtonSize = "sm" | "md" | "lg" | "xl";
+/*
+ * Primary action control. Pill for marketing CTAs, 10px radius in product.
+ *
+ * All interaction state is CSS: hover is one step lighter (never a hue
+ * change), press is a scale (never a ripple), focus is the lime ring. No React
+ * state, so this stays a server component and costs no re-renders.
+ */
+const button = cva(
+  [
+    "inline-flex items-center justify-center gap-2 whitespace-nowrap select-none",
+    "border font-medium tracking-[-0.005em]",
+    "transition-[background-color,color,border-color,transform,opacity]",
+    "duration-[140ms] ease-snap motion-reduce:duration-0",
+    "focus-visible:shadow-ring focus-visible:outline-none",
+    "active:scale-[0.97]",
+    "disabled:pointer-events-none disabled:cursor-not-allowed disabled:border-hairline",
+    "disabled:bg-n-4 disabled:opacity-45",
+    "aria-busy:pointer-events-none aria-busy:opacity-45",
+  ],
+  {
+    variants: {
+      variant: {
+        primary:
+          "border-transparent bg-accent text-on-accent hover:bg-accent-hover",
+        secondary: "border-hairline bg-n-4 text-primary hover:bg-n-5",
+        ghost: "border-transparent bg-transparent text-secondary hover:bg-w-06",
+        outline: "border-strong bg-transparent text-primary hover:bg-w-06",
+        glass: "border-w-16 bg-white/10 text-primary hover:bg-white/20",
+        danger: "border-transparent bg-danger text-white hover:bg-[#FF6666]",
+      },
+      size: {
+        sm: "h-7 gap-1.5 px-3 text-caption",
+        md: "h-9 px-4 text-body-sm",
+        lg: "h-11 px-[22px] text-body",
+        xl: "h-13 gap-2.5 px-7 text-[16px]",
+      },
+      pill: { true: "rounded-full", false: "rounded-control" },
+      fullWidth: { true: "flex w-full", false: "" },
+    },
+    defaultVariants: {
+      variant: "primary",
+      size: "md",
+      pill: false,
+      fullWidth: false,
+    },
+  },
+);
 
-const BTN_SIZES: Record<
-  ButtonSize,
-  { h: string; px: number; fs: number; gap: number; icon: number }
-> = {
-  sm: { h: "var(--control-sm)", px: 12, fs: 12, gap: 6, icon: 14 },
-  md: { h: "var(--control-md)", px: 16, fs: 13, gap: 8, icon: 16 },
-  lg: { h: "var(--control-lg)", px: 22, fs: 15, gap: 8, icon: 18 },
-  xl: { h: "var(--control-xl)", px: 28, fs: 16, gap: 10, icon: 20 },
-};
+const GLYPH_SIZE = { sm: 14, md: 16, lg: 18, xl: 20 } as const;
+const SPINNER_SIZE = {
+  sm: "size-3.5",
+  md: "size-4",
+  lg: "size-[18px]",
+  xl: "size-5",
+} as const;
 
-const BTN_VARIANTS: Record<
-  ButtonVariant,
-  { bg: string; fg: string; bd: string; hover: string }
-> = {
-  primary: {
-    bg: "var(--accent-solid)",
-    fg: "var(--text-on-accent)",
-    bd: "transparent",
-    hover: "var(--accent-solid-hover)",
-  },
-  secondary: {
-    bg: "var(--n-4)",
-    fg: "var(--text-primary)",
-    bd: "var(--border-hairline)",
-    hover: "var(--n-5)",
-  },
-  ghost: {
-    bg: "transparent",
-    fg: "var(--text-secondary)",
-    bd: "transparent",
-    hover: "var(--surface-hover)",
-  },
-  outline: {
-    bg: "transparent",
-    fg: "var(--text-primary)",
-    bd: "var(--border-strong)",
-    hover: "var(--surface-hover)",
-  },
-  glass: {
-    bg: "rgba(255,255,255,.10)",
-    fg: "var(--text-primary)",
-    bd: "var(--w-16)",
-    hover: "rgba(255,255,255,.18)",
-  },
-  danger: {
-    bg: "var(--status-danger)",
-    fg: "#FFFFFF",
-    bd: "transparent",
-    hover: "#FF6666",
-  },
-};
+export type ButtonVariant = NonNullable<VariantProps<typeof button>["variant"]>;
+export type ButtonSize = NonNullable<VariantProps<typeof button>["size"]>;
 
-export interface ButtonProps {
+export interface ButtonProps
+  extends
+    Omit<ButtonHTMLAttributes<HTMLButtonElement>, "className">,
+    VariantProps<typeof button> {
   children?: ReactNode;
-  variant?: ButtonVariant;
-  size?: ButtonSize;
-  /** Fully rounded. Use on marketing CTAs and over-media controls. */
-  pill?: boolean;
   iconLeft?: IconName;
   iconRight?: IconName;
   loading?: boolean;
-  disabled?: boolean;
-  fullWidth?: boolean;
-  /** Render as another element, e.g. "a". */
-  as?: ElementType;
-  style?: CSSProperties;
-  onClick?: () => void;
-  href?: string;
-  type?: "button" | "submit" | "reset";
-  "aria-label"?: string;
+  className?: string;
 }
 
-/**
- * Primary action control. Pill for marketing CTAs, 10px radius in product.
- * Press is a scale, never a ripple; hover is one step lighter, never a hue change.
- */
 export function Button({
   children,
-  variant = "primary",
-  size = "md",
-  pill = false,
+  variant,
+  size,
+  pill,
+  fullWidth,
   iconLeft,
   iconRight,
   loading = false,
   disabled = false,
-  fullWidth = false,
-  as,
-  style,
+  className,
+  type = "button",
   ...rest
 }: ButtonProps) {
-  const [hover, setHover] = useState(false);
-  const [down, setDown] = useState(false);
-  const s = BTN_SIZES[size];
-  const v = BTN_VARIANTS[variant];
-  const off = disabled || loading;
-  const Tag: ElementType = as ?? "button";
+  const glyph = GLYPH_SIZE[size ?? "md"];
 
   return (
-    <Tag
-      disabled={Tag === "button" ? off : undefined}
+    <button
+      type={type}
+      disabled={disabled || loading}
       aria-busy={loading || undefined}
-      onMouseEnter={() => {
-        setHover(true);
-      }}
-      onMouseLeave={() => {
-        setHover(false);
-        setDown(false);
-      }}
-      onMouseDown={() => {
-        setDown(true);
-      }}
-      onMouseUp={() => {
-        setDown(false);
-      }}
-      style={{
-        display: fullWidth ? "flex" : "inline-flex",
-        width: fullWidth ? "100%" : undefined,
-        alignItems: "center",
-        justifyContent: "center",
-        gap: s.gap,
-        height: s.h,
-        padding: `0 ${String(s.px)}px`,
-        font: `var(--fw-medium) ${String(s.fs)}px/1 var(--font-ui)`,
-        letterSpacing: "-.005em",
-        color: v.fg,
-        background: off ? "var(--n-4)" : hover ? v.hover : v.bg,
-        border: `1px solid ${off ? "var(--border-hairline)" : v.bd}`,
-        borderRadius: pill ? "var(--r-pill)" : "var(--r-control)",
-        cursor: off ? "not-allowed" : "pointer",
-        opacity: off ? 0.45 : 1,
-        transform: down && !off ? "scale(var(--press-scale))" : "scale(1)",
-        transition: "var(--t-control)",
-        whiteSpace: "nowrap",
-        userSelect: "none",
-        textDecoration: "none",
-        ...style,
-      }}
+      className={cn(button({ variant, size, pill, fullWidth }), className)}
       {...rest}
     >
       {loading ? (
-        <ButtonSpinner size={s.icon} />
+        <span
+          aria-hidden="true"
+          className={cn(
+            "animate-spin rounded-full border-2 border-current border-t-transparent",
+            "motion-reduce:animate-none",
+            SPINNER_SIZE[size ?? "md"],
+          )}
+        />
       ) : iconLeft ? (
-        <Icon name={iconLeft} size={s.icon} />
+        <Icon name={iconLeft} size={glyph} />
       ) : null}
       {children}
-      {iconRight && !loading ? <Icon name={iconRight} size={s.icon} /> : null}
-    </Tag>
-  );
-}
-
-function ButtonSpinner({ size }: { size: number }) {
-  return (
-    <span
-      style={{
-        width: size,
-        height: size,
-        borderRadius: "50%",
-        flex: "0 0 auto",
-        border: "2px solid currentColor",
-        borderTopColor: "transparent",
-        animation: "hf-spin .7s var(--ease-linear) infinite",
-      }}
-    />
+      {iconRight && !loading ? <Icon name={iconRight} size={glyph} /> : null}
+    </button>
   );
 }

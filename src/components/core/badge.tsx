@@ -1,67 +1,40 @@
-import type { CSSProperties, ReactNode } from "react";
+import type { ReactNode } from "react";
+import { cva, type VariantProps } from "class-variance-authority";
+
+import { cn } from "@/lib/cn";
 
 /** Badges are one word, uppercase: NEW, TOP, PRO. */
-export type BadgeTone =
-  "accent" | "soft" | "neutral" | "outline" | "glass" | "sand";
+const badge = cva(
+  "inline-flex h-5 items-center self-start rounded-full border px-2 text-micro font-semibold whitespace-nowrap",
+  {
+    variants: {
+      tone: {
+        accent: "border-transparent bg-accent text-on-accent",
+        soft: "border-accent-ring bg-accent-soft text-lime",
+        neutral: "border-transparent bg-w-08 text-secondary",
+        outline: "border-strong bg-transparent text-secondary",
+        glass: "border-w-16 bg-b-60 text-white",
+        sand: "border-transparent bg-sand text-n-0",
+      },
+      uppercase: {
+        true: "tracking-[0.06em] uppercase",
+        false: "tracking-normal normal-case",
+      },
+    },
+    defaultVariants: { tone: "accent", uppercase: true },
+  },
+);
 
-const BADGE_TONES: Record<BadgeTone, { bg: string; fg: string; bd: string }> = {
-  accent: {
-    bg: "var(--accent-solid)",
-    fg: "var(--text-on-accent)",
-    bd: "transparent",
-  },
-  soft: {
-    bg: "var(--accent-soft)",
-    fg: "var(--hf-lime)",
-    bd: "var(--accent-ring)",
-  },
-  neutral: {
-    bg: "var(--w-08)",
-    fg: "var(--text-secondary)",
-    bd: "transparent",
-  },
-  outline: {
-    bg: "transparent",
-    fg: "var(--text-secondary)",
-    bd: "var(--border-strong)",
-  },
-  glass: { bg: "rgba(0,0,0,.55)", fg: "#fff", bd: "var(--w-16)" },
-  sand: { bg: "var(--hf-sand)", fg: "var(--n-0)", bd: "transparent" },
-};
+export type BadgeTone = NonNullable<VariantProps<typeof badge>["tone"]>;
 
-export interface BadgeProps {
+export interface BadgeProps extends VariantProps<typeof badge> {
   children?: ReactNode;
-  tone?: BadgeTone;
-  uppercase?: boolean;
-  style?: CSSProperties;
+  className?: string;
 }
 
-export function Badge({
-  children,
-  tone = "accent",
-  uppercase = true,
-  style,
-}: BadgeProps) {
-  const t = BADGE_TONES[tone];
+export function Badge({ children, tone, uppercase, className }: BadgeProps) {
   return (
-    <span
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        alignSelf: "flex-start",
-        height: 20,
-        padding: "0 8px",
-        background: t.bg,
-        color: t.fg,
-        border: `1px solid ${t.bd}`,
-        borderRadius: "var(--r-pill)",
-        font: "var(--fw-semibold) var(--fs-micro)/1 var(--font-ui)",
-        letterSpacing: uppercase ? ".06em" : "0",
-        textTransform: uppercase ? "uppercase" : "none",
-        whiteSpace: "nowrap",
-        ...style,
-      }}
-    >
+    <span className={cn(badge({ tone, uppercase }), className)}>
       {children}
     </span>
   );

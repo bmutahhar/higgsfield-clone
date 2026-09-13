@@ -1,14 +1,17 @@
-"use client";
+import type { ReactNode, TextareaHTMLAttributes } from "react";
 
-import { useState } from "react";
-import type { CSSProperties, ReactNode, TextareaHTMLAttributes } from "react";
+import { cn } from "@/lib/cn";
 
-export interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
+export interface TextareaProps extends Omit<
+  TextareaHTMLAttributes<HTMLTextAreaElement>,
+  "className"
+> {
   label?: ReactNode;
   hint?: ReactNode;
   /** Show a mono character counter. Requires maxLength. */
   counter?: boolean;
-  wrapperStyle?: CSSProperties;
+  className?: string;
+  textareaClassName?: string;
 }
 
 export function Textarea({
@@ -17,72 +20,36 @@ export function Textarea({
   counter,
   maxLength,
   rows = 4,
-  style,
-  wrapperStyle,
   value,
-  onChange,
+  className,
+  textareaClassName,
   ...rest
 }: TextareaProps) {
-  const [focus, setFocus] = useState(false);
   const length = typeof value === "string" ? value.length : undefined;
 
   return (
-    <label
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: 6,
-        ...wrapperStyle,
-      }}
-    >
+    <label className={cn("flex flex-col gap-1.5", className)}>
       {label && (
-        <span
-          style={{
-            font: "var(--fw-medium) var(--fs-body-sm)/1 var(--font-ui)",
-            color: "var(--text-secondary)",
-          }}
-        >
-          {label}
-        </span>
+        <span className="text-body-sm font-medium text-secondary">{label}</span>
       )}
       <textarea
         rows={rows}
         maxLength={maxLength}
         value={value}
-        onChange={onChange}
-        onFocus={() => {
-          setFocus(true);
-        }}
-        onBlur={() => {
-          setFocus(false);
-        }}
-        style={{
-          resize: "vertical",
-          padding: "10px 12px",
-          background: "var(--surface-input)",
-          border: `1px solid ${focus ? "var(--border-focus)" : "var(--border-input)"}`,
-          boxShadow: focus ? "var(--ring-focus)" : "none",
-          borderRadius: "var(--r-control)",
-          color: "var(--text-primary)",
-          font: "var(--text-body)",
-          outline: "none",
-          transition: "var(--t-control)",
-          ...style,
-        }}
+        className={cn(
+          "resize-y rounded-control border border-input-border bg-input px-3 py-2.5",
+          "text-body text-primary outline-none placeholder:text-muted",
+          "transition-[border-color,box-shadow] duration-[140ms] ease-snap",
+          "focus:border-lime focus:shadow-ring motion-reduce:duration-0",
+          textareaClassName,
+        )}
         {...rest}
       />
       {(hint ?? counter) && (
-        <span
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            font: "var(--fw-regular) var(--fs-caption)/1.3 var(--font-ui)",
-            color: "var(--text-muted)",
-          }}
-        >
+        <span className="flex justify-between text-caption text-muted">
           <span>{hint}</span>
           {counter && maxLength ? (
-            <span className="hf-mono">
+            <span className="font-mono text-mono">
               {length ?? 0}/{maxLength}
             </span>
           ) : null}

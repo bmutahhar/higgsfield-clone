@@ -1,123 +1,75 @@
-"use client";
-
-import { useState } from "react";
-import type { CSSProperties } from "react";
+import type { ButtonHTMLAttributes } from "react";
+import { cva, type VariantProps } from "class-variance-authority";
 
 import { Icon, type IconName } from "@/components/core/icon";
+import { cn } from "@/lib/cn";
 
-export type IconButtonVariant = "ghost" | "solid" | "glass" | "accent";
-export type IconButtonSize = "sm" | "md" | "lg";
+/** Where a control floats over media it becomes a glass capsule, not a scrim. */
+const iconButton = cva(
+  [
+    "inline-flex items-center justify-center border p-0",
+    "transition-[background-color,color,border-color,transform,opacity]",
+    "duration-[140ms] ease-snap motion-reduce:duration-0",
+    "focus-visible:shadow-ring focus-visible:outline-none",
+    "active:scale-[0.97]",
+    "disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-40",
+    // Active nav is a 12%-white fill, never lime.
+    "aria-pressed:bg-w-12 aria-pressed:text-primary",
+  ],
+  {
+    variants: {
+      variant: {
+        ghost: "border-transparent bg-transparent text-secondary hover:bg-w-06",
+        solid: "border-hairline bg-n-4 text-primary hover:bg-n-5",
+        glass: "border-w-16 bg-black/45 text-white hover:bg-black/65",
+        accent:
+          "border-transparent bg-accent text-on-accent hover:bg-accent-hover",
+      },
+      size: { sm: "size-7", md: "size-9", lg: "size-11" },
+      pill: { true: "rounded-full", false: "rounded-control" },
+    },
+    defaultVariants: { variant: "ghost", size: "md", pill: true },
+  },
+);
 
-const IB_SIZES: Record<IconButtonSize, { box: number; glyph: number }> = {
-  sm: { box: 28, glyph: 16 },
-  md: { box: 36, glyph: 20 },
-  lg: { box: 44, glyph: 22 },
-};
+const GLYPH_SIZE = { sm: 16, md: 20, lg: 22 } as const;
 
-const IB_VARIANTS: Record<
-  IconButtonVariant,
-  { bg: string; fg: string; hover: string; bd: string }
-> = {
-  ghost: {
-    bg: "transparent",
-    fg: "var(--text-secondary)",
-    hover: "var(--surface-hover)",
-    bd: "transparent",
-  },
-  solid: {
-    bg: "var(--n-4)",
-    fg: "var(--text-primary)",
-    hover: "var(--n-5)",
-    bd: "var(--border-hairline)",
-  },
-  glass: {
-    bg: "rgba(0,0,0,.45)",
-    fg: "#fff",
-    hover: "rgba(0,0,0,.66)",
-    bd: "var(--w-16)",
-  },
-  accent: {
-    bg: "var(--accent-solid)",
-    fg: "var(--text-on-accent)",
-    hover: "var(--accent-solid-hover)",
-    bd: "transparent",
-  },
-};
+export type IconButtonVariant = NonNullable<
+  VariantProps<typeof iconButton>["variant"]
+>;
 
-export interface IconButtonProps {
+export interface IconButtonProps
+  extends
+    Omit<ButtonHTMLAttributes<HTMLButtonElement>, "className">,
+    VariantProps<typeof iconButton> {
   icon: IconName;
   /** Accessible label — required, also used as the native tooltip. */
   label: string;
-  variant?: IconButtonVariant;
-  size?: IconButtonSize;
-  pill?: boolean;
   active?: boolean;
-  disabled?: boolean;
-  style?: CSSProperties;
-  onClick?: () => void;
+  className?: string;
 }
 
-/** Where a control floats over media it becomes a glass capsule, not a scrim. */
 export function IconButton({
   icon,
   label,
-  variant = "ghost",
-  size = "md",
-  pill = true,
+  variant,
+  size,
+  pill,
   active = false,
-  disabled = false,
-  style,
+  className,
+  type = "button",
   ...rest
 }: IconButtonProps) {
-  const [hover, setHover] = useState(false);
-  const [down, setDown] = useState(false);
-  const s = IB_SIZES[size];
-  const v = IB_VARIANTS[variant];
-
   return (
     <button
-      type="button"
+      type={type}
       aria-label={label}
       aria-pressed={active || undefined}
       title={label}
-      disabled={disabled}
-      onMouseEnter={() => {
-        setHover(true);
-      }}
-      onMouseLeave={() => {
-        setHover(false);
-        setDown(false);
-      }}
-      onMouseDown={() => {
-        setDown(true);
-      }}
-      onMouseUp={() => {
-        setDown(false);
-      }}
-      style={{
-        width: s.box,
-        height: s.box,
-        display: "inline-flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: active
-          ? "var(--surface-active)"
-          : hover && !disabled
-            ? v.hover
-            : v.bg,
-        color: active ? "var(--text-primary)" : v.fg,
-        border: `1px solid ${v.bd}`,
-        borderRadius: pill ? "var(--r-pill)" : "var(--r-control)",
-        cursor: disabled ? "not-allowed" : "pointer",
-        opacity: disabled ? 0.4 : 1,
-        transform: down && !disabled ? "scale(var(--press-scale))" : "scale(1)",
-        transition: "var(--t-control)",
-        padding: 0,
-        ...style,
-      }}
+      className={cn(iconButton({ variant, size, pill }), className)}
       {...rest}
     >
-      <Icon name={icon} size={s.glyph} />
+      <Icon name={icon} size={GLYPH_SIZE[size ?? "md"]} />
     </button>
   );
 }

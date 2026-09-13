@@ -1,7 +1,6 @@
-"use client";
-
-import type { CSSProperties } from "react";
 import { DynamicIcon, type IconName } from "lucide-react/dynamic";
+
+import { cn } from "@/lib/cn";
 
 export type { IconName };
 
@@ -11,8 +10,7 @@ export interface IconProps {
   /** Pixel box. Product uses 16 / 20 / 24. */
   size?: number;
   strokeWidth?: number;
-  color?: string;
-  style?: CSSProperties;
+  className?: string;
 }
 
 /*
@@ -22,25 +20,22 @@ export interface IconProps {
  *
  * The design system loads Lucide from unpkg at runtime via an injected script
  * tag. That is replaced here by the lucide-react package: no third-party
- * request, no global, and each glyph is code-split by DynamicIcon. The prop
- * contract is unchanged, so swapping in the real glyph set later still only
- * touches this file.
+ * request, no window global, and each glyph is code-split by DynamicIcon.
+ * Glyphs draw in currentColor, so colour comes from the parent's text utility.
  */
 export function Icon({
   name,
   size = 20,
   strokeWidth = 1.75,
-  color = "currentColor",
-  style,
+  className,
 }: IconProps) {
   return (
     <DynamicIcon
       name={name}
       size={size}
       strokeWidth={strokeWidth}
-      color={color}
       aria-hidden="true"
-      style={{ flex: "0 0 auto", ...style }}
+      className={cn("shrink-0", className)}
     />
   );
 }

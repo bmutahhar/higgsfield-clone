@@ -1,90 +1,74 @@
-"use client";
+import type { InputHTMLAttributes, ReactNode } from "react";
 
-import type { CSSProperties, ReactNode } from "react";
+import { cn } from "@/lib/cn";
 
-export interface SwitchProps {
-  checked?: boolean;
-  onChange?: (next: boolean) => void;
+export interface SwitchProps extends Omit<
+  InputHTMLAttributes<HTMLInputElement>,
+  "type" | "className" | "size"
+> {
   label?: ReactNode;
-  disabled?: boolean;
   size?: "sm" | "md";
-  style?: CSSProperties;
+  className?: string;
 }
 
 /*
- * The design system styles a bare <span> and binds onClick to it, which is
- * unreachable by keyboard and carries no form semantics. The visual is
- * unchanged here, but it is driven by a real visually-hidden checkbox so the
- * control is focusable, announced, and submits with a form.
+ * A real checkbox drives the visual through `peer-checked:` — no React state,
+ * so focus, keyboard toggling, announcement and form submission all come from
+ * the platform. The design system styled a bare <span> with onClick, which is
+ * unreachable by keyboard and carries no form semantics.
  */
 export function Switch({
-  checked = false,
-  onChange,
   label,
-  disabled = false,
   size = "md",
-  style,
+  disabled,
+  className,
+  ...rest
 }: SwitchProps) {
-  const width = size === "sm" ? 34 : 44;
-  const height = size === "sm" ? 20 : 26;
-  const knob = height - 6;
+  const track = size === "sm" ? "h-5 w-[34px]" : "h-[26px] w-11";
+  const knob = size === "sm" ? "size-3.5" : "size-5";
+  // The knob is a descendant of the peer's sibling, not a sibling itself, so
+  // the variant has to be written on the track and reach in with [&>span].
+  const travel =
+    size === "sm"
+      ? "peer-checked:[&>span]:translate-x-[14px]"
+      : "peer-checked:[&>span]:translate-x-[18px]";
 
   return (
     <label
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: 10,
-        cursor: disabled ? "not-allowed" : "pointer",
-        opacity: disabled ? 0.45 : 1,
-        ...style,
-      }}
+      className={cn(
+        "inline-flex items-center gap-2.5",
+        disabled ? "cursor-not-allowed opacity-45" : "cursor-pointer",
+        className,
+      )}
     >
       <input
         type="checkbox"
         role="switch"
-        className="hf-sr-only"
-        checked={checked}
         disabled={disabled}
-        onChange={(e) => onChange?.(e.target.checked)}
+        className="hf-sr-only peer"
+        {...rest}
       />
       <span
         aria-hidden="true"
-        style={{
-          width,
-          height,
-          flex: "0 0 auto",
-          borderRadius: "var(--r-pill)",
-          background: checked ? "var(--accent-solid)" : "var(--n-5)",
-          border: `1px solid ${checked ? "transparent" : "var(--border-hairline)"}`,
-          display: "inline-flex",
-          alignItems: "center",
-          padding: 2,
-          transition: "var(--t-control)",
-        }}
+        className={cn(
+          "inline-flex shrink-0 items-center rounded-full border border-hairline bg-n-5 p-0.5",
+          "transition-colors duration-[140ms] ease-snap motion-reduce:duration-0",
+          "peer-checked:border-transparent peer-checked:bg-accent",
+          "peer-focus-visible:shadow-ring",
+          "peer-checked:[&>span]:bg-n-0",
+          track,
+          travel,
+        )}
       >
         <span
-          style={{
-            width: knob,
-            height: knob,
-            borderRadius: "50%",
-            background: checked ? "var(--n-0)" : "var(--n-11)",
-            transform: `translateX(${String(checked ? width - knob - 6 : 0)}px)`,
-            transition:
-              "transform var(--dur-fast) var(--ease-standard), background var(--dur-fast) var(--ease-standard)",
-          }}
+          className={cn(
+            "rounded-full bg-n-11 transition-transform duration-[140ms] ease-snap",
+            "motion-reduce:duration-0",
+            knob,
+          )}
         />
       </span>
-      {label && (
-        <span
-          style={{
-            font: "var(--text-body-sm)",
-            color: "var(--text-secondary)",
-          }}
-        >
-          {label}
-        </span>
-      )}
+      {label && <span className="text-body-sm text-secondary">{label}</span>}
     </label>
   );
 }

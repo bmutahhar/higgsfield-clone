@@ -1,71 +1,52 @@
-"use client";
-
-import type { CSSProperties, ReactNode } from "react";
+import type { InputHTMLAttributes, ReactNode } from "react";
 
 import { Icon } from "@/components/core/icon";
+import { cn } from "@/lib/cn";
 
-export interface CheckboxProps {
-  checked?: boolean;
-  onChange?: (next: boolean) => void;
+export interface CheckboxProps extends Omit<
+  InputHTMLAttributes<HTMLInputElement>,
+  "type" | "className"
+> {
   label?: ReactNode;
-  disabled?: boolean;
-  style?: CSSProperties;
+  className?: string;
 }
 
 /* Real checkbox behind the styled box — see the note in switch.tsx. */
 export function Checkbox({
-  checked = false,
-  onChange,
   label,
-  disabled = false,
-  style,
+  disabled,
+  className,
+  ...rest
 }: CheckboxProps) {
   return (
     <label
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: 10,
-        cursor: disabled ? "not-allowed" : "pointer",
-        opacity: disabled ? 0.45 : 1,
-        ...style,
-      }}
+      className={cn(
+        "inline-flex items-center gap-2.5",
+        disabled ? "cursor-not-allowed opacity-45" : "cursor-pointer",
+        className,
+      )}
     >
       <input
         type="checkbox"
-        className="hf-sr-only"
-        checked={checked}
         disabled={disabled}
-        onChange={(e) => onChange?.(e.target.checked)}
+        className="hf-sr-only peer"
+        {...rest}
       />
       <span
         aria-hidden="true"
-        style={{
-          width: 18,
-          height: 18,
-          flex: "0 0 auto",
-          borderRadius: "var(--r-6)",
-          background: checked ? "var(--accent-solid)" : "transparent",
-          border: `1px solid ${checked ? "transparent" : "var(--border-input)"}`,
-          display: "inline-flex",
-          alignItems: "center",
-          justifyContent: "center",
-          color: "var(--n-0)",
-          transition: "var(--t-control)",
-        }}
+        className={cn(
+          "inline-flex size-[18px] shrink-0 items-center justify-center rounded-[6px]",
+          "border border-input-border bg-transparent text-n-0",
+          "transition-[background-color,border-color] duration-[140ms] ease-snap",
+          "motion-reduce:duration-0",
+          "peer-checked:border-transparent peer-checked:bg-accent",
+          "peer-focus-visible:shadow-ring",
+          "[&>svg]:opacity-0 peer-checked:[&>svg]:opacity-100",
+        )}
       >
-        {checked && <Icon name="check" size={13} strokeWidth={3} />}
+        <Icon name="check" size={13} strokeWidth={3} />
       </span>
-      {label && (
-        <span
-          style={{
-            font: "var(--text-body-sm)",
-            color: "var(--text-secondary)",
-          }}
-        >
-          {label}
-        </span>
-      )}
+      {label && <span className="text-body-sm text-secondary">{label}</span>}
     </label>
   );
 }

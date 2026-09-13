@@ -1,72 +1,60 @@
-"use client";
+import type { InputHTMLAttributes, ReactNode } from "react";
 
-import type { CSSProperties, ReactNode } from "react";
+import { cn } from "@/lib/cn";
 
-export interface SliderProps {
+export interface SliderProps extends Omit<
+  InputHTMLAttributes<HTMLInputElement>,
+  "type" | "value" | "className"
+> {
   label?: ReactNode;
+  value?: number;
   min?: number;
   max?: number;
-  step?: number;
-  value?: number;
-  onChange?: (next: number) => void;
   /** Suffix on the mono readout, e.g. "s" or "%". */
   unit?: string;
-  style?: CSSProperties;
+  className?: string;
 }
 
+/*
+ * The filled portion of the track is a gradient stop that depends on the
+ * current value, so it is the one genuinely dynamic style here and rides a CSS
+ * custom property rather than a class.
+ */
 export function Slider({
   label,
   min = 0,
   max = 100,
   step = 1,
   value = 50,
-  onChange,
   unit,
-  style,
+  className,
+  ...rest
 }: SliderProps) {
   const pct = ((value - min) / (max - min)) * 100;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 8, ...style }}>
+    <div className={cn("flex flex-col gap-2", className)}>
       {(label ?? unit !== undefined) && (
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "baseline",
-          }}
-        >
-          <span
-            style={{
-              font: "var(--fw-medium) var(--fs-body-sm)/1 var(--font-ui)",
-              color: "var(--text-secondary)",
-            }}
-          >
+        <div className="flex items-baseline justify-between">
+          <span className="text-body-sm font-medium text-secondary">
             {label}
           </span>
-          <span className="hf-mono" style={{ color: "var(--text-primary)" }}>
+          <span className="font-mono text-mono text-primary">
             {value}
             {unit}
           </span>
         </div>
       )}
       <input
-        className="hf-slider"
         type="range"
         min={min}
         max={max}
         step={step}
         value={value}
         aria-label={typeof label === "string" ? label : undefined}
-        onChange={(e) => onChange?.(Number(e.target.value))}
-        style={{
-          width: "100%",
-          height: 4,
-          borderRadius: "var(--r-pill)",
-          background: `linear-gradient(to right, var(--accent-solid) 0%, var(--accent-solid) ${String(pct)}%, var(--n-5) ${String(pct)}%, var(--n-5) 100%)`,
-          outline: "none",
-          cursor: "pointer",
-        }}
+        className="hf-slider h-1 w-full cursor-pointer rounded-full outline-none"
+        style={{ "--hf-slider-pct": `${String(pct)}%` } as React.CSSProperties}
+        {...rest}
       />
     </div>
   );

@@ -1,21 +1,19 @@
-"use client";
-
-import { useState } from "react";
-import type { CSSProperties, InputHTMLAttributes, ReactNode } from "react";
+import type { InputHTMLAttributes, ReactNode } from "react";
 
 import { Icon, type IconName } from "@/components/core/icon";
+import { cn } from "@/lib/cn";
 
 export type ControlSize = "sm" | "md" | "lg";
 
-const CONTROL_HEIGHT: Record<ControlSize, string> = {
-  sm: "var(--control-sm)",
-  md: "var(--control-md)",
-  lg: "var(--control-lg)",
+export const CONTROL_HEIGHT: Record<ControlSize, string> = {
+  sm: "h-7",
+  md: "h-9",
+  lg: "h-11",
 };
 
 export interface InputProps extends Omit<
   InputHTMLAttributes<HTMLInputElement>,
-  "size"
+  "size" | "className"
 > {
   label?: ReactNode;
   hint?: ReactNode;
@@ -24,10 +22,14 @@ export interface InputProps extends Omit<
   /** Trailing readout — rendered in mono, as every number in the system is. */
   suffix?: ReactNode;
   size?: ControlSize;
-  wrapperStyle?: CSSProperties;
+  className?: string;
+  inputClassName?: string;
 }
 
-/** Focus switches the border to solid lime and adds the lime ring. */
+/*
+ * Focus switches the border to solid lime and adds the lime ring. Both are
+ * driven by `focus-within` on the shell rather than a React focus flag.
+ */
 export function Input({
   label,
   hint,
@@ -35,90 +37,43 @@ export function Input({
   iconLeft,
   suffix,
   size = "md",
-  style,
-  wrapperStyle,
+  className,
+  inputClassName,
   ...rest
 }: InputProps) {
-  const [focus, setFocus] = useState(false);
-
   return (
-    <label
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: 6,
-        ...wrapperStyle,
-      }}
-    >
+    <label className={cn("flex flex-col gap-1.5", className)}>
       {label && (
-        <span
-          style={{
-            font: "var(--fw-medium) var(--fs-body-sm)/1 var(--font-ui)",
-            color: "var(--text-secondary)",
-          }}
-        >
-          {label}
-        </span>
+        <span className="text-body-sm font-medium text-secondary">{label}</span>
       )}
       <span
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 8,
-          height: CONTROL_HEIGHT[size],
-          padding: "0 12px",
-          background: "var(--surface-input)",
-          borderRadius: "var(--r-control)",
-          border: `1px solid ${
-            error
-              ? "var(--status-danger)"
-              : focus
-                ? "var(--border-focus)"
-                : "var(--border-input)"
-          }`,
-          boxShadow: focus && !error ? "var(--ring-focus)" : "none",
-          transition: "var(--t-control)",
-        }}
-      >
-        {iconLeft && (
-          <Icon
-            name={iconLeft}
-            size={16}
-            style={{ color: "var(--text-muted)" }}
-          />
+        className={cn(
+          "flex items-center gap-2 rounded-control border bg-input px-3",
+          "transition-[border-color,box-shadow] duration-[140ms] ease-snap",
+          "motion-reduce:duration-0",
+          CONTROL_HEIGHT[size],
+          error
+            ? "border-danger"
+            : "border-input-border focus-within:border-lime focus-within:shadow-ring",
         )}
+      >
+        {iconLeft && <Icon name={iconLeft} size={16} className="text-muted" />}
         <input
           aria-invalid={error ? true : undefined}
-          onFocus={() => {
-            setFocus(true);
-          }}
-          onBlur={() => {
-            setFocus(false);
-          }}
-          style={{
-            flex: 1,
-            minWidth: 0,
-            background: "transparent",
-            border: "none",
-            outline: "none",
-            color: "var(--text-primary)",
-            font: "var(--text-body)",
-            ...style,
-          }}
+          className={cn(
+            "min-w-0 flex-1 border-none bg-transparent text-body text-primary",
+            "outline-none placeholder:text-muted",
+            inputClassName,
+          )}
           {...rest}
         />
         {suffix && (
-          <span className="hf-mono" style={{ color: "var(--text-muted)" }}>
-            {suffix}
-          </span>
+          <span className="font-mono text-mono text-muted">{suffix}</span>
         )}
       </span>
       {(hint ?? error) && (
         <span
-          style={{
-            font: "var(--fw-regular) var(--fs-caption)/1.3 var(--font-ui)",
-            color: error ? "var(--status-danger)" : "var(--text-muted)",
-          }}
+          className={cn("text-caption", error ? "text-danger" : "text-muted")}
         >
           {error ?? hint}
         </span>

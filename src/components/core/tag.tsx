@@ -1,23 +1,26 @@
-"use client";
-
-import { useState } from "react";
-import type { CSSProperties, MouseEvent, ReactNode } from "react";
+import type { ButtonHTMLAttributes, ReactNode } from "react";
 
 import { Icon, type IconName } from "@/components/core/icon";
+import { cn } from "@/lib/cn";
 
-export interface TagProps {
+export interface TagProps extends Omit<
+  ButtonHTMLAttributes<HTMLButtonElement>,
+  "className"
+> {
   children?: ReactNode;
   /** Lucide icon name shown before the label. */
   icon?: IconName;
   selected?: boolean;
-  onRemove?: (e: MouseEvent) => void;
-  onClick?: (e: MouseEvent) => void;
-  style?: CSSProperties;
+  onRemove?: () => void;
+  className?: string;
 }
 
-/**
- * Selection inverts to a white fill with black text — it is never a lime fill,
- * which is reserved for actions.
+/*
+ * Selection inverts to a white fill with black text — never a lime fill, which
+ * is reserved for actions.
+ *
+ * Renders as a <button> when interactive so keyboard and screen-reader support
+ * come from the platform; the design system used a clickable <span>.
  */
 export function Tag({
   children,
@@ -25,74 +28,66 @@ export function Tag({
   selected = false,
   onRemove,
   onClick,
-  style,
+  className,
+  type = "button",
+  ...rest
 }: TagProps) {
-  const [hover, setHover] = useState(false);
   const interactive = Boolean(onClick);
 
-  return (
-    <span
-      role={interactive ? "button" : undefined}
-      tabIndex={interactive ? 0 : undefined}
-      aria-pressed={interactive ? selected : undefined}
-      onClick={onClick}
-      onKeyDown={(e) => {
-        if (!onClick) return;
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          onClick(e as unknown as MouseEvent);
-        }
-      }}
-      onMouseEnter={() => {
-        setHover(true);
-      }}
-      onMouseLeave={() => {
-        setHover(false);
-      }}
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: 6,
-        height: 28,
-        padding: "0 10px",
-        background: selected
-          ? "var(--n-12)"
-          : hover && interactive
-            ? "var(--surface-active)"
-            : "var(--w-06)",
-        color: selected ? "var(--n-0)" : "var(--text-secondary)",
-        border: `1px solid ${selected ? "transparent" : "var(--border-hairline)"}`,
-        borderRadius: "var(--r-chip)",
-        font: "var(--fw-medium) var(--fs-body-sm)/1 var(--font-ui)",
-        cursor: interactive ? "pointer" : "default",
-        transition: "var(--t-control)",
-        whiteSpace: "nowrap",
-        ...style,
-      }}
-    >
+  const content = (
+    <>
       {icon && <Icon name={icon} size={14} />}
       {children}
-      {onRemove && (
-        <span
-          role="button"
-          tabIndex={0}
-          aria-label="Remove"
-          onClick={(e) => {
-            e.stopPropagation();
-            onRemove(e);
-          }}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              e.stopPropagation();
-              onRemove(e as unknown as MouseEvent);
-            }
-          }}
-          style={{ display: "inline-flex", opacity: 0.6, cursor: "pointer" }}
-        >
-          <Icon name="x" size={12} />
-        </span>
-      )}
+    </>
+  );
+
+  const classes = cn(
+    "inline-flex h-7 items-center gap-1.5 rounded-full border px-2.5",
+    "text-body-sm font-medium whitespace-nowrap",
+    "transition-[background-color,color,border-color] duration-[140ms] ease-snap",
+    "motion-reduce:duration-0 focus-visible:shadow-ring focus-visible:outline-none",
+    selected
+      ? "border-transparent bg-n-12 text-n-0"
+      : "border-hairline bg-w-06 text-secondary",
+    interactive && !selected && "hover:bg-w-12",
+    className,
+  );
+
+  const removeButton = onRemove ? (
+    <button
+      type="button"
+      aria-label="Remove"
+      onClick={(e) => {
+        e.stopPropagation();
+        onRemove();
+      }}
+      className="inline-flex opacity-60 transition-opacity hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none"
+    >
+      <Icon name="x" size={12} />
+    </button>
+  ) : null;
+
+  if (!interactive) {
+    return (
+      <span className={classes}>
+        {content}
+        {removeButton}
+      </span>
+    );
+  }
+
+  return (
+    <span className={classes}>
+      <button
+        type={type}
+        aria-pressed={selected}
+        onClick={onClick}
+        className="inline-flex items-center gap-1.5 focus-visible:outline-none"
+        {...rest}
+      >
+        {content}
+      </button>
+      {removeButton}
     </span>
   );
 }

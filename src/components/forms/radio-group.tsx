@@ -1,9 +1,10 @@
 "use client";
 
 import { useId } from "react";
-import type { CSSProperties, ReactNode } from "react";
+import type { ReactNode } from "react";
 
 import type { SelectOption } from "@/components/forms/select";
+import { cn } from "@/lib/cn";
 
 export interface RadioGroupProps {
   options?: SelectOption[];
@@ -11,97 +12,76 @@ export interface RadioGroupProps {
   onChange?: (next: string) => void;
   label?: ReactNode;
   direction?: "row" | "column";
-  style?: CSSProperties;
+  className?: string;
+  name?: string;
 }
 
-/* Real radio inputs, so arrow-key roving and grouping come from the platform. */
+/*
+ * Real radio inputs, so grouping and arrow-key roving come from the platform.
+ * Client-only for useId's stable group name; the visual state is all CSS.
+ */
 export function RadioGroup({
   options = [],
   value,
   onChange,
   label,
   direction = "column",
-  style,
+  className,
+  name,
 }: RadioGroupProps) {
-  const name = useId();
+  const generatedName = useId();
+  const groupName = name ?? generatedName;
 
   return (
     <div
       role="radiogroup"
       aria-label={typeof label === "string" ? label : undefined}
-      style={{ display: "flex", flexDirection: "column", gap: 10, ...style }}
+      className={cn("flex flex-col gap-2.5", className)}
     >
       {label && (
-        <span
-          style={{
-            font: "var(--fw-medium) var(--fs-body-sm)/1 var(--font-ui)",
-            color: "var(--text-secondary)",
-          }}
-        >
-          {label}
-        </span>
+        <span className="text-body-sm font-medium text-secondary">{label}</span>
       )}
       <div
-        style={{
-          display: "flex",
-          flexDirection: direction,
-          gap: direction === "row" ? 20 : 10,
-        }}
+        className={cn(
+          "flex",
+          direction === "row" ? "flex-row gap-5" : "flex-col gap-2.5",
+        )}
       >
         {options.map((option) => {
           const opt =
             typeof option === "string"
               ? { value: option, label: option }
               : option;
-          const on = opt.value === value;
           return (
             <label
               key={opt.value}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 10,
-                cursor: "pointer",
-              }}
+              className="inline-flex cursor-pointer items-center gap-2.5"
             >
               <input
                 type="radio"
-                className="hf-sr-only"
-                name={name}
+                className="hf-sr-only peer"
+                name={groupName}
                 value={opt.value}
-                checked={on}
+                checked={opt.value === value}
                 onChange={() => onChange?.(opt.value)}
               />
               <span
                 aria-hidden="true"
-                style={{
-                  width: 18,
-                  height: 18,
-                  flex: "0 0 auto",
-                  borderRadius: "50%",
-                  border: `1px solid ${on ? "var(--accent-solid)" : "var(--border-input)"}`,
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  transition: "var(--t-control)",
-                }}
-              >
-                {on && (
-                  <span
-                    style={{
-                      width: 9,
-                      height: 9,
-                      borderRadius: "50%",
-                      background: "var(--accent-solid)",
-                    }}
-                  />
+                className={cn(
+                  "inline-flex size-[18px] shrink-0 items-center justify-center rounded-full",
+                  "border border-input-border transition-colors duration-[140ms] ease-snap",
+                  "peer-checked:border-accent motion-reduce:duration-0",
+                  "peer-focus-visible:shadow-ring",
+                  "[&>span]:scale-0 peer-checked:[&>span]:scale-100",
                 )}
+              >
+                <span className="size-[9px] rounded-full bg-accent transition-transform duration-[140ms] ease-snap motion-reduce:duration-0" />
               </span>
               <span
-                style={{
-                  font: "var(--text-body-sm)",
-                  color: on ? "var(--text-primary)" : "var(--text-secondary)",
-                }}
+                className={cn(
+                  "text-body-sm",
+                  opt.value === value ? "text-primary" : "text-secondary",
+                )}
               >
                 {opt.label}
               </span>

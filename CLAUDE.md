@@ -15,6 +15,37 @@
 - Write commit messages in the imperative mood, explaining _why_ the change was made,
   not just what changed.
 
+## Styling
+
+**Tailwind utilities are the only styling mechanism.** Not inline `style`
+objects, not CSS modules, not styled-components.
+
+- **Design tokens live in `src/styles/tokens/*.css`** as CSS custom properties
+  and mirror the Claude Design project 1:1. They are the source of truth, and a
+  token change upstream is a one-file change here.
+- **`src/app/globals.css` projects every token into Tailwind's theme** via
+  `@theme inline`. Components therefore write `bg-card`, `text-muted`,
+  `rounded-card`, `text-h2`, `shadow-e3`, `ease-snap` — never
+  `style={{ background: "var(--surface-card)" }}`.
+- **Never use React state for visual state.** Hover, press, focus, checked,
+  open and disabled are CSS: `hover:`, `active:`, `focus-visible:`,
+  `peer-checked:`, `group-hover:`, `data-[state=open]:`, `disabled:`. A
+  `useState` that only drives a class is a re-render on every mouse move and is
+  invisible to keyboard users.
+- **Prefer the platform for control state.** A styled toggle is a real
+  visually-hidden `<input>` plus `peer-checked:` — never a `<span>` with
+  `onClick`. Focus, announcement, arrow-key roving and form submission then
+  come for free.
+- **Variants use `cva`**, and classes merge through `cn()` from
+  `@/lib/cn` so a caller's `className` can override component defaults.
+- **Inline `style` is allowed only for a genuinely dynamic value** that cannot
+  be a class — e.g. a slider's fill percentage passed as a CSS custom property.
+  Add a comment saying why.
+- **Components stay server components by default.** Add `"use client"` only for
+  an actual hook or browser API. If the styling is CSS, most components never
+  need it.
+- Respect `motion-reduce:` on anything that animates.
+
 ## File naming — kebab-case
 
 Every file and directory uses **kebab-case**. No `camelCase`, no `PascalCase`, no

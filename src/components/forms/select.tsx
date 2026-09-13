@@ -1,18 +1,10 @@
-"use client";
-
-import { useState } from "react";
-import type { CSSProperties, ReactNode, SelectHTMLAttributes } from "react";
+import type { ReactNode, SelectHTMLAttributes } from "react";
 
 import { Icon } from "@/components/core/icon";
-import type { ControlSize } from "@/components/forms/input";
+import { CONTROL_HEIGHT, type ControlSize } from "@/components/forms/input";
+import { cn } from "@/lib/cn";
 
 export type SelectOption = string | { value: string; label: string };
-
-const CONTROL_HEIGHT: Record<ControlSize, string> = {
-  sm: "var(--control-sm)",
-  md: "var(--control-md)",
-  lg: "var(--control-lg)",
-};
 
 function normalize(option: SelectOption): { value: string; label: string } {
   return typeof option === "string" ? { value: option, label: option } : option;
@@ -20,90 +12,45 @@ function normalize(option: SelectOption): { value: string; label: string } {
 
 export interface SelectProps extends Omit<
   SelectHTMLAttributes<HTMLSelectElement>,
-  "size"
+  "size" | "className"
 > {
   label?: ReactNode;
   options?: SelectOption[];
   size?: ControlSize;
-  wrapperStyle?: CSSProperties;
+  className?: string;
 }
 
 export function Select({
   label,
   options = [],
-  value,
-  onChange,
   size = "md",
-  style,
-  wrapperStyle,
+  className,
   ...rest
 }: SelectProps) {
-  const [focus, setFocus] = useState(false);
-
   return (
-    <label
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: 6,
-        ...wrapperStyle,
-      }}
-    >
+    <label className={cn("flex flex-col gap-1.5", className)}>
       {label && (
-        <span
-          style={{
-            font: "var(--fw-medium) var(--fs-body-sm)/1 var(--font-ui)",
-            color: "var(--text-secondary)",
-          }}
-        >
-          {label}
-        </span>
+        <span className="text-body-sm font-medium text-secondary">{label}</span>
       )}
       <span
-        style={{
-          position: "relative",
-          display: "flex",
-          alignItems: "center",
-          height: CONTROL_HEIGHT[size],
-          background: "var(--surface-input)",
-          borderRadius: "var(--r-control)",
-          border: `1px solid ${focus ? "var(--border-focus)" : "var(--border-input)"}`,
-          transition: "var(--t-control)",
-        }}
+        className={cn(
+          "relative flex items-center rounded-control border border-input-border bg-input",
+          "transition-[border-color,box-shadow] duration-[140ms] ease-snap",
+          "focus-within:border-lime focus-within:shadow-ring motion-reduce:duration-0",
+          CONTROL_HEIGHT[size],
+        )}
       >
         <select
-          value={value}
-          onChange={onChange}
-          onFocus={() => {
-            setFocus(true);
-          }}
-          onBlur={() => {
-            setFocus(false);
-          }}
-          style={{
-            appearance: "none",
-            WebkitAppearance: "none",
-            flex: 1,
-            height: "100%",
-            padding: "0 34px 0 12px",
-            background: "transparent",
-            border: "none",
-            outline: "none",
-            color: "var(--text-primary)",
-            font: "var(--text-body)",
-            cursor: "pointer",
-            ...style,
-          }}
+          className={cn(
+            "h-full flex-1 cursor-pointer appearance-none border-none bg-transparent",
+            "pr-[34px] pl-3 text-body text-primary outline-none",
+          )}
           {...rest}
         >
           {options.map((option) => {
             const opt = normalize(option);
             return (
-              <option
-                key={opt.value}
-                value={opt.value}
-                style={{ background: "var(--n-3)" }}
-              >
+              <option key={opt.value} value={opt.value} className="bg-n-3">
                 {opt.label}
               </option>
             );
@@ -112,12 +59,7 @@ export function Select({
         <Icon
           name="chevron-down"
           size={16}
-          style={{
-            position: "absolute",
-            right: 10,
-            color: "var(--text-muted)",
-            pointerEvents: "none",
-          }}
+          className="pointer-events-none absolute right-2.5 text-muted"
         />
       </span>
     </label>
