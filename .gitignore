@@ -1,0 +1,5 @@
+.DS_Store
+node_modules/
+.next/
+
+# NOTE: .agent-logs/ is deliberately NOT ignored — it ships with the repo.
