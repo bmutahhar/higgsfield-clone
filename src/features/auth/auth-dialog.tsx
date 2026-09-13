@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 
 import { Icon } from "@/components/core/icon";
 import { useAuth } from "@/features/auth/auth-context";
+import { AuthMedia } from "@/features/auth/auth-media";
 import { EmailLoginStep } from "@/features/auth/steps/email-login";
 import { EmailSignupStep } from "@/features/auth/steps/email-signup";
 import { ResetStep } from "@/features/auth/steps/reset";
@@ -84,8 +85,10 @@ export function AuthDialog() {
         <Icon name="x" size={16} />
       </button>
 
-      {/* The media half. Task 12 fills it; below xl it does not render. */}
-      <div className="hidden min-h-0 w-1/2 p-2 pr-0 xl:block" />
+      {/* Below xl this does not render at all rather than shrinking. */}
+      <div className="hidden min-h-0 w-1/2 p-2 pr-0 xl:block">
+        <AuthMedia />
+      </div>
 
       <div className="hf-scrollbar-none flex flex-1 flex-col items-center overflow-y-auto px-5 py-6 md:px-22 md:py-8">
         <div className="w-full">
