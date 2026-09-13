@@ -54,7 +54,13 @@ describe("pricing tokens", () => {
   it.each([
     ["--q-brand-pink", "#ff005b"],
     ["--q-brand-blue", "#0256fe"],
-    ["--q-bg-plan", "#18191c"],
+    /*
+     * #18191c is pinned under --q-bg-section, not --q-bg-plan. The audio
+     * surface measured the same colour and gave it the name it actually has;
+     * --q-bg-plan now aliases it. The literal is still guarded, and there is
+     * still exactly one of it — which is the property this block is for.
+     */
+    ["--q-bg-section", "#18191c"],
     ["--q-info", "#9ce6f3"],
   ])("pins %s to its measured value %s", (variable, value) => {
     expect(tokens).toMatch(new RegExp(`${variable}:\\s*${value}`));

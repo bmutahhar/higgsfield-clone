@@ -4,12 +4,12 @@ import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm, useWatch } from "react-hook-form";
 
+import { QTabs } from "@/components/navigation/q-tabs";
 import { DropZone } from "@/components/studio/drop-zone";
 import { GenjutsuModelSelect } from "@/components/studio/genjutsu-model-select";
 import { ModePreview } from "@/components/studio/mode-preview";
 import { PromptField } from "@/components/studio/prompt-field";
 import { QSelect } from "@/components/studio/q-select";
-import { QTabs } from "@/components/studio/q-tabs";
 import { readVideoDuration } from "@/components/studio/read-video-duration";
 import { StudioPanel } from "@/components/studio/studio-panel";
 import { type GenjutsuMode, MODE_ORDER, MODES, PROMO } from "@/config/genjutsu";

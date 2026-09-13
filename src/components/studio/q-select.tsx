@@ -3,8 +3,8 @@
 import { useId, useRef, useState } from "react";
 
 import { Icon } from "@/components/core/icon";
-import { QPopover } from "@/components/studio/q-popover";
-import { useDismiss } from "@/components/studio/use-dismiss";
+import { QPopover } from "@/components/overlays/q-popover";
+import { useDismiss } from "@/components/overlays/use-dismiss";
 import { cn } from "@/lib/cn";
 
 /**

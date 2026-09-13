@@ -204,6 +204,7 @@
   --color-q-composer: var(--q-bg-composer);
   --color-q-modal: var(--q-bg-modal);
   --color-q-pill: var(--q-bg-pill);
+  --color-q-section: var(--q-bg-section);
 
   /* ---- Borders. `q-hairline` is the card edge; the rest is the white ladder. ---- */
   --color-q-hairline: var(--q-border-card);
@@ -222,6 +223,7 @@
   --color-q-soft: var(--q-text-muted);
   --color-q-inverse: var(--q-text-inverse);
   --color-q-brand: var(--q-text-brand);
+  --color-q-on-brand: var(--q-text-on-brand);
   --color-q-idle: var(--q-text-idle);
   --color-q-idle-soft: var(--q-text-idle-soft);
 
@@ -354,6 +356,27 @@
   --text-q-badge--font-weight: 700;
   --text-q-caption-l: 12px;
   --text-q-caption-l--line-height: 18px;
+
+  /* The audio surface's own steps. `q-accent-2xl` is not `q-title`: same box,
+     different weight, tracking and face. */
+  --text-q-accent-2xl: 40px;
+  --text-q-accent-2xl--line-height: 48px;
+  --text-q-accent-2xl--letter-spacing: -1.6px;
+  --text-q-accent-2xl--font-weight: 700;
+  --text-q-heading-sm: 24px;
+  --text-q-heading-sm--line-height: 28px;
+  --text-q-heading-sm--letter-spacing: -0.4px;
+  --text-q-heading-sm--font-weight: 500;
+  --text-q-body-lg: 18px;
+  --text-q-body-lg--line-height: 28px;
+  --text-q-body-lg--font-weight: 500;
+  --text-q-body-md: 16px;
+  --text-q-body-md--line-height: 24px;
+  --text-q-body-md--font-weight: 500;
+  --text-q-cta: 18px;
+  --text-q-cta--line-height: 24px;
+  --text-q-cta--letter-spacing: -0.4px;
+  --text-q-cta--font-weight: 600;
 }
 
 /* The system is dark-only: a black cinema wall with one acid-lime switch. */

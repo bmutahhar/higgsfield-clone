@@ -3,6 +3,7 @@
 import { ActionButton } from "@/components/core/action-button";
 import { Icon } from "@/components/core/icon";
 import type { LightboxDetail } from "@/components/overlays/media-lightbox";
+import { audioModelById, LANGUAGES } from "@/config/audio";
 import { MODES } from "@/config/genjutsu";
 import { modelById } from "@/config/image-studio";
 import { videoModelById } from "@/config/models";
@@ -66,6 +67,48 @@ export function detailsFor(settings: GenerationSettings): LightboxDetail[] {
     ];
   }
 
+  if (settings.kind === "audio") {
+    const values = settings.values;
+
+    /*
+     * All three audio tabs file under one kind, so the mode is the first thing
+     * worth saying — unlike the video surfaces, which each have a route of
+     * their own to say it for them.
+     */
+    if (values.mode === "translate") {
+      const language =
+        LANGUAGES.find((entry) => entry.id === values.language)?.name ??
+        values.language;
+      return [
+        { label: "Mode", value: "Translate", icon: "languages" },
+        { label: "Language", value: language, icon: "globe" },
+      ];
+    }
+
+    if (values.mode === "voice-change") {
+      return [{ label: "Mode", value: "Voice change", icon: "mic" }];
+    }
+
+    return [
+      { label: "Batch", value: String(values.batch), icon: "layers" },
+      {
+        label: "Format",
+        value: values.advanced.outputFormat,
+        icon: "file-audio",
+      },
+      {
+        label: "Sample rate",
+        value: values.advanced.sampleRate,
+        icon: "gauge",
+      },
+      {
+        label: "Attachments",
+        value: String(values.attachments.length),
+        icon: "paperclip",
+      },
+    ];
+  }
+
   const values = settings.values;
   const references =
     values.referenceImages.length + (values.referenceVideo ? 1 : 0);
@@ -77,11 +120,19 @@ export function detailsFor(settings: GenerationSettings): LightboxDetail[] {
   ];
 }
 
-/** The name of whatever produced a generation, resolved from its catalogue. */
+/**
+ * The name of whatever produced a generation, resolved from its catalogue.
+ *
+ * Three catalogues, because the kinds do not share one — an audio model
+ * looked up in the video list comes back undefined and the badge falls back to
+ * printing a raw id at the reader.
+ */
 export function modelNameFor(generation: Generation): string {
-  return generation.kind === "image"
-    ? modelById(generation.modelId).name
-    : (videoModelById(generation.modelId)?.name ?? generation.modelId);
+  if (generation.kind === "image") return modelById(generation.modelId).name;
+  if (generation.kind === "audio") {
+    return audioModelById(generation.modelId)?.name ?? generation.modelId;
+  }
+  return videoModelById(generation.modelId)?.name ?? generation.modelId;
 }
 
 export interface GenerationDetailsProps {

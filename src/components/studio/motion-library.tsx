@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 
+import { QTabs } from "@/components/navigation/q-tabs";
 import { PresetCard } from "@/components/studio/preset-card";
-import { QTabs } from "@/components/studio/q-tabs";
 import { HERO } from "@/config/genjutsu";
 import {
   type Preset,

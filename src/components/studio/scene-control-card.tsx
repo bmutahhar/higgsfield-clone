@@ -1,6 +1,6 @@
 "use client";
 
-import { QSwitch } from "@/components/studio/q-switch";
+import { QSwitch } from "@/components/forms/q-switch";
 import {
   MOTION_COPY,
   SCENE_SOURCES,
