@@ -310,6 +310,50 @@
 
   /* ---- Easing ---- */
   --ease-q-pop: var(--q-ease-pop);
+  --ease-q-std: var(--q-ease-std);
+  --ease-q-swap: var(--q-ease-swap);
+  --ease-q-slot: var(--q-ease-slot);
+
+  /* ---- Pricing surface. See q-studio.css for what each value is for. ---- */
+  --color-q-pink: var(--q-brand-pink);
+  --color-q-pink-hi: var(--q-brand-pink-hi);
+  --color-q-pink-deep: var(--q-brand-pink-deep);
+  --color-q-lime-hi: var(--q-brand-lime-hi);
+  --color-q-lime-line: var(--q-brand-lime-line);
+  --color-q-blue: var(--q-brand-blue);
+  --color-q-info: var(--q-info);
+  --color-q-ground: var(--q-bg-plan);
+  --color-q-w-03: var(--q-w-03);
+  --color-q-w-06: var(--q-w-06);
+  --color-q-w-14: var(--q-w-14);
+  --color-q-w-15: var(--q-w-15);
+  --color-q-w-30: var(--q-w-30);
+  --color-q-w-40: var(--q-w-40);
+  --radius-q-700: var(--q-r-700);
+  --radius-q-800: var(--q-r-800);
+  --shadow-q-key: var(--q-shadow-key);
+  --shadow-q-plan: var(--q-shadow-plan);
+  --shadow-q-sheet: var(--q-shadow-sheet);
+  --shadow-q-knob: var(--q-shadow-knob);
+  --shadow-q-slider: var(--q-glow-slider);
+
+  /* Type steps the pricing page adds to the studio scale. */
+  --text-q-price: 28px;
+  --text-q-price--line-height: 32px;
+  --text-q-price--letter-spacing: -1.2px;
+  --text-q-price--font-weight: 700;
+  --text-q-plan: 24px;
+  --text-q-plan--line-height: 28px;
+  --text-q-plan--letter-spacing: -1.2px;
+  --text-q-plan--font-weight: 700;
+  --text-q-title: 40px;
+  --text-q-title--line-height: 48px;
+  --text-q-title--font-weight: 600;
+  --text-q-badge: 12px;
+  --text-q-badge--line-height: 12px;
+  --text-q-badge--font-weight: 700;
+  --text-q-caption-l: 12px;
+  --text-q-caption-l--line-height: 18px;
 }
 
 /* The system is dark-only: a black cinema wall with one acid-lime switch. */

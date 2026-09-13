@@ -55,23 +55,32 @@ There are two, and they must not be mixed inside one component.
   written as `bg-card`, `text-muted`, `rounded-card`, `text-h2`. Mirrors the
   Claude Design project 1:1 and is the source of truth everywhere **except**
   the generation surfaces. Faces: Archivo + JetBrains Mono.
-- **Studio layer** — `--q-*` from `src/styles/tokens/q-studio.css`, written as
-  `bg-q-panel`, `text-q-soft`, `rounded-q-300`, `text-q-body-sm`. Used only
-  under `src/app/(studio)/`, `src/components/studio/` and
-  `src/features/auth/`. Its values mirror the live generation pages so those
-  can hit 1:1 parity without restyling the marketing pages. The auth dialog is
-  the same live design system as those pages — its measured values are already
-  in `q-studio.css` — so rebuilding it on the marketing ramp would put the
-  wrong faces and the wrong neutrals on a surface that has to match 1:1.
+- **Live-surface layer** — `--q-*` from `src/styles/tokens/q-studio.css`,
+  written as `bg-q-panel`, `text-q-soft`, `rounded-q-300`, `text-q-body-sm`.
+  Used by every route that has to hit 1:1 parity with the live site:
+  `src/app/(studio)/`, `src/components/studio/`,
+  `src/components/image-studio/`, `src/features/auth/`, and
+  `src/app/(marketing)/pricing/` + `src/components/pricing/`.
   Faces: Inter + Space Grotesk.
+
+  The name says "studio" for history: it began as the generation pages' ramp.
+  It is really **the live site's own ramp**, and anything measured off
+  higgsfield.ai belongs on it. `/pricing` was measured to the same neutrals
+  (`#0f1113`, `#131517`, `#1c1e20`, `#23262a`), the same brand (`#d1fe17`) and
+  the same faces, so putting it on the marketing ramp would have meant the
+  wrong faces and the wrong greys on a surface specified as pixel-exact — and
+  forking a third near-identical set would have been worse still. Extend this
+  file instead; reuse before you add.
 
   Two `--q-*` names cross over when projected, and mixing them fails quietly:
   `--q-text-muted` (`#898a8b`) is written **`text-q-soft`**, while
   `text-q-muted` resolves to `--q-text-secondary` (`#828282`).
 
-A studio component reaching for `bg-card`, or a marketing component reaching for
-`bg-q-panel`, is a bug. The two ramps are close enough to look almost right and
-far enough apart to be visibly wrong next to each other.
+A live-surface component reaching for `bg-card`, or a marketing component
+reaching for `bg-q-panel`, is a bug. The two ramps are close enough to look
+almost right and far enough apart to be visibly wrong next to each other. The
+boundary is the folder list above, not the route group: `/pricing` sits under
+`(marketing)` and is still on the `q-` ramp.
 
 ## File naming — kebab-case
 

@@ -38,6 +38,12 @@ const FONT_SIZES = [
   "q-caption-m",
   "q-caption-xs",
   "q-menu",
+  // The pricing steps, added to the same scale.
+  "q-price",
+  "q-plan",
+  "q-title",
+  "q-badge",
+  "q-caption-l",
 ];
 
 const RADII = [
@@ -55,6 +61,8 @@ const RADII = [
   "q-400",
   "q-500",
   "q-600",
+  "q-700",
+  "q-800",
 ];
 
 const SHADOWS = [
@@ -70,6 +78,12 @@ const SHADOWS = [
   "q-cta",
   "q-glass",
   "q-badge",
+  "q-dialog",
+  "q-key",
+  "q-plan",
+  "q-sheet",
+  "q-knob",
+  "q-slider",
 ];
 
 const twMerge = extendTailwindMerge({

@@ -155,6 +155,7 @@
   --q-w-03: rgba(255, 255, 255, 0.03); /* countdown banner hover */
   --q-w-06: rgba(255, 255, 255, 0.06); /* comparison frame and row rules */
   --q-w-14: rgba(255, 255, 255, 0.14); /* FAQ item edge */
+  --q-w-15: rgba(255, 255, 255, 0.15); /* Seedance list, over the blue */
   --q-w-30: rgba(255, 255, 255, 0.3); /* rows this plan does not include */
   --q-w-40: rgba(255, 255, 255, 0.4); /* configurator sub-copy, tick ruler */
 
@@ -637,4 +638,60 @@
   .q-swap-exit {
     animation: none;
   }
+}
+
+/*
+ * The Seedance panel's blue. Thirteen stops, not a two-stop fade: it runs
+ * steel → near-black at 46% → back up to a bright rim at the floor, which is
+ * what makes the panel read as a lit horizon rather than a gradient swatch.
+ * Sampled off the live card.
+ */
+.q-seedance-sky {
+  background-image: linear-gradient(
+    #2b527b 0%,
+    #23548d 2%,
+    #163f75 7%,
+    #082357 16%,
+    #000e41 27%,
+    #00083b 46%,
+    #000d40 61%,
+    #001245 67%,
+    #022d61 78%,
+    #0b4e83 87%,
+    #2877ad 93%,
+    #4f95cc 97%,
+    #6ba9e1 100%
+  );
+}
+
+/* Both vertical edges catch the light; the middle 76% stays clean. */
+.q-seedance-edge {
+  background-image: linear-gradient(
+    90deg,
+    rgba(60, 140, 220, 0.28) 0%,
+    rgba(60, 140, 220, 0) 12%,
+    rgba(60, 140, 220, 0) 88%,
+    rgba(60, 140, 220, 0.28) 100%
+  );
+}
+
+/*
+ * The 32px glyph disc on a panel header. Bright at both ends, dim through the
+ * middle, so it reads as a bevelled coin rather than a flat circle.
+ */
+.q-glyph-disc {
+  background-image: linear-gradient(
+    rgba(255, 255, 255, 0.25) 0%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0.25) 100%
+  );
+}
+
+/* The unlimited panel's floor light. */
+.q-panel-floor {
+  background-image: radial-gradient(
+    80% 40% at 50% 100%,
+    rgba(255, 255, 255, 0.08) 0%,
+    rgba(255, 255, 255, 0) 100%
+  );
 }
