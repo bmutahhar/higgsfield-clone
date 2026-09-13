@@ -765,9 +765,19 @@ Each item is a **native `<details>`** — keep that. 640 × 60 closed,
 - Body copy `16/24 w400 #898a8b`, `py-4`, `white-space: pre-line`.
 - Items are **independent, not exclusive** — several can be open at once.
 
-Eight questions: credits, auto-renewal, generation counts, extra credits,
-Unlimited, the 365 Unlimited promo, changing a subscription, Supercomputer
-cost.
+**The FAQ is two lists, not one.** It swaps wholesale with the audience tab
+and nothing in the section's chrome says so, which makes a single-list build
+look correct until someone clicks the other tab.
+
+- _Individual_ — eight questions: credits, auto-renewal, generation counts,
+  extra credits, Unlimited, the 365 Unlimited promo, changing a subscription,
+  Supercomputer cost.
+- _Business_ — thirteen, and procurement-flavoured: getting started, upgrading
+  Team → Enterprise, support tiers, payment methods, the admin dashboard, data
+  security, seat counts, credit expiry, topping up, collaboration, feature
+  access, the Team/Enterprise difference, billing.
+
+There is no overlap between the two sets.
 
 Above the FAQ sit two help links (`12/18 w400 #898a8b`, 12px external icon,
 `target="_blank"`) — "How do Higgsfield plans work?" and "What are Unlimited
@@ -780,6 +790,37 @@ about Unlimited availability, VAT and dynamic speed adjustment, with an inline
 `hidden sm:flex gap-4 justify-center items-center`, h 40: "Are you ready?"
 `14/20 w500 #fff` + a 139 × 40 brand button "Choose your plan"
 (`bg #d1fe17`, `rounded-[10px]`, `14/20 w600 #131517`, key-cap shadow).
+
+---
+
+## 9.3 The responsive contract, measured
+
+Four states. Only one of them is a reflow; the first is a different page.
+
+| Width            | Tree                     | Plan grid                       | Countdown banner                        | Configurator |
+| ---------------- | ------------------------ | ------------------------------- | --------------------------------------- | ------------ |
+| 0–767            | `.pricing-mobile-layout` | n/a — three picks in one column | n/a                                     | n/a          |
+| 768–1023 (`md`)  | `.pricing-page`          | 2 × 348, gap 8                  | `p-4`, `rounded-2xl`, content column    | column       |
+| 1024–1279 (`lg`) | `.pricing-page`          | 2 × 476, gap 8                  | `p-6`, `rounded-3xl`, content row gap-6 | row          |
+| 1280+ (`xl`)     | `.pricing-page`          | 3 × 344, gap 16                 | as `lg`; capped at the 1064 column      | row          |
+
+Two details that do not fall out of the table:
+
+- **The plan column carries `px-4` below `xl` and `px-0` at `xl`.** Above 1280
+  the 1064px column is already narrower than the container, so a gutter would
+  only eat the cards. Miss this and every column below `xl` is 16px too wide —
+  the grid reads 492 where the live site reads 476.
+- **The comparison table wears a slab below `xl`** — `bg-surface-tertiary
+rounded-t-2xl -mx-3 px-3 pt-5` — and goes transparent, square and flush at
+  `xl` (`xl:bg-transparent xl:rounded-none xl:mx-0 xl:px-0`).
+
+The closing CTA row is `hidden sm:flex`. Below 640 the mobile tree is showing
+anyway, so the guard only matters if the desktop tree is ever forced narrow.
+
+**The mobile tree has no internal breakpoints.** It is one fluid column with
+flat 12px gutters from 0 to 767: measured identical at 375 and at 767, where
+the cards simply grow from 351 to 743 and the hero stays 280px tall. There is
+nothing to implement between those two widths.
 
 ---
 
@@ -842,8 +883,13 @@ lines: `12/16 w500 #fff` / `12/16 w500 rgba(255,255,255,0.5)`.
 
 **b. Plan picker** — `px-3 pt-6 gap-3`, three cards, single-select.
 
-The offer differs from desktop: **Basic Monthly $5**, **Pro Annual $29→$23**
-(default), **Pro Monthly $29**.
+The offer differs from desktop, and **it is A/B tested** — two loads minutes
+apart served "Basic Monthly $5 / 70 credits" and "Basic Monthly $9 / 120
+credits", and moved Pro between its 600 and 900 credit tiers. Transcribing
+either variant bakes one arm of someone else's experiment into our source and
+lets the two surfaces drift apart. Derive the three picks — Basic Monthly,
+**Pro Annual (default)**, Pro Monthly — from the same plan matrix §13 already
+defines, and pin them to it with a test.
 
 |               | Ribbon                                                  | Frame                                                                                                |
 | ------------- | ------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
