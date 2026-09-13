@@ -137,3 +137,50 @@ a:hover {
 .hf-slider:focus-visible::-webkit-slider-thumb {
   box-shadow: var(--ring-focus);
 }
+
+@keyframes hf-indeterminate {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(250%);
+  }
+}
+
+@keyframes hf-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes hf-pop {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes hf-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Modal scrim is one of the few sanctioned uses of blur. */
+dialog::backdrop {
+  background: var(--surface-scrim);
+  backdrop-filter: blur(6px);
+  animation: hf-fade var(--dur-base) var(--ease-standard) both;
+}
