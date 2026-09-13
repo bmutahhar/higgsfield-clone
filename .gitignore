@@ -44,3 +44,7 @@ next-env.d.ts
 __pycache__/
 
 # NOTE: .agent-logs/ is deliberately NOT ignored — it ships with the repo.
+
+# Claude Code local overrides and worktrees
+.claude/settings.local.json
+.claude/worktrees/
