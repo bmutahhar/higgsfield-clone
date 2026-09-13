@@ -2016,30 +2016,48 @@ only field audio needs that the other two surfaces do not have."
 **Files:**
 
 - Move: `src/components/image-studio/batch-stepper.tsx` → `src/components/forms/batch-stepper.tsx`
-- Move: `src/components/image-studio/setting-popover.tsx` → `src/components/forms/setting-popover.tsx`
-- Modify: `src/components/image-studio/composer.tsx`
+- Move: `src/components/studio/dropdown.tsx` → `src/components/overlays/dropdown.tsx`
+- Modify: every importer of the two (see Step 2)
 
 **Interfaces:**
 
 - Consumes: nothing.
-- Produces: `BatchStepper({ value, max, onChange, showMax }: { value: number; max: number; onChange: (next: number) => void; showMax?: boolean })` at `@/components/forms/batch-stepper`, and `SettingPopover` unchanged at `@/components/forms/setting-popover`.
+- Produces: `BatchStepper({ value, max, onChange, showMax }: { value: number; max: number; onChange: (next: number) => void; showMax?: boolean })` at `@/components/forms/batch-stepper`, and `Dropdown` / `DropdownItem` unchanged at `@/components/overlays/dropdown`.
+
+> **Why `dropdown` and not `setting-popover`.** An earlier draft of this plan
+> promoted `setting-popover.tsx`. That was wrong: it is a _titled listbox_ —
+> `{title, icon, value, options, onChange}` — that renders its own trigger pill.
+> Audio's advanced dials need a slider under a custom trigger, which is
+> `Dropdown`'s shape (`trigger` node plus `children: (close) => ReactNode` plus
+> `role="dialog"`), not a list of options. Audio never consumes
+> `setting-popover`, so it does not move.
+>
+> `Dropdown` is already imported out of `components/studio/` by
+> `components/feed/`, `components/marketing/` and `components/image-studio/`, so
+> this promotion settles a cross-feature violation that predates audio.
 
 `CLAUDE.md`: _"Colocate first, promote later. A component moves to `components/` the moment a second consumer appears."_ Audio is that second consumer. Doing the move now, in its own commit, keeps the image studio's regression separate from the audio feature.
 
 - [ ] **Step 1: Move both files with git so history follows**
 
 ```bash
+mkdir -p src/components/forms src/components/overlays
 git mv src/components/image-studio/batch-stepper.tsx src/components/forms/batch-stepper.tsx
-git mv src/components/image-studio/setting-popover.tsx src/components/forms/setting-popover.tsx
+git mv src/components/studio/dropdown.tsx src/components/overlays/dropdown.tsx
 ```
 
 - [ ] **Step 2: Find every importer**
 
 ```bash
-grep -rn "image-studio/batch-stepper\|image-studio/setting-popover" src/
+grep -rln "image-studio/batch-stepper\|studio/dropdown" src/ | xargs sed -i '' \
+  -e 's#@/components/image-studio/batch-stepper#@/components/forms/batch-stepper#g' \
+  -e 's#@/components/studio/dropdown#@/components/overlays/dropdown#g'
+grep -rn "image-studio/batch-stepper\|studio/dropdown" src/ || echo "no stale imports"
 ```
 
-Expected: hits in `src/components/image-studio/composer.tsx` only. Rewrite each to `@/components/forms/batch-stepper` and `@/components/forms/setting-popover`.
+`batch-stepper` has one importer (`composer.tsx`). `dropdown` has five:
+`studio/model-picker.tsx`, `studio/option-pill.tsx`, `feed/tile-menu.tsx`,
+`marketing/account-menu.tsx` and `image-studio/setting-popover.tsx`.
 
 - [ ] **Step 3: Add the optional `max` display to `BatchStepper`**
 
@@ -2086,18 +2104,27 @@ Check:
 
 1. The composer renders with its settings row intact.
 2. The batch stepper still shows a bare number — **not** `1 / 4`. If it shows the max, `showMax` was defaulted to `true`.
-3. Clicking a settings pill still opens its titled popover.
-4. The browser console has no errors.
+3. Clicking a settings pill still opens its titled popover (that popover is
+   `setting-popover.tsx`, which stays in `image-studio/` and now imports
+   `Dropdown` from its new home).
+4. The account menu in the site header still opens, and a feed tile's `⋯` menu
+   still opens — those are the other two `Dropdown` consumers.
+5. The browser console has no errors.
 
 - [ ] **Step 6: Commit**
 
 ```bash
-git add -A src/components/forms src/components/image-studio
-git commit -m "Promote the batch stepper and setting popover out of image-studio
+git add -A src/components
+git commit -m "Promote the batch stepper and the dropdown into shared folders
 
-Audio is their second consumer, and feature folders are not allowed to
-import from each other — the alternative was a duplicate that would drift
-the first time either was touched.
+Audio is the stepper's second consumer, and feature folders are not
+allowed to import from each other — the alternative was a duplicate that
+would drift the first time either was touched.
+
+The dropdown had already lost that argument. It lives in studio/ but feed/,
+marketing/ and image-studio/ all reach into it, so the rule was being
+broken three times before audio existed. Moving it to overlays/ makes the
+existing imports legal rather than adding a fourth violation.
 
 The stepper grows an opt-in showMax, because audio labels its ceiling
 (1 / 4) and the image composer shows the count alone. Opt-in rather than
@@ -3195,7 +3222,7 @@ not import from each other."
 
 **Interfaces:**
 
-- Consumes: `AUDIO_RANGES`, `ADVANCED_DEFAULTS`, `OUTPUT_FORMATS`, `audioModelById` from Task 2; `SettingRow` from Task 10; `SettingPopover` from `@/components/forms/setting-popover`.
+- Consumes: `AUDIO_RANGES`, `ADVANCED_DEFAULTS`, `OUTPUT_FORMATS`, `audioModelById` from Task 2; `SettingRow` from Task 10; `Dropdown` from `@/components/overlays/dropdown` (promoted in Task 7).
 - Produces:
 
 ```ts
@@ -3625,16 +3652,15 @@ export function AdvancedSettings({
 
 - [ ] **Step 4: Write the three-up dial**
 
-Create `src/components/audio-studio/advanced-dial.tsx` — a `SettingRow`-shaped button at `h-14.5` that opens a `SettingPopover` containing one `IntensitySlider`:
+Create `src/components/audio-studio/advanced-dial.tsx` — a `SettingRow`-shaped trigger at `h-14.5` whose `Dropdown` panel holds one `IntensitySlider`. `Dropdown` owns its own open state and takes the trigger as a node, so there is no `useState`/`useRef` pair here. `role="dialog"` because the panel holds a focusable control, which a `listbox` may not:
 
 ```tsx
 "use client";
 
-import { useRef, useState } from "react";
 import { ChevronRight } from "lucide-react";
 
 import { IntensitySlider } from "@/components/audio-studio/intensity-slider";
-import { SettingPopover } from "@/components/forms/setting-popover";
+import { Dropdown } from "@/components/overlays/dropdown";
 
 export function AdvancedDial({
   label,
@@ -3653,49 +3679,52 @@ export function AdvancedDial({
   format: (value: number) => string;
   onChange: (next: number) => void;
 }) {
-  const anchor = useRef<HTMLButtonElement>(null);
-  const [open, setOpen] = useState(false);
-
   return (
-    <>
-      <button
-        ref={anchor}
-        type="button"
-        onClick={() => {
-          setOpen((current) => !current);
-        }}
-        className="flex h-14.5 min-w-0 flex-1 items-center gap-1 rounded-q-300 border border-q-subtle bg-q-w-05 px-3 py-2 text-left transition-colors outline-none hover:border-q-default focus-visible:ring-2 focus-visible:ring-q-focus motion-reduce:transition-none"
-      >
-        <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-          <span className="truncate text-q-caption-l font-medium text-q-soft">
-            {label}
+    <Dropdown
+      label={label}
+      /* The panel holds a slider, which is focusable chrome — a listbox may
+         not contain one, so the panel is a dialog. */
+      role="dialog"
+      width={260}
+      align="start"
+      triggerClassName="min-w-0 flex-1"
+      trigger={
+        <span className="flex h-14.5 w-full items-center gap-1 rounded-q-300 border border-q-subtle bg-q-w-05 px-3 py-2 text-left transition-colors hover:border-q-default motion-reduce:transition-none">
+          <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+            <span className="truncate text-q-caption-l font-medium text-q-soft">
+              {label}
+            </span>
+            <span className="truncate text-q-menu text-q-fg tabular-nums">
+              {format(value)}
+            </span>
           </span>
-          <span className="truncate text-q-menu text-q-fg tabular-nums">
-            {format(value)}
-          </span>
+          <ChevronRight className="size-4 shrink-0" />
         </span>
-        <ChevronRight className="size-4 shrink-0" />
-      </button>
-
-      <SettingPopover anchorRef={anchor} open={open} title={label} width={260}>
-        <IntensitySlider
-          label={label}
-          value={value}
-          min={min}
-          max={max}
-          step={step}
-          format={format}
-          onChange={onChange}
-        />
-      </SettingPopover>
-    </>
+      }
+    >
+      {() => (
+        <div className="p-2">
+          <IntensitySlider
+            label={label}
+            value={value}
+            min={min}
+            max={max}
+            step={step}
+            format={format}
+            onChange={onChange}
+          />
+        </div>
+      )}
+    </Dropdown>
   );
 }
 ```
 
-> Check `setting-popover.tsx`'s actual prop names before writing this — it was
-> written for the image studio and may call them `anchor`, `title` or
-> `children` differently. Match what is there rather than changing it.
+> `Dropdown`'s `children` is a render prop receiving `close`. This panel does
+> not close on change — a slider you drag should stay open — so the argument is
+> ignored. Check `dropdown.tsx` for whether `trigger` is already wrapped in its
+> own `<button>`; if it is, the trigger here must stay a `<span>`, as written,
+> never a nested `<button>`.
 
 - [ ] **Step 5: Verify in the browser**
 
