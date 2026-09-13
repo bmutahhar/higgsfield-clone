@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQueries } from "@tanstack/react-query";
 
+import { AudioPane } from "@/components/audio-studio/audio-pane";
 import { AudioPanel } from "@/components/audio-studio/audio-panel";
 import { TranslateForm } from "@/components/audio-studio/translate-form";
 import { TtsForm } from "@/components/audio-studio/tts-form";
@@ -96,6 +97,19 @@ export function AudioStudio({
     })),
   });
 
+  /*
+   * This tab's own output, newest first. All three modes file under one kind,
+   * so the pane would otherwise show a Translate tile in the speech list — the
+   * mode on each record's settings is what separates them.
+   */
+  const forThisTab = generations
+    .filter(
+      (generation) =>
+        generation.settings.kind === "audio" &&
+        generation.settings.values.mode === mode,
+    )
+    .sort((a, b) => b.createdAt - a.createdAt);
+
   const submit = (values: AudioGenerationValues) => {
     /*
      * Values arrive already validated, so submitting signed out still fails on
@@ -126,12 +140,16 @@ export function AudioStudio({
         )}
       </AudioPanel>
 
-      <div className="relative size-full">
-        {/* Tasks 13-14 replace this with the pane. */}
-        <p className="p-6 text-q-caption-l text-q-soft">
-          Pane: {paneTab} · {String(generations.length)} audio generations
-        </p>
-      </div>
+      <AudioPane
+        tab={paneTab}
+        onTabChange={setPaneTab}
+        mode={mode}
+        generations={forThisTab}
+        signedIn={Boolean(user)}
+        onGate={() => {
+          openAuth("signup");
+        }}
+      />
     </div>
   );
 }
