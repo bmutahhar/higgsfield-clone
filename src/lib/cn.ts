@@ -26,11 +26,51 @@ const FONT_SIZES = [
   "label",
   "eyebrow",
   "mono",
+  // The studio scale. Same reasoning: without these, `text-q-body-sm` and
+  // `text-q-idle` both look like `text-*` and one is dropped.
+  "q-accent-xl",
+  "q-accent-lg",
+  "q-accent-sm",
+  "q-brand-xxs",
+  "q-body-sm",
+  "q-label-sm",
+  "q-label-xs",
+  "q-caption-m",
+  "q-caption-xs",
+  "q-menu",
 ];
 
-const RADII = ["control", "card", "media", "panel", "modal", "thumb"];
+const RADII = [
+  "control",
+  "card",
+  "media",
+  "panel",
+  "modal",
+  "thumb",
+  "q-100",
+  "q-150",
+  "q-200",
+  "q-250",
+  "q-300",
+  "q-400",
+  "q-500",
+  "q-600",
+];
 
-const SHADOWS = ["e1", "e2", "e3", "e4", "ring", "glow"];
+const SHADOWS = [
+  "e1",
+  "e2",
+  "e3",
+  "e4",
+  "ring",
+  "glow",
+  "q-indicator",
+  "q-menu",
+  "q-avatar",
+  "q-cta",
+  "q-glass",
+  "q-badge",
+];
 
 const twMerge = extendTailwindMerge({
   extend: {

@@ -18,6 +18,13 @@
 @import "../styles/tokens/base.css" layer(base);
 
 /*
+ * The studio ("q") layer. Separate scale for /ai/* only — see the header of
+ * q-studio.css for why it is a parallel namespace rather than an edit to the
+ * files above.
+ */
+@import "../styles/tokens/q-studio.css";
+
+/*
  * Every token above is projected into Tailwind's theme here, so components are
  * written in plain utilities — bg-card, text-muted, rounded-card, text-h2,
  * hover:bg-accent-hover — and never in inline style objects.
@@ -169,9 +176,136 @@
 
   /* ---- Animation ---- */
   --animate-indeterminate: hf-indeterminate 1.2s linear infinite;
+  --animate-route-progress: hf-route-progress 6s var(--ease-linear) forwards;
+  --animate-route-progress-out: hf-route-progress-out var(--dur-slow)
+    var(--ease-standard) forwards;
   --animate-fade-in: hf-fade var(--dur-base) var(--ease-standard) both;
   --animate-pop-in: hf-pop var(--dur-slow) var(--ease-out) both;
   --animate-rise-in: hf-rise var(--dur-slow) var(--ease-out) both;
+}
+
+/*
+ * Studio ("q") theme projection. Same contract as the block above: components
+ * write `bg-q-panel`, `text-q-muted`, `rounded-q-300`, `text-q-body-sm` and
+ * never an inline style. Only /ai/* components use these.
+ *
+ * Spacing is deliberately absent — the live studio's scale is Tailwind's own
+ * default step scale, so `p-3` / `gap-4` / `pb-12` already land on it.
+ */
+@theme inline {
+  /* ---- Surfaces ---- */
+  --color-q-page: var(--q-bg-page);
+  --color-q-panel: var(--q-bg-primary);
+  --color-q-card: var(--q-bg-secondary);
+  --color-q-card-strong: var(--q-bg-secondary-strong);
+  --color-q-raised: var(--q-bg-tertiary);
+  --color-q-glass: var(--q-bg-glass);
+  --color-q-dot: var(--q-dot);
+  --color-q-composer: var(--q-bg-composer);
+  --color-q-modal: var(--q-bg-modal);
+  --color-q-pill: var(--q-bg-pill);
+
+  /* ---- Borders. `q-hairline` is the card edge; the rest is the white ladder. ---- */
+  --color-q-hairline: var(--q-border-card);
+  --color-q-subtle: var(--q-border-subtle);
+  --color-q-default: var(--q-border-default);
+  --color-q-strong: var(--q-border-strong);
+  --color-q-focus: var(--q-border-focus);
+
+  /* ---- Text ---- */
+  --color-q-fg: var(--q-text-primary);
+  --color-q-body: var(--q-text-body);
+  --color-q-danger: var(--q-text-danger);
+  --color-q-danger-soft: var(--q-surface-danger);
+  --color-q-muted: var(--q-text-secondary);
+  --color-q-dim: var(--q-text-tertiary);
+  --color-q-soft: var(--q-text-muted);
+  --color-q-inverse: var(--q-text-inverse);
+  --color-q-brand: var(--q-text-brand);
+  --color-q-idle: var(--q-text-idle);
+  --color-q-idle-soft: var(--q-text-idle-soft);
+
+  /* ---- White inks. 05 is every control at rest, 08 is its hover. ---- */
+  --color-q-w-04: var(--q-w-04);
+  --color-q-w-05: var(--q-w-05);
+  --color-q-w-08: var(--q-w-08);
+  --color-q-w-10: var(--q-w-10);
+  --color-q-w-20: var(--q-w-20);
+  --color-q-w-32: var(--q-w-32);
+  --color-q-w-50: var(--q-w-50);
+  --color-q-w-80: var(--q-w-80);
+
+  /* ---- Brand + control states ---- */
+  --color-q-accent: var(--q-brand);
+  --color-q-accent-hi: var(--q-brand-hi);
+  --color-q-accent-05: var(--q-brand-05);
+  --color-q-accent-10: var(--q-brand-10);
+  --color-q-accent-80: var(--q-brand-80);
+  --color-q-disabled: var(--q-btn-disabled-bg);
+  --color-q-disabled-fg: var(--q-btn-disabled-fg);
+  --color-q-switch-off: var(--q-switch-off);
+
+  /* ---- Radius ---- */
+  --radius-q-100: var(--q-r-100);
+  --radius-q-150: var(--q-r-150);
+  --radius-q-200: var(--q-r-200);
+  --radius-q-250: var(--q-r-250);
+  --radius-q-300: var(--q-r-300);
+  --radius-q-400: var(--q-r-400);
+  --radius-q-500: var(--q-r-500);
+  --radius-q-600: var(--q-r-600);
+  --radius-q-full: var(--q-r-full);
+
+  /* ---- Families. Inter for UI, Space Grotesk for the uppercase display. ---- */
+  --font-q-ui: var(--font-inter), "Helvetica Neue", arial, sans-serif;
+  --font-q-display:
+    var(--font-space-grotesk), "Helvetica Neue", arial, sans-serif;
+
+  /* ---- Type. Weight is baked in only where it never varies. ---- */
+  --text-q-accent-xl: 36px;
+  --text-q-accent-xl--line-height: 40px;
+  --text-q-accent-xl--letter-spacing: -1.2px;
+  --text-q-accent-xl--font-weight: 700;
+  --text-q-accent-lg: 32px;
+  --text-q-accent-lg--line-height: 36px;
+  --text-q-accent-lg--letter-spacing: -1.2px;
+  --text-q-accent-lg--font-weight: 700;
+  --text-q-accent-sm: 24px;
+  --text-q-accent-sm--line-height: 28px;
+  --text-q-accent-sm--letter-spacing: -1px;
+  --text-q-accent-sm--font-weight: 700;
+  --text-q-brand-xxs: 20px;
+  --text-q-brand-xxs--line-height: 28px;
+  --text-q-brand-xxs--letter-spacing: -0.2px;
+  --text-q-brand-xxs--font-weight: 700;
+
+  --text-q-body-sm: 14px;
+  --text-q-body-sm--line-height: 20px;
+  --text-q-label-sm: 14px;
+  --text-q-label-sm--line-height: 16px;
+  --text-q-label-xs: 12px;
+  --text-q-label-xs--line-height: 16px;
+  --text-q-caption-m: 12px;
+  --text-q-caption-m--line-height: 16px;
+  --text-q-caption-m--font-weight: 500;
+  --text-q-caption-xs: 10px;
+  --text-q-caption-xs--line-height: 14px;
+  --text-q-caption-xs--letter-spacing: 0.2px;
+  --text-q-caption-xs--font-weight: 600;
+  --text-q-menu: 14px;
+  --text-q-menu--line-height: 20px;
+  --text-q-menu--font-weight: 500;
+
+  /* ---- Elevation ---- */
+  --shadow-q-indicator: var(--q-shadow-indicator);
+  --shadow-q-menu: var(--q-shadow-menu);
+  --shadow-q-avatar: var(--q-shadow-avatar);
+  --shadow-q-cta: var(--q-shadow-cta);
+  --shadow-q-glass: var(--q-shadow-glass);
+  --shadow-q-badge: var(--q-shadow-badge);
+
+  /* ---- Easing ---- */
+  --ease-q-pop: var(--q-ease-pop);
 }
 
 /* The system is dark-only: a black cinema wall with one acid-lime switch. */

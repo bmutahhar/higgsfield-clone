@@ -435,12 +435,18 @@ model listed twice.
 Absolutely-positioned cells over a `relative` container, ~2px gutters, column
 count from the zoom control, cell height from each image's aspect ratio.
 
-Column count is a **fixed function of the zoom value**, independent of viewport
-width — verified at both 1728 and 1440:
+The zoom value sets a **column ceiling**, not the final count — verified at
+1728 and 1440:
 
 | slider value | 0   | 1   | 2   | 3 (default) | 4   |
 | ------------ | --- | --- | --- | ----------- | --- |
 | columns      | 7   | 6   | 5   | 4           | 3   |
+
+A narrow window overrides that ceiling: columns are
+`max(2, min(zoomColumns, floor(scrollerWidth / 240)))`. One rule reconciles
+every count observed live — 1728px at zoom 3 is 4 columns, 1440px at zoom 2 is
+5, 900px is 3 whatever the zoom, and 500px is 2 — and it is what makes the
+mobile feed two columns with the zoom control hidden.
 
 Persisted to `localStorage` as
 `hf:image-feed-view-controls:<date>` → `{"columnsPerRow":N,"groupMode":"default"}`.
@@ -624,34 +630,45 @@ reveals — is CSS.
 ## 11. Files
 
 ```
-src/app/(studio)/ai/image/page.tsx           rewritten: toolbar + feed + composer
-src/components/studio/
-  image-composer.tsx                         rewritten
-  prompt-editor.tsx                          new — auto-grow textarea + placeholder
-  setting-pill.tsx                           new — the shared pill trigger
-  setting-popover.tsx                        new — pattern A (both variants)
-  ratio-glyph.tsx                            new — proportional rectangle icon
-  model-dialog.tsx                           new — pattern B
-  model-badge.tsx                            new — the skewed NEW/PREMIUM badge
-  batch-stepper.tsx                          new
-  generate-button.tsx                        new — incl. the rotated strike
-  scroll-rail.tsx                            new — overflow rail + edge arrows
+src/app/(studio)/ai/image/page.tsx           rewritten: feed + composer
+src/components/image-studio/
+  composer.tsx                               the floating bar
+  prompt-editor.tsx                          auto-grow textarea + placeholder
+  setting-pill.tsx                           the shared pill shape
+  setting-popover.tsx                        pattern A (both row variants)
+  ratio-glyph.tsx                            proportional rectangle icon
+  model-dialog.tsx                           pattern B
+  model-badge.tsx                            the skewed NEW/PREMIUM badge
+  batch-stepper.tsx                          1–4, with its bounds
+  generate-cta.tsx                           incl. the 30° strike
+  scroll-rail.tsx                            overflow rail + edge arrows
 src/components/feed/
-  image-feed.tsx                             new — masonry + column logic
-  feed-tile.tsx                              new — tile + hover overlay
-  tile-menu.tsx                              new — context menu
-  selection-bar.tsx                          new
-  zoom-control.tsx                           new
-src/config/image-studio.ts                   new — 33 models, ratios, quality,
-                                             resolutions, backgrounds
-src/hooks/use-feed-columns.ts                new — persisted column count
+  image-feed.tsx                             masonry, columns, selection
+  feed-tile.tsx                              tile + hover overlay
+  tile-menu.tsx                              context menu
+  selection-bar.tsx                          multi-select toolbar
+  zoom-control.tsx                           the density slider
+src/config/image-studio.ts                   33 models, ratios, quality,
+                                             resolutions, backgrounds, feed
+src/hooks/use-feed-columns.ts                persisted column count
+src/lib/masonry.ts                           shortest-column-first balancing
+src/components/studio/dropdown.tsx           + `role` and `height` props
+src/lib/cn.ts                                register the q- scale with tw-merge
 src/styles/tokens/q-studio.css               corrected + extended per §2
 src/app/globals.css                          project the new q- tokens
 ```
 
-`option-pill.tsx` and `model-picker.tsx` stay as they are — the video studio
-still uses them. The image studio gets its own, exact components rather than
-bending the shared ones into two shapes.
+The image studio gets its own folder rather than joining `components/studio/`.
+That folder belongs to the video surfaces — `option-pill.tsx`,
+`model-picker.tsx`, the Genjutsu form and its own `generate-button.tsx` all
+live there and stay untouched. Two feature folders beat one shared one whose
+components would have to bend into two shapes, and it keeps concurrent work on
+the two studios from landing on the same filenames.
+
+`cn()` needs the `q-` font sizes, radii and shadows registered with
+tailwind-merge for the same reason its own comment already gives for the
+marketing scale: without them `text-q-body-sm` and `text-q-idle` both look like
+`text-*`, and one is silently dropped.
 
 ---
 

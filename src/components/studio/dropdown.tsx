@@ -15,6 +15,14 @@ export interface DropdownProps {
   /** Panel width in px. Needed up front so it can be positioned before paint. */
   width?: number;
   label: string;
+  /**
+   * The panel's role. `listbox` for a plain list of options; `menu` for a list
+   * of commands; `dialog` when the panel owns focusable chrome of its own — a
+   * search field, say — which a listbox may not contain.
+   */
+  role?: "listbox" | "menu" | "dialog";
+  /** Fixed panel height, for panels that must not resize as they filter. */
+  height?: number;
 }
 
 interface Position {
@@ -45,6 +53,8 @@ export function Dropdown({
   panelClassName,
   width = 240,
   label,
+  role = "listbox",
+  height,
 }: DropdownProps) {
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState<Position | null>(null);
@@ -137,9 +147,13 @@ export function Dropdown({
         <div
           ref={panelRef}
           id={panelId}
-          role="listbox"
+          role={role}
           aria-label={label}
-          style={{ maxHeight: pos.maxHeight }}
+          style={
+            height === undefined
+              ? { maxHeight: pos.maxHeight }
+              : { height: Math.min(height, pos.maxHeight) }
+          }
           className={cn(
             "overflow-y-auto rounded-panel border border-hairline bg-n-2 p-1.5 shadow-e4",
             "hf-scrollbar animate-pop-in motion-reduce:animate-none",
@@ -158,7 +172,7 @@ export function Dropdown({
       <button
         ref={triggerRef}
         type="button"
-        aria-haspopup="listbox"
+        aria-haspopup={role}
         aria-expanded={open}
         aria-controls={open ? panelId : undefined}
         aria-label={label}

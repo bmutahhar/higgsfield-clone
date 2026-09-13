@@ -1,10 +1,13 @@
 "use client";
 
+import { Fragment } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { Icon } from "@/components/core/icon";
 import { LogoMark } from "@/components/layout/logo-mark";
+import { NavMenu } from "@/components/marketing/nav-menu";
+import { NAV_MENUS } from "@/config/nav-menus";
 import { PRIMARY_NAV } from "@/config/site";
 import { cn } from "@/lib/cn";
 
@@ -24,21 +27,29 @@ import { useCompactHeader } from "./use-compact-header";
  *   active     lime text — not white, which is what this had before
  *   badges     10px/700, radius 6, lime at 20% on lime text
  *
- * Both sizes cross in 300ms ease-in-out, and the live site runs the buttons'
- * colours on that same 300ms rather than the 140ms the rest of the system uses
- * for controls — so hover here settles slower than on a page button.
+ * Both sizes cross in 300ms on the CSS `ease-in-out` keyword, spelled as an
+ * arbitrary value because Tailwind's ease-in-out utility is a different,
+ * asymmetric curve. The live site also runs the buttons' colours on that same
+ * 300ms rather than the 140ms the rest of the system uses for controls, so
+ * hover settles more slowly here than on a page button.
  *
  * The live site shrinks a bar that overlays the page, because there the
  * document scrolls under it. Here the header is chrome in a body that does not
  * scroll, so it gives its 16px back to the scroll container below instead —
  * same 300ms, and the two animate together.
+ *
+ * `relative` on the row is what the hover menus hang off: it makes the header
+ * the containing block for their panels, which both keeps them clear of the
+ * nav row's horizontal clipping and lets `top-full` track whatever height the
+ * header currently has. `z-60` puts them over the page — above the studio
+ * composer at 50, below the dropdowns and modals at 100 and up.
  */
 
 const NAV_LINK =
   "inline-flex h-7 shrink-0 items-center gap-1.5 rounded-lg px-2 py-1 text-[14px] font-medium whitespace-nowrap transition-colors duration-[140ms] ease-snap motion-reduce:duration-0 focus-visible:shadow-ring focus-visible:outline-none";
 
 const BUTTON =
-  "inline-flex h-9 shrink-0 items-center gap-2 rounded-control px-3 text-[14px] font-medium whitespace-nowrap transition-[height,padding,border-radius,color,background-color] duration-300 ease-in-out motion-reduce:duration-0 focus-visible:shadow-ring focus-visible:outline-none group-data-compact:h-6 group-data-compact:rounded-lg group-data-compact:px-2.5";
+  "inline-flex h-9 shrink-0 items-center gap-2 rounded-control px-3 text-[14px] font-medium whitespace-nowrap transition-[height,padding,border-radius,color,background-color] duration-300 ease-[ease-in-out] motion-reduce:duration-0 focus-visible:shadow-ring focus-visible:outline-none group-data-compact:h-6 group-data-compact:rounded-lg group-data-compact:px-2.5";
 
 function NavBadge({ children }: { children: string }) {
   return (
@@ -59,7 +70,7 @@ export function SiteHeader() {
   return (
     <header
       ref={headerRef}
-      className="group flex h-13 shrink-0 items-center gap-3 bg-panel px-4 transition-[height] duration-300 ease-in-out data-compact:h-9 motion-reduce:duration-0"
+      className="group relative z-60 flex h-13 shrink-0 items-center gap-3 bg-panel px-4 transition-[height] duration-300 ease-[ease-in-out] data-compact:h-9 motion-reduce:duration-0"
     >
       <Link
         href="/"
@@ -68,7 +79,7 @@ export function SiteHeader() {
       >
         {/* Sized in CSS, not through the `size` prop, so the two states can
               animate into each other. */}
-        <LogoMark className="size-8 transition-[width,height] duration-300 ease-in-out group-data-compact:size-5 motion-reduce:duration-0" />
+        <LogoMark className="size-8 transition-[width,height] duration-300 ease-[ease-in-out] group-data-compact:size-5 motion-reduce:duration-0" />
         <span className="hidden font-display text-[16px] tracking-[-0.01em] sm:block">
           Higgsfield
         </span>
@@ -76,7 +87,13 @@ export function SiteHeader() {
 
       {/* The live row overflows horizontally rather than collapsing. Entries
             for surfaces this clone has not built render inert, not as 404 links. */}
-      <nav className="hf-scrollbar-none flex min-w-0 flex-1 items-center gap-0.5 overflow-x-auto">
+      {/*
+        `self-stretch` rather than the header's default centring: the row is
+        otherwise only as tall as a link, and a hover menu's trigger has to
+        reach the header's lower edge or the pointer crosses dead space on its
+        way down to the panel and the menu closes under it.
+      */}
+      <nav className="hf-scrollbar-none flex min-w-0 flex-1 items-center gap-0.5 self-stretch overflow-x-auto">
         {PRIMARY_NAV.map((link) => {
           const active = isActive(link.href);
           const content = (
@@ -86,22 +103,8 @@ export function SiteHeader() {
             </>
           );
 
-          if (!link.href) {
-            return (
-              <span
-                key={link.label}
-                aria-disabled="true"
-                title={`${link.label} — not built in this clone`}
-                className={cn(NAV_LINK, "cursor-default text-[#A8A8A8]/45")}
-              >
-                {content}
-              </span>
-            );
-          }
-
-          return (
+          const item = link.href ? (
             <Link
-              key={link.label}
               href={link.href}
               aria-current={active ? "page" : undefined}
               className={cn(
@@ -113,6 +116,26 @@ export function SiteHeader() {
             >
               {content}
             </Link>
+          ) : (
+            <span
+              aria-disabled="true"
+              title={`${link.label} — not built in this clone`}
+              className={cn(NAV_LINK, "cursor-default text-[#A8A8A8]/45")}
+            >
+              {content}
+            </span>
+          );
+
+          // Four items open a panel on the live site; the two whose surfaces
+          // exist here carry one.
+          const menu = link.menu ? NAV_MENUS[link.menu] : undefined;
+
+          return menu ? (
+            <NavMenu key={link.label} menu={menu}>
+              {item}
+            </NavMenu>
+          ) : (
+            <Fragment key={link.label}>{item}</Fragment>
           );
         })}
       </nav>

@@ -46,6 +46,33 @@ a:hover {
   box-shadow: var(--ring-focus);
 }
 
+/*
+ * Text entry is the exception, and it has to be stated because the browser
+ * matches :focus-visible on a text field for a plain mouse click — so the rule
+ * above was drawing a ring every time anyone clicked into a prompt or an
+ * input. The caret already marks the insertion point; a ring around the field
+ * you are typing in is noise. Controls that are not text entry — checkboxes,
+ * radios, ranges, buttons — keep theirs, and fields that want a focus
+ * treatment light their border instead.
+ */
+:is(
+  textarea,
+  [contenteditable="true"],
+  input:not(
+    [type="button"],
+    [type="checkbox"],
+    [type="color"],
+    [type="file"],
+    [type="image"],
+    [type="radio"],
+    [type="range"],
+    [type="reset"],
+    [type="submit"]
+  )
+):focus-visible {
+  box-shadow: none;
+}
+
 /* Eyebrows mark a section; they never carry meaning alone. */
 .hf-eyebrow {
   font: var(--fw-medium) var(--fs-eyebrow) / 1 var(--font-ui);
@@ -144,6 +171,44 @@ a:hover {
   }
   100% {
     transform: translateX(250%);
+  }
+}
+
+/* Route progress. Linear between stops — the deceleration is in where the
+   stops sit, not in an easing curve on top of them. It acknowledges the click
+   in the first half-second, then slows towards a ceiling it never reaches:
+   only a committed navigation completes the bar.
+
+   Written against `scale`, not `transform`: Tailwind v4 compiles scale-x-* to
+   the standalone scale property, and the two multiply — keyframing transform
+   would leave the utility's `scale: 0 1` pinning the bar shut forever. */
+@keyframes hf-route-progress {
+  0% {
+    scale: 0 1;
+  }
+  8% {
+    scale: 0.28 1;
+  }
+  30% {
+    scale: 0.55 1;
+  }
+  60% {
+    scale: 0.75 1;
+  }
+  100% {
+    scale: 0.9 1;
+  }
+}
+
+/* The fade half of the finish. Held opaque while the fill completes, so the
+   bar is seen reaching 100% rather than dissolving on the way there. */
+@keyframes hf-route-progress-out {
+  0%,
+  45% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
   }
 }
 

@@ -1,0 +1,49 @@
+import { Icon } from "@/components/core/icon";
+
+export interface GenerateCtaProps {
+  /** Pre-discount total, struck through. */
+  list: number;
+  /** Charged total. */
+  net: number;
+}
+
+/** Credits print without a trailing `.0`: 6.5 stays 6.5, 11.0 becomes 11. */
+function credits(n: number): string {
+  return n.toFixed(1).replace(/\.0$/, "");
+}
+
+/*
+ * The image studio's call to action.
+ *
+ * A tall block rather than a bar — 84px, filling the composer's right column
+ * and bottom-aligned, so it holds still while the prompt grows above it. The
+ * Genjutsu form's `GenerateButton` is a different shape for a different
+ * surface; these two deliberately do not share.
+ *
+ * It is never disabled: the live button stays live on an empty prompt, and
+ * submitting nothing is the server's to report, not the button's to pre-empt.
+ */
+export function GenerateCta({ list, net }: GenerateCtaProps) {
+  return (
+    <button
+      type="submit"
+      className="flex h-full min-w-44 shrink-0 items-center justify-center rounded-q-300 bg-q-accent px-1.5 text-q-inverse transition-colors duration-150 hover:bg-q-accent-80 focus-visible:bg-q-accent-80 focus-visible:ring-2 focus-visible:ring-q-accent/50 focus-visible:outline-none motion-reduce:transition-none"
+    >
+      <span className="flex items-center gap-1.5 text-base font-semibold">
+        Generate
+        <span className="flex items-center gap-1">
+          <Icon name="sparkles" size={16} />
+          {/*
+            A 30° rule through the old price, not `line-through`: the live
+            strike is drawn at an angle and overhangs the digits by 2px.
+          */}
+          <span className="relative opacity-50">
+            {credits(list)}
+            <span className="absolute top-1/2 -right-0.5 -left-0.5 rotate-[30deg] border-t-[1.5px] border-current" />
+          </span>
+          <span>{credits(net)}</span>
+        </span>
+      </span>
+    </button>
+  );
+}

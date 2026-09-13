@@ -40,7 +40,8 @@ export function Textarea({
           "resize-y rounded-control border border-input-border bg-input px-3 py-2.5",
           "text-body text-primary outline-none placeholder:text-muted",
           "transition-[border-color,box-shadow] duration-[140ms] ease-snap",
-          "focus:border-lime focus:shadow-ring motion-reduce:duration-0",
+          // Border only. A ring around a field you are typing in is noise.
+          "focus:border-lime motion-reduce:duration-0",
           textareaClassName,
         )}
         {...rest}

@@ -46,6 +46,25 @@ objects, not CSS modules, not styled-components.
   need it.
 - Respect `motion-reduce:` on anything that animates.
 
+### Which token layer
+
+There are two, and they must not be mixed inside one component.
+
+- **Marketing layer** — `--surface-*`, `--text-*`, `--r-*`, `--sp-*` from
+  `src/styles/tokens/{colors,typography,spacing,radius,elevation,motion}.css`,
+  written as `bg-card`, `text-muted`, `rounded-card`, `text-h2`. Mirrors the
+  Claude Design project 1:1 and is the source of truth everywhere **except**
+  the generation surfaces. Faces: Archivo + JetBrains Mono.
+- **Studio layer** — `--q-*` from `src/styles/tokens/q-studio.css`, written as
+  `bg-q-panel`, `text-q-muted`, `rounded-q-300`, `text-q-body-sm`. Used only
+  under `src/app/(studio)/` and `src/components/studio/`. Its values mirror the
+  live generation pages so those can hit 1:1 parity without restyling the
+  marketing pages. Faces: Inter + Space Grotesk.
+
+A studio component reaching for `bg-card`, or a marketing component reaching for
+`bg-q-panel`, is a bug. The two ramps are close enough to look almost right and
+far enough apart to be visibly wrong next to each other.
+
 ## File naming — kebab-case
 
 Every file and directory uses **kebab-case**. No `camelCase`, no `PascalCase`, no

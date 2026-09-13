@@ -54,7 +54,8 @@ export function Input({
           CONTROL_HEIGHT[size],
           error
             ? "border-danger"
-            : "border-input-border focus-within:border-lime focus-within:shadow-ring",
+            : // Border only, as on Textarea: text entry gets no focus ring.
+              "border-input-border focus-within:border-lime",
         )}
       >
         {iconLeft && <Icon name={iconLeft} size={16} className="text-muted" />}

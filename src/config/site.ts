@@ -1,4 +1,5 @@
 import type { IconName } from "@/components/core/icon";
+import type { NavMenuId } from "@/config/nav-menus";
 
 /**
  * Content inventory for the landing page, mirroring the surfaces the live
@@ -12,6 +13,8 @@ export interface NavLink {
   /** Omitted for surfaces this clone has not built — those render inert. */
   href?: string;
   badge?: string;
+  /** Opens a hover panel of features and models. See `config/nav-menus.ts`. */
+  menu?: NavMenuId;
 }
 
 /**
@@ -26,8 +29,8 @@ export interface NavLink {
  */
 export const PRIMARY_NAV: NavLink[] = [
   { label: "Explore", href: "/" },
-  { label: "Image", href: "/ai/image" },
-  { label: "Video", href: "/ai/video" },
+  { label: "Image", href: "/ai/image", menu: "image" },
+  { label: "Video", href: "/ai/video", menu: "video" },
   { label: "Audio" },
   { label: "MCP" },
   { label: "ChatGPT Plugin", badge: "New" },

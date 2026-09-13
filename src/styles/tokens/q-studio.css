@@ -1,0 +1,285 @@
+/*
+ * Studio ("q") token layer.
+ *
+ * The generation surfaces run on their own scale, separate from the marketing
+ * tokens in the sibling files. Those mirror the Claude Design project and stay
+ * the source of truth for everything outside /ai/*; these mirror the live
+ * studio's own values so the studio can hit 1:1 parity without restyling the
+ * pages already built on the other layer.
+ *
+ * Two rules keep them from tangling:
+ *   1. Every name here is `--q-` prefixed, so nothing collides.
+ *   2. Studio components use only `q-` utilities; marketing components never do.
+ *
+ * The numeric radius/spacing scale is the live system's own: the number is
+ * hundredths of a rem, so `--radius-q-300` is 0.75rem.
+ */
+:root {
+  /* ---- Backgrounds ---- */
+  --q-bg-page: #0f1113; /* studio body, behind both columns */
+  --q-bg-primary: #131517; /* form panel */
+  --q-bg-secondary: #1c1e20; /* media card at rest */
+  --q-bg-secondary-strong: #23262a;
+  --q-bg-tertiary: #2a2d32;
+  --q-bg-glass: rgba(35, 38, 42, 0.75); /* popovers, always with a blur */
+  --q-dot: #191b1d; /* the pane's dot grid, one step above the page */
+  /* The image studio's three own surfaces, measured off the live composer. */
+  --q-bg-composer: rgba(15, 17, 19, 0.96); /* the composer's outer ring */
+  --q-bg-modal: #1b1b1b; /* titled setting popovers */
+  --q-bg-pill: #222222; /* settings pills at rest */
+
+  /* ---- Borders ---- */
+  --q-border-subtle: rgba(255, 255, 255, 0.05);
+  --q-border-default: rgba(255, 255, 255, 0.1);
+  --q-border-strong: rgba(255, 255, 255, 0.2);
+  --q-border-card: rgba(217, 217, 217, 0.04);
+  --q-border-focus: #d1fe17;
+
+  /* ---- Text ---- */
+  --q-text-primary: #ffffff;
+  --q-text-body: #f7f7f8; /* prose and prompt text; not quite white */
+  --q-text-secondary: #828282;
+  --q-text-tertiary: #626262;
+  --q-text-muted: #898a8b;
+  --q-text-inverse: #14151a;
+  --q-text-brand: #d1fe17;
+  --q-text-danger: #e72930;
+  --q-surface-danger: rgba(231, 41, 48, 0.2);
+  /* Panel tab and segmented-tab idle states are white alphas, not greys. */
+  --q-text-idle: rgba(255, 255, 255, 0.6);
+  --q-text-idle-soft: rgba(255, 255, 255, 0.5);
+
+  /* ---- White inks. The control-surface ladder is 05 rest / 08 hover. ---- */
+  --q-w-04: rgba(255, 255, 255, 0.04);
+  --q-w-05: rgba(255, 255, 255, 0.05);
+  --q-w-08: rgba(255, 255, 255, 0.08);
+  --q-w-10: rgba(255, 255, 255, 0.1);
+  --q-w-20: rgba(255, 255, 255, 0.2);
+  --q-w-32: rgba(255, 255, 255, 0.32);
+  --q-w-50: rgba(255, 255, 255, 0.5);
+  --q-w-80: rgba(255, 255, 255, 0.8);
+
+  /* ---- Brand ----
+     The lime alphas are borders, not fills. Every control in the image
+     composer — the shell, the pills, the setting popovers — is outlined in
+     brand at 5%, and the reference button at 10%. Reading them as white
+     alphas is the single most visible way to get this surface wrong. */
+  --q-brand: #d1fe17;
+  --q-brand-hi: #effe17; /* inner stop of the CTA's radial fill */
+  --q-brand-05: rgba(209, 254, 23, 0.05);
+  --q-brand-10: rgba(209, 254, 23, 0.1);
+  --q-brand-80: rgba(209, 254, 23, 0.8); /* the CTA's hover fill */
+  --q-btn-disabled-bg: #292b2c;
+  --q-btn-disabled-fg: #737475;
+  --q-switch-off: #5c626a;
+
+  /* ---- Radius. The number is hundredths of a rem, as upstream.
+          Named --q-r-* so the @theme projection to --radius-q-* below is not
+          self-referential. Spacing needs no tokens: the live scale (4/8/12/16/
+          24/32/48px) is Tailwind's default step scale already. ---- */
+  --q-r-100: 0.25rem;
+  --q-r-150: 0.375rem;
+  --q-r-200: 0.5rem;
+  --q-r-250: 0.625rem;
+  --q-r-300: 0.75rem;
+  --q-r-400: 1rem;
+  --q-r-500: 1.25rem;
+  --q-r-600: 1.5rem;
+  --q-r-full: 9999px; /* pills: switches, filmstrip rail, pill-shaped tabs */
+
+  /* ---- Elevation ---- */
+  --q-shadow-indicator:
+    0 2px 2px rgba(0, 0, 0, 0.12), inset 0 2px 3px rgba(255, 255, 255, 0.05);
+  --q-shadow-menu:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.05), 0 4px 8px rgba(0, 0, 0, 0.24);
+  --q-shadow-avatar: 0 6px 12px rgba(0, 0, 0, 0.4);
+  --q-shadow-cta: inset 0 -3px rgba(0, 0, 0, 0.43);
+  --q-shadow-glass:
+    inset 0 2px 3px rgba(255, 255, 255, 0.05),
+    0 2px 4px -0.5px rgba(0, 0, 0, 0.12);
+  /* The drop-zone badge stack: a long, very soft fall plus an inner lip. */
+  --q-shadow-badge:
+    0 128.9px 36px rgba(0, 0, 0, 0), 0 82.4px 33px rgba(0, 0, 0, 0.01),
+    0 46.4px 28px rgba(0, 0, 0, 0.05), 0 20.5px 20.5px rgba(0, 0, 0, 0.09),
+    0 5px 11.3px rgba(0, 0, 0, 0.1),
+    inset 0 -0.3px 5.36px rgba(185, 185, 185, 0.35);
+
+  /* ---- Motion ---- */
+  --q-ease-pop: cubic-bezier(0.215, 0.61, 0.355, 1);
+}
+
+/* The segmented control's active pill. A gradient, a hairline and a lift. */
+.q-indicator {
+  background: linear-gradient(
+    148.9deg,
+    rgba(255, 255, 255, 0.04) 22.6%,
+    rgba(255, 255, 255, 0.06) 51.3%,
+    rgba(255, 255, 255, 0.04) 100%
+  );
+  border: 1px solid var(--q-border-subtle);
+  box-shadow: var(--q-shadow-indicator);
+}
+
+/*
+ * A 1px gradient border. Cannot be a border-color: the stroke itself is a
+ * conic gradient, so it has to be a masked background on a pseudo-box.
+ */
+.q-hairline-conic {
+  padding: 1px;
+  background: conic-gradient(
+    from 45deg,
+    rgba(255, 255, 255, 0.02) 0deg,
+    rgba(255, 255, 255, 0.15) 90deg,
+    rgba(255, 255, 255, 0.02) 180deg,
+    rgba(255, 255, 255, 0.02) 360deg
+  );
+  mask:
+    linear-gradient(#fff, #fff) content-box exclude,
+    linear-gradient(#fff, #fff);
+  -webkit-mask:
+    linear-gradient(#fff, #fff) content-box,
+    linear-gradient(#fff, #fff);
+  -webkit-mask-composite: xor;
+}
+
+/* The quality/model menu surface. A near-opaque vertical wash, not a flat fill. */
+.q-menu-surface {
+  background: linear-gradient(
+    180deg,
+    rgba(42, 42, 42, 0.98),
+    rgba(40, 40, 40, 0.98)
+  );
+  box-shadow: var(--q-shadow-menu);
+}
+
+/*
+ * The image composer's sheen. A 115° wash — cool slate into near-white, both
+ * at 12% — over the shell colour, which is what stops the bar reading as a
+ * flat plate against the feed behind it.
+ *
+ * It belongs on the outer ring rather than the form: the form is transparent
+ * with a backdrop blur, so it picks the wash up already softened, and the 2px
+ * of shell that shows around it stays part of the same surface.
+ */
+.q-composer-sheen {
+  background-image: linear-gradient(
+    115deg,
+    rgba(36, 43, 50, 0.12) 27.54%,
+    rgba(219, 219, 219, 0.12) 85.5%
+  );
+}
+
+/* The primary CTA. A radial hot spot at 40%, then the flat brand. */
+.q-cta-fill {
+  background: radial-gradient(
+    in oklab,
+    var(--q-brand-hi) 40%,
+    var(--q-brand) 100%
+  );
+}
+
+/*
+ * The feed's zoom slider. Unlike the marketing `.hf-slider` it has no fill:
+ * the rail is one flat 4px line the whole way across, with a small white
+ * thumb riding it. Pseudo-elements, so it cannot be expressed in utilities.
+ */
+.q-slider {
+  appearance: none;
+  -webkit-appearance: none;
+  height: 12px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.q-slider::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: var(--q-r-500);
+  background: var(--q-border-card);
+}
+
+.q-slider::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  /* Centres the 12px thumb on the 4px track. */
+  margin-top: -4px;
+  border: none;
+  border-radius: 50%;
+  background: var(--q-text-primary);
+}
+
+.q-slider::-moz-range-track {
+  height: 4px;
+  border-radius: var(--q-r-500);
+  background: var(--q-border-card);
+}
+
+.q-slider::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border: none;
+  border-radius: 50%;
+  background: var(--q-text-primary);
+}
+
+.q-slider:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 3px var(--q-brand-10);
+}
+
+.q-slider:focus-visible::-moz-range-thumb {
+  box-shadow: 0 0 0 3px var(--q-brand-10);
+}
+
+/* The scrim over a feed tile's controls. Two of these, mirrored. */
+.q-tile-scrim {
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.4) 0%,
+    rgba(0, 0, 0, 0.3) 12%,
+    rgba(0, 0, 0, 0.2) 25%,
+    rgba(0, 0, 0, 0.1) 38%,
+    rgba(0, 0, 0, 0.05) 50%,
+    rgba(0, 0, 0, 0) 100%
+  );
+}
+
+/* The `Top` model badge. The one place the studio uses a cool gradient. */
+.q-badge-top {
+  background-image: linear-gradient(
+    90deg,
+    #3259b4 0%,
+    #3c8cff 50%,
+    #00c8d2 75%,
+    #78c9e6 100%
+  );
+}
+
+/*
+ * The pane's ground: a staggered dot grid, two identical layers offset by half
+ * a tile so the dots read as a diagonal lattice rather than a square one.
+ *
+ * The mask is what keeps it from being wallpaper — it holds the dots at full
+ * strength through the lower-left of the pane and dissolves them toward the
+ * right edge and the top, so the grid sits under the content without competing
+ * with it. Two mask layers intersected, not stacked.
+ */
+.q-dot-grid {
+  background-image:
+    radial-gradient(circle, var(--q-dot) 1px, transparent 1px),
+    radial-gradient(circle, var(--q-dot) 1px, transparent 1px);
+  background-position:
+    0 0,
+    10px 10px;
+  background-size:
+    20px 20px,
+    20px 20px;
+  mask-image:
+    linear-gradient(to right, #000 78%, transparent 100%),
+    linear-gradient(to top, #000 60%, transparent 100%);
+  mask-composite: intersect;
+  -webkit-mask-image:
+    linear-gradient(to right, #000 78%, transparent 100%),
+    linear-gradient(to top, #000 60%, transparent 100%);
+  -webkit-mask-composite: source-in;
+}

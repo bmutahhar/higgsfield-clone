@@ -1,5 +1,11 @@
-import { Archivo, JetBrains_Mono } from "next/font/google";
+import {
+  Archivo,
+  Inter,
+  JetBrains_Mono,
+  Space_Grotesk,
+} from "next/font/google";
 
+import { RouteProgress } from "@/components/layout/route-progress";
 import { PromoBanner } from "@/components/marketing/promo-banner";
 import { SiteHeader } from "@/components/marketing/site-header";
 
@@ -27,6 +33,26 @@ const jetbrainsMono = JetBrains_Mono({
   display: "swap",
 });
 
+/*
+ * The studio surfaces run on their own faces. Unlike the pair above these are
+ * not substitutes — Inter and Space Grotesk are what the live generation pages
+ * actually use — so the studio token layer can be exact. Only q-* utilities
+ * consume them; the marketing layer stays on Archivo.
+ */
+const inter = Inter({
+  variable: "--font-inter",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+});
+
+const spaceGrotesk = Space_Grotesk({
+  variable: "--font-space-grotesk",
+  subsets: ["latin"],
+  weight: ["500", "700"],
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   title: "Higgsfield",
   description: "AI-native creative suite.",
@@ -41,7 +67,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${archivo.variable} ${jetbrainsMono.variable} h-full antialiased`}
+      className={`${archivo.variable} ${jetbrainsMono.variable} ${inter.variable} ${spaceGrotesk.variable} h-full antialiased`}
     >
       {/*
        * One chrome for the whole site. The live site keeps the main navbar on
@@ -55,6 +81,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
        */}
       <body className="flex h-dvh flex-col overflow-hidden">
         <PromoBanner />
+        <RouteProgress />
         <SiteHeader />
         {children}
       </body>
