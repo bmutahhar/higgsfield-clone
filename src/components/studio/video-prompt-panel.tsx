@@ -219,7 +219,15 @@ export function VideoPromptPanel() {
 
       <button
         type="button"
-        className="mt-auto flex h-12 items-center justify-center gap-2 rounded-control bg-accent text-[14px] font-semibold text-on-accent transition-colors duration-[140ms] hover:bg-accent-hover focus-visible:shadow-ring focus-visible:outline-none active:scale-[0.99] motion-reduce:duration-0"
+        className={cn(
+          // Pinned to the foot of the rail. mt-auto alone stops working the
+          // moment the panel scrolls, which let Generate collide with the
+          // last settings row.
+          "sticky bottom-0 mt-auto flex h-12 shrink-0 items-center justify-center gap-2",
+          "rounded-control bg-accent text-[14px] font-semibold text-on-accent",
+          "transition-colors duration-[140ms] hover:bg-accent-hover motion-reduce:duration-0",
+          "focus-visible:shadow-ring focus-visible:outline-none active:scale-[0.99]",
+        )}
       >
         Generate
         <Icon name="sparkles" size={14} />

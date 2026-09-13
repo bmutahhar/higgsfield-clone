@@ -1,5 +1,8 @@
 import { Archivo, JetBrains_Mono } from "next/font/google";
 
+import { PromoBanner } from "@/components/marketing/promo-banner";
+import { SiteHeader } from "@/components/marketing/site-header";
+
 import type { Metadata, Viewport } from "next";
 
 import "./globals.css";
@@ -40,7 +43,21 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="en"
       className={`${archivo.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
-      <body className="hf-scrollbar flex min-h-full flex-col">{children}</body>
+      {/*
+       * One chrome for the whole site. The live site keeps the main navbar on
+       * every surface including the generation pages — there is no icon rail
+       * anywhere — so the banner and header live here rather than in a
+       * per-group layout.
+       *
+       * The body itself does not scroll: each route group owns its scroll
+       * container, which lets the studio routes size to the viewport while
+       * content pages scroll normally.
+       */}
+      <body className="flex h-dvh flex-col overflow-hidden">
+        <PromoBanner />
+        <SiteHeader />
+        {children}
+      </body>
     </html>
   );
 }
