@@ -5,9 +5,18 @@ import { displayNameFromEmail } from "@/lib/auth/identity";
 import type { Provider, User } from "@/types/auth.types";
 
 /*
- * The whole database. A module-level Map, seeded at import and reset when the
- * dev server restarts — accounts made during a session survive hot reloads but
- * not a restart, and the seeded user always comes back.
+ * The whole database. Seeded at import and reset when the dev server restarts —
+ * accounts made during a session survive hot reloads but not a restart, and the
+ * seeded user always comes back.
+ *
+ * Hung off globalThis rather than held in a module-level binding, because Next
+ * gives route handlers and server components separate module graphs: a plain
+ * `const users = new Map()` is instantiated once per graph. Both copies seed
+ * the mock user, so it appeared signed in everywhere — but anyone who signed in
+ * at runtime was written only to the graph whose handler created them, and the
+ * server-component render that paints the header read the other Map and saw
+ * nobody. One object on globalThis is the only thing both graphs can agree on.
+ * It survives HMR too, which the module-level version intended but never had.
  *
  * Passwords are compared in plain text. That is correct here: there is no
  * persistence and no real account, so a hash would protect nothing and only
@@ -18,8 +27,21 @@ interface StoredUser extends User {
   password: string;
 }
 
-const users = new Map<string, StoredUser>();
-let nextId = 1;
+interface Store {
+  users: Map<string, StoredUser>;
+  nextId: number;
+}
+
+const globalRef = globalThis as typeof globalThis & {
+  __hfAuthStore?: Store;
+};
+
+const store: Store = (globalRef.__hfAuthStore ??= {
+  users: new Map<string, StoredUser>(),
+  nextId: 1,
+});
+
+const users = store.users;
 
 const normalise = (email: string) => email.trim().toLowerCase();
 
@@ -38,7 +60,7 @@ function insert(
 ): StoredUser {
   const key = normalise(email);
   const stored: StoredUser = {
-    id: `user_${String(nextId)}`,
+    id: `user_${String(store.nextId)}`,
     email: key,
     name,
     provider,
@@ -46,14 +68,14 @@ function insert(
     createdAt: new Date().toISOString(),
     password,
   };
-  nextId += 1;
+  store.nextId += 1;
   users.set(key, stored);
   return stored;
 }
 
 export function resetStore(): void {
   users.clear();
-  nextId = 1;
+  store.nextId = 1;
   insert(
     MOCK_USER.email,
     MOCK_USER.password,
@@ -63,7 +85,12 @@ export function resetStore(): void {
   );
 }
 
-resetStore();
+/*
+ * Seed only when the shared store is new. An unconditional reset at import
+ * would let the second module graph to load wipe every account the first had
+ * already taken — which is the same bug in a different costume.
+ */
+if (users.size === 0) resetStore();
 
 export function findByEmail(email: string): User | null {
   const stored = users.get(normalise(email));
