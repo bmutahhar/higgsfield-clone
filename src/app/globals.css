@@ -244,6 +244,9 @@
   --color-q-disabled: var(--q-btn-disabled-bg);
   --color-q-disabled-fg: var(--q-btn-disabled-fg);
   --color-q-switch-off: var(--q-switch-off);
+  --color-q-divider: var(--q-divider);
+  --color-q-solid: var(--q-btn-solid);
+  --color-q-scrim: var(--q-scrim);
 
   /* ---- Radius ---- */
   --radius-q-100: var(--q-r-100);
@@ -303,6 +306,7 @@
   --shadow-q-cta: var(--q-shadow-cta);
   --shadow-q-glass: var(--q-shadow-glass);
   --shadow-q-badge: var(--q-shadow-badge);
+  --shadow-q-dialog: var(--q-shadow-dialog);
 
   /* ---- Easing ---- */
   --ease-q-pop: var(--q-ease-pop);

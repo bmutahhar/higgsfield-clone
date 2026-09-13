@@ -73,6 +73,14 @@
   --q-btn-disabled-fg: #737475;
   --q-switch-off: #5c626a;
 
+  /* ---- Auth dialog. The four values the sign-in surface needs that the
+          generation pages never did. The hover step for --q-btn-solid is
+          --q-bg-secondary-strong, which already exists — do not add a
+          second token for it. ---- */
+  --q-divider: rgba(255, 255, 255, 0.08); /* the SSO footer's top rule */
+  --q-btn-solid: #1f2228; /* the email submit at rest */
+  --q-scrim: rgba(0, 0, 0, 0.8); /* the dialog backdrop; no blur */
+
   /* ---- Radius. The number is hundredths of a rem, as upstream.
           Named --q-r-* so the @theme projection to --radius-q-* below is not
           self-referential. Spacing needs no tokens: the live scale (4/8/12/16/
@@ -104,8 +112,41 @@
     0 5px 11.3px rgba(0, 0, 0, 0.1),
     inset 0 -0.3px 5.36px rgba(185, 185, 185, 0.35);
 
+  /* The auth dialog's inner lip. Inset, not a drop shadow. */
+  --q-shadow-dialog: inset 0 0 32px rgba(0, 0, 0, 0.2);
+
   /* ---- Motion ---- */
   --q-ease-pop: cubic-bezier(0.215, 0.61, 0.355, 1);
+}
+
+/*
+ * The consent checkbox's rejection. The live dialog shakes the whole label
+ * rather than flashing the box, which reads as "this row needs you" instead
+ * of "this input is broken".
+ */
+@keyframes q-attention-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20%,
+  60% {
+    transform: translateX(-4px);
+  }
+  40%,
+  80% {
+    transform: translateX(4px);
+  }
+}
+
+.animate-q-attention-shake {
+  animation: q-attention-shake 0.4s ease-in-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-q-attention-shake {
+    animation: none;
+  }
 }
 
 /* The segmented control's active pill. A gradient, a hairline and a lift. */

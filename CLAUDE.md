@@ -56,10 +56,18 @@ There are two, and they must not be mixed inside one component.
   Claude Design project 1:1 and is the source of truth everywhere **except**
   the generation surfaces. Faces: Archivo + JetBrains Mono.
 - **Studio layer** — `--q-*` from `src/styles/tokens/q-studio.css`, written as
-  `bg-q-panel`, `text-q-muted`, `rounded-q-300`, `text-q-body-sm`. Used only
-  under `src/app/(studio)/` and `src/components/studio/`. Its values mirror the
-  live generation pages so those can hit 1:1 parity without restyling the
-  marketing pages. Faces: Inter + Space Grotesk.
+  `bg-q-panel`, `text-q-soft`, `rounded-q-300`, `text-q-body-sm`. Used only
+  under `src/app/(studio)/`, `src/components/studio/` and
+  `src/features/auth/`. Its values mirror the live generation pages so those
+  can hit 1:1 parity without restyling the marketing pages. The auth dialog is
+  the same live design system as those pages — its measured values are already
+  in `q-studio.css` — so rebuilding it on the marketing ramp would put the
+  wrong faces and the wrong neutrals on a surface that has to match 1:1.
+  Faces: Inter + Space Grotesk.
+
+  Two `--q-*` names cross over when projected, and mixing them fails quietly:
+  `--q-text-muted` (`#898a8b`) is written **`text-q-soft`**, while
+  `text-q-muted` resolves to `--q-text-secondary` (`#828282`).
 
 A studio component reaching for `bg-card`, or a marketing component reaching for
 `bg-q-panel`, is a bug. The two ramps are close enough to look almost right and
