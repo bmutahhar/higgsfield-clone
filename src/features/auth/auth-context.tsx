@@ -10,6 +10,7 @@ import {
 import type { ReactNode } from "react";
 import { useRouter } from "next/navigation";
 
+import { AuthDialog } from "@/features/auth/auth-dialog";
 import * as authApi from "@/services/auth-client";
 import type { Provider, User } from "@/types/auth.types";
 
@@ -146,7 +147,12 @@ export function AuthProvider({
     router,
   ]);
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+      <AuthDialog />
+    </AuthContext.Provider>
+  );
 }
 
 export function useAuth(): AuthValue {

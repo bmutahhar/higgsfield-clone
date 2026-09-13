@@ -117,6 +117,66 @@
 
   /* ---- Motion ---- */
   --q-ease-pop: cubic-bezier(0.215, 0.61, 0.355, 1);
+  /* The pricing surface's three curves, measured off its own stylesheet. */
+  --q-ease-std: cubic-bezier(0.4, 0, 0.2, 1); /* segmented thumb, comparison */
+  --q-ease-swap: cubic-bezier(0.77, 0, 0.175, 1); /* the 3D plan swap */
+  --q-ease-slot: cubic-bezier(0.455, 0.03, 0.515, 0.955); /* slider slot */
+
+  /* ================================================================
+     Pricing surface.
+     Measured off https://higgsfield.ai/pricing — see
+     docs/superpowers/specs/2026-09-13-pricing-page-design.md §2.
+
+     Everything the pricing page needed that the generation pages already
+     had is reused, not re-declared: --q-w-05/10/20, --q-border-subtle/
+     default/strong/card, --q-text-idle-soft, --q-switch-off, --q-r-*.
+     Only the genuinely new values live below.
+     ================================================================ */
+
+  /* ---- Second and third brand hues. The generation pages are lime-only;
+          pricing adds pink (discounts, MAX) and blue (SCALE, Best value). ---- */
+  --q-brand-pink: #ff005b; /* discount badges, MAX fill, drawn strike-through */
+  --q-brand-pink-hi: #fa4ae7; /* MAX CTA's upper gradient stop */
+  --q-brand-pink-deep: #ed1572; /* countdown banner inner glow only */
+  --q-brand-lime-hi: #ffff14; /* PRO CTA's upper gradient stop */
+  --q-brand-lime-line: #829b19; /* PRO CTA's inset key-cap line */
+  --q-brand-blue: #0256fe; /* SCALE CTA */
+  --q-brand-blue-1: #4fc9dc; /* "Best value" badge, gradient stop 1 */
+  --q-brand-blue-2: #32a2ee; /* stop 2 */
+  --q-brand-blue-3: #167bff; /* stop 3 */
+  --q-info: #9ce6f3; /* "Access to Supercomputer", the one info-ink row */
+
+  /* ---- Plan-card grounds ---- */
+  --q-bg-plan: #18191c; /* PRO / MAX base, beneath the tint */
+  --q-bg-plan-basic-a: #1d1f20; /* BASIC frame gradient, top */
+  --q-bg-plan-basic-b: #17191b; /* BASIC frame gradient, bottom */
+
+  /* ---- White inks the studio ladder was missing ---- */
+  --q-w-03: rgba(255, 255, 255, 0.03); /* countdown banner hover */
+  --q-w-06: rgba(255, 255, 255, 0.06); /* comparison frame and row rules */
+  --q-w-14: rgba(255, 255, 255, 0.14); /* FAQ item edge */
+  --q-w-30: rgba(255, 255, 255, 0.3); /* rows this plan does not include */
+  --q-w-40: rgba(255, 255, 255, 0.4); /* configurator sub-copy, tick ruler */
+
+  /* ---- Radius. 20px/24px are --q-r-500/600 already; mobile needs two more. ---- */
+  --q-r-700: 1.75rem; /* mobile story panel, comparison bottom sheet */
+  --q-r-800: 2rem; /* mobile plan sheet */
+
+  /* ---- Elevation ----
+          Every CTA on the pricing page is a "key cap": an inset line along the
+          bottom edge doing the work of a bevel, then two very soft falls. The
+          inset colour changes per plan, so it is a separate token. */
+  --q-shadow-key:
+    0 6px 4px rgba(0, 0, 0, 0.25), 0 32px 24px rgba(0, 0, 0, 0.15);
+  --q-shadow-key-line: rgba(0, 0, 0, 0.32); /* default inset line */
+  --q-shadow-plan: 0 24px 64px rgba(0, 0, 0, 0.24); /* MAX card only */
+  --q-shadow-sheet: 0 4px 4px rgba(0, 0, 0, 0.12); /* feature menu */
+  --q-shadow-knob:
+    0 1px 12px rgba(0, 0, 0, 0.32), 0 1px 2px rgba(0, 0, 0, 0.15);
+  --q-glow-slider: 0 0 1.125rem rgba(209, 254, 23, 0.28); /* fill, lit */
+
+  /* ---- Layout. Every pricing section centres on one fixed column. ---- */
+  --q-pricing-column: 1064px;
 }
 
 /*
@@ -143,8 +203,28 @@
   animation: q-attention-shake 0.4s ease-in-out;
 }
 
+/*
+ * The auth dialog's entrance. The live site drives this from JS; a keyframe on
+ * [open] is the same 160ms without the runtime.
+ */
+@keyframes q-dialog-in {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-q-dialog-in {
+  animation: q-dialog-in 0.16s var(--q-ease-pop);
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .animate-q-attention-shake {
+  .animate-q-attention-shake,
+  .animate-q-dialog-in {
     animation: none;
   }
 }
@@ -323,4 +403,238 @@
     linear-gradient(to right, #000 78%, transparent 100%),
     linear-gradient(to top, #000 60%, transparent 100%);
   -webkit-mask-composite: source-in;
+}
+
+/* ==================================================================
+   Pricing surface — the parts that cannot be utilities.
+   See docs/superpowers/specs/2026-09-13-pricing-page-design.md.
+   ================================================================== */
+
+/*
+ * The plan card's hairline. Not a border-color: the stroke is a vertical
+ * gradient — bright at the top, gone by 72% down — so it has to be a masked
+ * background on a 1px-padded box. Reading it as a flat border is the second
+ * most visible way to get a plan card wrong, after the badge skew.
+ *
+ * Distinct from .q-hairline-conic, which is the studio's 45° conic edge.
+ */
+.q-hairline-plan {
+  padding: 1px;
+  background: linear-gradient(
+    rgba(255, 255, 255, 0.15) 0%,
+    rgba(255, 255, 255, 0.09) 18%,
+    rgba(255, 255, 255, 0.03) 38%,
+    rgba(255, 255, 255, 0) 72%
+  );
+  mask:
+    linear-gradient(#fff, #fff) content-box exclude,
+    linear-gradient(#fff, #fff);
+  -webkit-mask:
+    linear-gradient(#fff, #fff) content-box,
+    linear-gradient(#fff, #fff);
+  -webkit-mask-composite: xor;
+}
+
+/*
+ * The countdown banner's texture: a 10px dot grid drawn as two offset conic
+ * gradients, a pink wash rising from the floor, and a flat 3% lift. Four
+ * layers in one declaration because background shorthand order matters.
+ */
+.q-promo-texture {
+  background-image:
+    conic-gradient(
+      from 270deg at 3px 3px,
+      rgba(255, 255, 255, 0.02) 0deg,
+      rgba(255, 255, 255, 0.02) 25%,
+      transparent 0deg
+    ),
+    conic-gradient(
+      from 270deg at 3px 3px,
+      rgba(255, 255, 255, 0.02) 0deg,
+      rgba(255, 255, 255, 0.02) 25%,
+      transparent 0deg
+    ),
+    linear-gradient(
+      to top,
+      rgba(255, 0, 91, 0.1) 0%,
+      rgba(255, 0, 91, 0.004) 100%
+    ),
+    linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.03) 0%,
+      rgba(255, 255, 255, 0.03) 100%
+    );
+  background-size:
+    10px 10px,
+    10px 10px,
+    100% 100%,
+    100% 100%;
+  background-position:
+    0 0,
+    5px 5px,
+    0 0,
+    0 0;
+}
+
+/* ---- Plan frame grounds. Gradients, so not expressible as bg-* ---- */
+.q-plan-basic {
+  background-image:
+    radial-gradient(
+      58% 220% at 3% 42%,
+      rgba(255, 255, 255, 0.094) 0%,
+      rgba(255, 255, 255, 0.035) 42%,
+      rgba(255, 255, 255, 0.01) 100%
+    ),
+    linear-gradient(var(--q-bg-plan-basic-a) 0%, var(--q-bg-plan-basic-b) 100%);
+}
+
+.q-plan-pro {
+  background-color: var(--q-bg-plan);
+  background-image: linear-gradient(
+    225deg,
+    rgba(209, 254, 23, 0.16) 0%,
+    rgba(209, 254, 23, 0.08) 28%,
+    rgba(209, 254, 23, 0) 62%
+  );
+}
+
+.q-plan-max {
+  background-color: var(--q-bg-plan);
+  background-image:
+    radial-gradient(
+      145% 54% at 100% 0%,
+      rgba(255, 0, 91, 0.32) 0%,
+      rgba(255, 0, 91, 0.15) 42%,
+      transparent 78%
+    ),
+    linear-gradient(
+      rgba(255, 0, 91, 0.13) 0%,
+      rgba(255, 0, 91, 0.07) 36%,
+      transparent 72%
+    );
+}
+
+/* ---- CTA fills. Each is a vertical sheen over a flat brand colour. ---- */
+.q-cta-lime {
+  background-color: var(--q-brand);
+  background-image: linear-gradient(
+    rgba(255, 255, 20, 0) 0%,
+    var(--q-brand-lime-hi) 100%
+  );
+}
+
+.q-cta-pink {
+  background-color: var(--q-brand-pink);
+  background-image: linear-gradient(
+    182.4deg,
+    rgba(243, 100, 228, 0) 12.7%,
+    var(--q-brand-pink-hi) 75.8%
+  );
+}
+
+.q-cta-blue {
+  background-color: var(--q-brand-blue);
+  background-image: linear-gradient(
+    rgba(255, 255, 255, 0) 12%,
+    rgba(255, 255, 255, 0.16) 76%
+  );
+}
+
+/*
+ * The "Best value" badge. A radial that reads as a lit blue chip rather than
+ * a flat one — the light source sits just below the badge's bottom edge.
+ */
+.q-badge-best {
+  background-image: radial-gradient(
+    84% 180% at 50% 118%,
+    var(--q-brand-blue-1) 0%,
+    var(--q-brand-blue-2) 50%,
+    var(--q-brand-blue-3) 100%
+  );
+}
+
+/* ---- Motion ---------------------------------------------------------- */
+
+@keyframes q-soft-enter {
+  from {
+    opacity: 0;
+    transform: translateY(0.375rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes q-plan-swap-enter {
+  from {
+    opacity: 0;
+    transform: translate3d(7rem, 0, -2.5rem) rotateY(5deg) scale(0.982);
+  }
+  to {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+}
+
+@keyframes q-plan-swap-exit {
+  from {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translate3d(-7rem, 0, -2.5rem) rotateY(-5deg) scale(0.982);
+  }
+}
+
+.q-soft-enter {
+  animation: q-soft-enter 0.18s var(--q-ease-pop) both;
+}
+
+.q-shell-enter {
+  animation: q-soft-enter 0.22s var(--q-ease-pop) both;
+}
+
+.q-chip-enter {
+  animation: q-soft-enter 0.15s var(--q-ease-pop) both;
+}
+
+/*
+ * The recommendation card's swap. The two cards occupy the same box and pass
+ * through each other in depth, which is why the parent needs perspective and
+ * the cards need preserve-3d — without both, the rotateY flattens to a skew.
+ */
+.q-swap-stage {
+  perspective: 72rem;
+  perspective-origin: 50%;
+}
+
+.q-swap-card {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+  will-change: opacity, transform;
+}
+
+.q-swap-enter {
+  z-index: 2;
+  animation: q-plan-swap-enter 0.42s var(--q-ease-swap) both;
+}
+
+.q-swap-exit {
+  z-index: 3;
+  pointer-events: none;
+  animation: q-plan-swap-exit 0.42s var(--q-ease-swap) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .q-soft-enter,
+  .q-shell-enter,
+  .q-chip-enter,
+  .q-swap-enter,
+  .q-swap-exit {
+    animation: none;
+  }
 }

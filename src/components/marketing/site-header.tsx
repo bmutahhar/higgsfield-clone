@@ -9,6 +9,7 @@ import { LogoMark } from "@/components/layout/logo-mark";
 import { NavMenu } from "@/components/marketing/nav-menu";
 import { NAV_MENUS } from "@/config/nav-menus";
 import { PRIMARY_NAV } from "@/config/site";
+import { useAuth } from "@/features/auth/auth-context";
 import { cn } from "@/lib/cn";
 
 import { useCompactHeader } from "./use-compact-header";
@@ -62,6 +63,7 @@ function NavBadge({ children }: { children: string }) {
 export function SiteHeader() {
   const pathname = usePathname();
   const headerRef = useCompactHeader<HTMLElement>(pathname);
+  const { openAuth } = useAuth();
 
   // Explore's href is "/" on the live site, so plain path matching is enough.
   const isActive = (href?: string) =>
@@ -174,19 +176,28 @@ export function SiteHeader() {
           <Icon name="globe" size={17} />
         </button>
 
-        <Link href="/" className={cn(BUTTON, "bg-lime/8 text-lime")}>
+        <button
+          type="button"
+          onClick={() => {
+            openAuth("login");
+          }}
+          className={cn(BUTTON, "bg-lime/8 text-lime")}
+        >
           Login
-        </Link>
+        </button>
 
-        <Link
-          href="/"
+        <button
+          type="button"
+          onClick={() => {
+            openAuth("signup");
+          }}
           className={cn(
             BUTTON,
             "bg-accent text-[#1A1A1A] hover:bg-accent-hover",
           )}
         >
           Sign up
-        </Link>
+        </button>
       </div>
     </header>
   );
