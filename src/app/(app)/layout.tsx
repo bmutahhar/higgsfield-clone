@@ -11,7 +11,7 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
       <TopBar />
       <div className="flex min-h-0 flex-1">
         <NavRail />
-        <main className="hf-scrollbar min-w-0 flex-1 overflow-y-auto">
+        <main className="hf-scrollbar flex min-w-0 flex-1 flex-col overflow-y-auto">
           {children}
         </main>
       </div>
