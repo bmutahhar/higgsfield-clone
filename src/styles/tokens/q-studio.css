@@ -353,6 +353,54 @@
   box-shadow: 0 0 0 3px var(--q-brand-10);
 }
 
+/*
+ * The light over a generation that has not landed yet.
+ *
+ * It fills the top third of the frame and breathes — the only thing moving
+ * while the work is opaque, so it has to read as alive rather than as a
+ * progress bar that is lying about how far along anything is.
+ *
+ * Painted in `currentColor` on purpose: the phase change from processing to
+ * generating recolours the light, the spinner and the label together, and
+ * doing it through the inherited colour keeps that one class on the tile
+ * rather than three coordinated swaps.
+ */
+@keyframes q-generation-breathe {
+  0%,
+  100% {
+    opacity: 0.1;
+  }
+  50% {
+    opacity: 0.32;
+  }
+}
+
+.q-generation-light {
+  /*
+   * An ellipse centred on the top edge, not a top-to-bottom fade. What shows
+   * inside the frame is its lower arc, so the light reaches deepest at the
+   * centre and rides up towards both sides — a broad, shallow U.
+   *
+   * The 120% width is what keeps it broad: narrower and the curve tightens
+   * into a spotlight, much wider and it flattens back into the linear wash
+   * this replaced.
+   */
+  background-image: radial-gradient(
+    ellipse 120% 100% at 50% 0%,
+    currentColor 0%,
+    color-mix(in oklab, currentColor 45%, transparent) 45%,
+    transparent 100%
+  );
+  animation: q-generation-breathe 2.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .q-generation-light {
+    animation: none;
+    opacity: 0.22;
+  }
+}
+
 /* The scrim over a feed tile's controls. Two of these, mirrored. */
 .q-tile-scrim {
   background: linear-gradient(

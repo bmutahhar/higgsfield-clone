@@ -9,10 +9,10 @@ import { ZoomControl } from "@/components/feed/zoom-control";
 import { MIN_COLUMNS, MIN_TILE_WIDTH } from "@/config/image-studio";
 import { useFeedColumns } from "@/hooks/use-feed-columns";
 import { balanceColumns } from "@/lib/masonry";
-import type { FeedCell } from "@/types/generation.types";
+import type { Generation } from "@/types/generation.types";
 
 export interface ImageFeedProps {
-  cells: FeedCell[];
+  generations: Generation[];
   onRemove: (ids: string[]) => void;
 }
 
@@ -28,8 +28,11 @@ export interface ImageFeedProps {
  * ratios are known up front — for running jobs as much as for finished images
  * — so columns fill shortest-first with no measurement pass, and a generation
  * landing swaps a tile in place without moving anything below it.
+ *
+ * A generation that has not reached `ready` is one still running, and renders
+ * as a held frame rather than a picture.
  */
-export function ImageFeed({ cells, onRemove }: ImageFeedProps) {
+export function ImageFeed({ generations, onRemove }: ImageFeedProps) {
   const { zoom, setZoom, columns } = useFeedColumns();
   const [selected, setSelected] = useState<string[]>([]);
 
@@ -63,11 +66,12 @@ export function ImageFeed({ cells, onRemove }: ImageFeedProps) {
           Math.min(columns, Math.floor(width / MIN_TILE_WIDTH)),
         );
 
-  const buckets = balanceColumns(cells, fitted);
+  const buckets = balanceColumns(generations, fitted);
 
   // Only finished images are selectable, so the bar always has a thumbnail.
-  const lastSelected = cells.find(
-    (cell) => cell.id === selected.at(-1) && cell.item !== null,
+  const lastSelected = generations.find(
+    (generation) =>
+      generation.id === selected.at(-1) && generation.src !== undefined,
   );
 
   function toggle(id: string) {
@@ -99,20 +103,36 @@ export function ImageFeed({ cells, onRemove }: ImageFeedProps) {
                 key={i}
                 className="flex min-w-0 flex-1 flex-col gap-[2px]"
               >
-                {bucket.map((cell) =>
-                  cell.item === null ? (
-                    <PendingTile key={cell.id} w={cell.w} h={cell.h} />
+                {bucket.map((generation) =>
+                  generation.status !== "ready" ? (
+                    <PendingTile
+                      key={generation.id}
+                      w={generation.w}
+                      h={generation.h}
+                      phase={generation.status}
+                      // Cancelling drops the tile and, with it, the query that
+                      // was polling for it.
+                      onCancel={() => {
+                        remove([generation.id]);
+                      }}
+                    />
                   ) : (
                     <FeedTile
-                      key={cell.id}
-                      item={cell.item}
-                      selected={selected.includes(cell.id)}
+                      key={generation.id}
+                      item={{
+                        id: generation.id,
+                        src: generation.src,
+                        w: generation.w,
+                        h: generation.h,
+                        prompt: generation.prompt,
+                      }}
+                      selected={selected.includes(generation.id)}
                       selecting={selected.length > 0}
                       onToggle={() => {
-                        toggle(cell.id);
+                        toggle(generation.id);
                       }}
                       onDelete={() => {
-                        remove([cell.id]);
+                        remove([generation.id]);
                       }}
                     />
                   ),
@@ -123,10 +143,10 @@ export function ImageFeed({ cells, onRemove }: ImageFeedProps) {
         </div>
       </div>
 
-      {selected.length > 0 && lastSelected?.item && (
+      {selected.length > 0 && lastSelected?.src && (
         <SelectionBar
           count={selected.length}
-          poster={lastSelected.item.src}
+          poster={lastSelected.src}
           onClear={() => {
             setSelected([]);
           }}

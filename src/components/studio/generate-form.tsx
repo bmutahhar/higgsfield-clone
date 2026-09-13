@@ -118,11 +118,15 @@ export function GenerateForm({
    * panel scrolls and the footer does not, so an error next to a field could
    * be reported somewhere the reader cannot see.
    */
-  const failure =
-    errors.prompt ??
-    errors.quality ??
-    errors.referenceVideo ??
-    errors.referenceImages;
+  /*
+   * Whatever failed, not a hand-picked list of fields.
+   *
+   * Naming the fields individually meant a failure on any other one — `mode`,
+   * `modelId` — rendered nothing at all: the form would refuse to submit and
+   * say nothing about why. Reading the error map itself means a rule can never
+   * be added to the schema without the panel being able to report it.
+   */
+  const [failedField, failure] = Object.entries(errors)[0] ?? [];
   const message = failure?.message;
 
   return (
@@ -197,7 +201,7 @@ export function GenerateForm({
                     onBlur={field.onBlur}
                     invalid={errors.referenceVideo !== undefined}
                     describedBy={
-                      failure === errors.referenceVideo && message !== undefined
+                      failedField === "referenceVideo" && message !== undefined
                         ? errorId
                         : undefined
                     }
@@ -221,8 +225,7 @@ export function GenerateForm({
                     onBlur={field.onBlur}
                     invalid={errors.referenceImages !== undefined}
                     describedBy={
-                      failure === errors.referenceImages &&
-                      message !== undefined
+                      failedField === "referenceImages" && message !== undefined
                         ? errorId
                         : undefined
                     }
@@ -248,7 +251,7 @@ export function GenerateForm({
                         placeholder={copy.promptPlaceholder}
                         invalid={errors.prompt !== undefined}
                         describedBy={
-                          failure === errors.prompt && message !== undefined
+                          failedField === "prompt" && message !== undefined
                             ? errorId
                             : undefined
                         }
@@ -293,7 +296,7 @@ export function GenerateForm({
                   onChange={field.onChange}
                   invalid={errors.quality !== undefined}
                   describedBy={
-                    failure === errors.quality && message !== undefined
+                    failedField === "quality" && message !== undefined
                       ? errorId
                       : undefined
                   }

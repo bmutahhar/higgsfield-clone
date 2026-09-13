@@ -132,3 +132,63 @@ export const videoGenerationSchema = z
 
 export type VideoGenerationValues = z.infer<typeof videoGenerationSchema>;
 export type ReferenceVideo = z.infer<typeof referenceVideoSchema>;
+
+/*
+ * What actually goes over the wire.
+ *
+ * The form's value holds `File` objects, and a File does not survive
+ * `JSON.stringify` — it serialises to `{}`. So the request is a deliberate
+ * projection: the decisions, plus enough of the media to describe it. A real
+ * backend would take the bytes as multipart and this shape as its metadata
+ * part; the mock only ever needed the metadata.
+ *
+ * `kind` is the discriminator the generations endpoint switches on. It is
+ * absent from the image payload, which is why the route treats a missing
+ * `kind` as an image request rather than rejecting it.
+ */
+export const videoGenerationRequestSchema = z.object({
+  kind: z.literal("video"),
+  mode: z.enum(MODE_IDS),
+  modelId: z.enum(MODEL_IDS),
+  quality: z.string().min(1),
+  prompt: z.string(),
+  referenceVideo: z
+    .object({
+      name: z.string(),
+      size: z.number().nonnegative(),
+      duration: z.number().positive().nullable(),
+    })
+    .nullable(),
+  referenceImageCount: z.number().int().nonnegative(),
+});
+
+export type VideoGenerationRequest = z.infer<
+  typeof videoGenerationRequestSchema
+>;
+
+/**
+ * Narrow validated form values down to the request payload.
+ *
+ * The prompt is dropped when the toggle is off rather than sent and ignored:
+ * a disabled prompt is not part of the request, and passing it anyway would
+ * leave the server deciding whether to honour text the user turned off.
+ */
+export function toVideoRequest(
+  values: VideoGenerationValues,
+): VideoGenerationRequest {
+  return {
+    kind: "video",
+    mode: values.mode,
+    modelId: values.modelId,
+    quality: values.quality,
+    prompt: values.promptEnabled ? values.prompt : "",
+    referenceVideo: values.referenceVideo
+      ? {
+          name: values.referenceVideo.file.name,
+          size: values.referenceVideo.file.size,
+          duration: values.referenceVideo.duration,
+        }
+      : null,
+    referenceImageCount: values.referenceImages.length,
+  };
+}

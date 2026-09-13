@@ -2,54 +2,86 @@ import "server-only";
 
 import { ASPECT_RATIOS } from "@/config/image-studio";
 import { PRESETS } from "@/config/media";
+import { HIGGSFIELD_PRESETS } from "@/config/presets";
 import type { ImageGenerationValues } from "@/schemas/image-generation";
+import type { VideoGenerationRequest } from "@/schemas/video-generation";
 import type { GenerationJob, GenerationStatus } from "@/types/generation.types";
 
 /*
  * A stand-in for the generation queue.
  *
- * Accepting a request records a deadline per image and nothing else; polling
- * compares that deadline to the clock. There is no worker and no work — but
- * the shape is the real one, so swapping in a service means replacing the two
- * functions below and nothing above them.
+ * It remembers nothing. Everything polling needs to answer — when the image is
+ * due, and which asset it will be — is encoded into the job id itself, so
+ * reading a job is a parse and a clock comparison rather than a lookup.
+ *
+ * That is worth the slightly odd id format. The obvious version keeps a Map of
+ * issued jobs, which then has to survive HMR, which means hanging it off
+ * globalThis — and even then a real server restart strands every job already
+ * in flight and those tiles spin forever. A stateless mock has none of those
+ * failure modes, and it is honest that there is no queue here to remember.
+ *
+ * The trade is that an id is forgeable: anyone can mint one with a deadline in
+ * the past and be handed a sample image. With no private data and no cost per
+ * call, that is not worth a signature.
  *
  * Each image in a batch gets its own deadline, staggered, because that is how
  * a real queue behaves: four images do not land on the same tick, and the feed
  * should not pretend they do.
  */
 
-interface StoredJob {
-  readyAt: number;
-  url: string;
-}
-
 /*
- * Held on globalThis so the store survives the module re-evaluation that HMR
- * does on every edit. A plain module-level Map would empty mid-generation and
- * strand every job that was already in flight.
- */
-declare global {
-  var __hfGenerationJobs: Map<string, StoredJob> | undefined;
-}
-
-const jobs = (globalThis.__hfGenerationJobs ??= new Map<string, StoredJob>());
-
-/*
- * Base latency plus a per-image stagger. Sized so a full batch of four still
- * lands inside ~3–4s once the client's poll granularity is added on top: the
- * last image is due at 3.5–3.8s and is noticed within one poll of that.
+ * Base latency plus a per-image stagger.
+ *
+ * The stagger has to stay wider than the client's poll interval or the point
+ * of it is lost: every job in a batch is enqueued on the same tick, so their
+ * polls run in lockstep, and any two deadlines falling inside one interval are
+ * noticed together and land as a clump. At 350ms against a 300ms poll a batch
+ * of four arrives one at a time and still finishes inside ~3–4s.
+ *
+ * Jitter stays well under the stagger so it varies the timing without
+ * reordering the batch.
  */
 const BASE_MS = 2600;
-const STAGGER_MS = 300;
-const JITTER_MS = 300;
+const STAGGER_MS = 350;
+const JITTER_MS = 120;
 
-let cursor = 0;
+/*
+ * How long before an image is due that it stops being "processing" and starts
+ * "generating". Derived from the same deadline as everything else, so the
+ * phase costs no extra state and each image in a staggered batch changes over
+ * at its own moment rather than all at once.
+ */
+const GENERATING_MS = 1600;
 
-/** Rotates the sample set so a second batch does not repeat the first. */
-function nextPoster(): string {
-  const poster = PRESETS[cursor % PRESETS.length].poster;
-  cursor += 1;
-  return poster;
+/*
+ * `<kind><readyAt>.<assetIndex>.<nonce>`, all base36 after the leading letter.
+ * The nonce keeps ids unique; the letter says which pool the asset comes from,
+ * which is what lets one stateless reader serve both surfaces.
+ */
+type JobKind = "image" | "video";
+const KIND_TAG: Record<JobKind, string> = { image: "g", video: "v" };
+const ID_PATTERN = /^([gv])([0-9a-z]+)\.([0-9a-z]+)\.[0-9a-z]+$/;
+
+function encodeId(kind: JobKind, readyAt: number, assetIndex: number): string {
+  const nonce = Math.random().toString(36).slice(2, 10);
+  return `${KIND_TAG[kind]}${readyAt.toString(36)}.${assetIndex.toString(36)}.${nonce}`;
+}
+
+function decodeId(
+  id: string,
+): { kind: JobKind; readyAt: number; assetIndex: number } | null {
+  const match = ID_PATTERN.exec(id);
+  if (!match) return null;
+
+  const readyAt = Number.parseInt(match[2], 36);
+  const assetIndex = Number.parseInt(match[3], 36);
+  if (!Number.isFinite(readyAt) || !Number.isFinite(assetIndex)) return null;
+
+  return {
+    kind: match[1] === "v" ? "video" : "image",
+    readyAt,
+    assetIndex,
+  };
 }
 
 /** `Auto` has no ratio of its own, so it renders in the feed's usual portrait. */
@@ -64,24 +96,80 @@ export function createJobs(values: ImageGenerationValues): GenerationJob[] {
   const now = Date.now();
   const { w, h } = frame(values.aspectRatio);
 
-  return Array.from({ length: values.batch }, (_, index) => {
-    const id = crypto.randomUUID();
-    jobs.set(id, {
-      readyAt:
-        now +
+  return Array.from({ length: values.batch }, (_, index) => ({
+    id: encodeId(
+      "image",
+      now +
         BASE_MS +
         index * STAGGER_MS +
         Math.round(Math.random() * JITTER_MS),
-      url: nextPoster(),
-    });
-    return { id, w, h, prompt: values.prompt };
-  });
+      // Random rather than a rotating counter: a counter would be the one
+      // piece of state this module otherwise avoids, and variety is all it
+      // buys.
+      Math.floor(Math.random() * PRESETS.length),
+    ),
+    w,
+    h,
+    prompt: values.prompt,
+  }));
 }
 
-/** `null` for an id this process has never issued. */
+/*
+ * Video takes materially longer than an image, and pretending otherwise would
+ * make the phase labels meaningless — `generating` would flash past. One clip
+ * per request, so there is no stagger to apply.
+ */
+const VIDEO_BASE_MS = 7000;
+const VIDEO_JITTER_MS = 1200;
+/** Longer than the image window, in proportion to the longer total. */
+const VIDEO_GENERATING_MS = 4500;
+
+/** Genjutsu renders 16:9; the frame does not depend on the request. */
+const VIDEO_FRAME = { w: 16, h: 9 };
+
+export function createVideoJobs(
+  values: VideoGenerationRequest,
+): GenerationJob[] {
+  return [
+    {
+      id: encodeId(
+        "video",
+        Date.now() +
+          VIDEO_BASE_MS +
+          Math.round(Math.random() * VIDEO_JITTER_MS),
+        Math.floor(Math.random() * HIGGSFIELD_PRESETS.length),
+      ),
+      ...VIDEO_FRAME,
+      prompt: values.prompt,
+    },
+  ];
+}
+
+/** `null` for anything that is not a job id this service could have issued. */
 export function readJob(id: string): GenerationStatus | null {
-  const job = jobs.get(id);
-  if (!job) return null;
-  if (Date.now() < job.readyAt) return { id, status: "pending" };
-  return { id, status: "ready", asset: { url: job.url } };
+  const decoded = decodeId(id);
+  if (!decoded) return null;
+
+  const video = decoded.kind === "video";
+  const remaining = decoded.readyAt - Date.now();
+  if (remaining > (video ? VIDEO_GENERATING_MS : GENERATING_MS)) {
+    return { id, status: "processing" };
+  }
+  if (remaining > 0) return { id, status: "generating" };
+
+  if (video) {
+    const preset =
+      HIGGSFIELD_PRESETS[decoded.assetIndex % HIGGSFIELD_PRESETS.length];
+    return {
+      id,
+      status: "ready",
+      asset: { url: preset.video ?? preset.poster, poster: preset.poster },
+    };
+  }
+
+  return {
+    id,
+    status: "ready",
+    asset: { url: PRESETS[decoded.assetIndex % PRESETS.length].poster },
+  };
 }

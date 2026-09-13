@@ -1,34 +1,40 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect } from "react";
 import { useMutation, useQueries } from "@tanstack/react-query";
 
 import { ImageFeed } from "@/components/feed/image-feed";
 import { StudioEmptyState } from "@/components/feed/studio-empty-state";
 import { Composer } from "@/components/image-studio/composer";
-import { FEED_ITEMS } from "@/config/image-studio";
 import { useAuth } from "@/features/auth/auth-context";
 import {
   fetchGeneration,
   requestGeneration,
 } from "@/services/image-generation";
-import type { FeedCell, GenerationJob } from "@/types/generation.types";
+import {
+  useGenerationsOfKind,
+  useGenerationStore,
+} from "@/stores/generation-store";
 
-/** How often a running job is asked whether it has landed. */
-const POLL_MS = 600;
+/*
+ * How often a running job is asked whether it has landed. Kept below the
+ * server's per-image stagger so images in a batch are seen arriving one by
+ * one rather than in a clump — see `generation-jobs.server.ts`.
+ */
+const POLL_MS = 300;
 
 /*
  * The image studio: the canvas and the composer, and the generation flow that
  * joins them.
  *
- * The split of ownership is the point. Which jobs this session started is
- * client state and lives here. What each job has produced is server state and
- * lives in React Query — one query per job, so each image resolves on its own
- * clock rather than the batch appearing all at once.
+ * Generations live in the shared store, not here — the same store the video
+ * and audio studios will write to. This component only starts them and reads
+ * back the ones of its own kind.
  *
- * Nothing is copied between the two: the cells handed to the feed are derived
- * from the jobs and their query results on every render, so there is no second
- * copy of the truth to fall out of step.
+ * React Query is the transport, not the record: one query per running job,
+ * polling until it lands and then writing the asset into the store. That way
+ * each image resolves on its own clock rather than the batch appearing at
+ * once, and there is still exactly one copy of what exists.
  */
 export interface ImageStudioProps {
   /** Which model the composer opens on, resolved from the URL by the route. */
@@ -37,21 +43,60 @@ export interface ImageStudioProps {
 
 export function ImageStudio({ modelId }: ImageStudioProps) {
   const { user, openAuth } = useAuth();
-  const [jobs, setJobs] = useState<GenerationJob[]>([]);
-  const [history, setHistory] = useState(FEED_ITEMS);
+
+  const generations = useGenerationsOfKind("image");
+  // Actions never change identity, so selecting them needs no shallow compare.
+  const enqueue = useGenerationStore((state) => state.enqueue);
+  const applyStatus = useGenerationStore((state) => state.applyStatus);
+  const remove = useGenerationStore((state) => state.remove);
+  const holdRequest = useGenerationStore((state) => state.holdRequest);
+  const takeRequest = useGenerationStore((state) => state.takeRequest);
 
   const { mutate: generate } = useMutation({
     mutationFn: requestGeneration,
-    // Newest first, the way the live feed stacks them.
     onSuccess: (accepted) => {
-      setJobs((prev) => [...accepted, ...prev]);
+      enqueue("image", modelId, accepted);
     },
   });
 
-  const results = useQueries({
-    queries: jobs.map((job) => ({
-      queryKey: ["generation", job.id],
-      queryFn: () => fetchGeneration(job.id),
+  /*
+   * Picking up where signing in left off.
+   *
+   * Submitting while signed out parks the validated values and opens the
+   * dialog; the moment a user exists, that request runs on its own. `mutate`
+   * is referentially stable and `takeRequest` clears as it reads, so this
+   * fires exactly once per parked request — including under StrictMode, which
+   * runs every effect twice in development.
+   */
+  useEffect(() => {
+    if (!user) return;
+    const held = takeRequest();
+    if (held?.kind === "image") generate(held.values);
+  }, [user, takeRequest, generate]);
+
+  /*
+   * One query per running job. Resolved generations drop out of this list, so
+   * their queries unmount and stop — nothing polls an image that has landed.
+   */
+  const pending = generations.filter(
+    (generation) => generation.status !== "ready",
+  );
+
+  useQueries({
+    queries: pending.map((generation) => ({
+      queryKey: ["generation", generation.id],
+      /*
+       * The write into the store lives here rather than in an effect: this is
+       * the only place that knows what the service just said, and an effect
+       * would re-derive the same fact one render later. `applyStatus` ignores
+       * a report that changes nothing, so polling four times a second costs
+       * nothing until the phase actually moves.
+       */
+      queryFn: async () => {
+        const status = await fetchGeneration(generation.id);
+        applyStatus(generation.id, status);
+        return status;
+      },
       // Stop the moment this one lands; the others keep going.
       refetchInterval: (query: { state: { data?: { status: string } } }) =>
         query.state.data?.status === "ready" ? false : POLL_MS,
@@ -66,47 +111,15 @@ export function ImageStudio({ modelId }: ImageStudioProps) {
     })),
   });
 
-  const cells: FeedCell[] = [
-    ...jobs.map((job, index) => {
-      const status = results[index]?.data;
-      return {
-        id: job.id,
-        w: job.w,
-        h: job.h,
-        item:
-          status?.status === "ready"
-            ? {
-                id: job.id,
-                src: status.asset.url,
-                w: job.w,
-                h: job.h,
-                prompt: job.prompt,
-              }
-            : null,
-      };
-    }),
-    ...history.map((item) => ({
-      id: item.id,
-      w: item.w,
-      h: item.h,
-      item,
-    })),
-  ];
-
-  function remove(ids: string[]) {
-    setJobs((prev) => prev.filter((job) => !ids.includes(job.id)));
-    setHistory((prev) => prev.filter((item) => !ids.includes(item.id)));
-  }
-
   /*
    * Signed out there is nothing of yours to show, and the live studio puts a
    * hero here rather than someone else's generations. The composer stays, and
    * submitting from it opens the dialog.
    *
-   * This return sits below every hook above — useState, useMutation and
-   * useQueries all run unconditionally — because returning earlier would change
-   * the hook order across the signed-in/signed-out transition and React would
-   * throw.
+   * This return sits below every hook above — the store selectors, useMutation
+   * and useQueries all run unconditionally — because returning earlier would
+   * change the hook order across the signed-in/signed-out transition and React
+   * would throw.
    */
   if (!user) {
     return (
@@ -114,7 +127,13 @@ export function ImageStudio({ modelId }: ImageStudioProps) {
         <StudioEmptyState />
         <Composer
           modelId={modelId}
-          onGenerate={() => {
+          /*
+           * The values arrive already validated, so an empty prompt still
+           * fails in the composer rather than asking someone to sign in
+           * before finding out they submitted nothing.
+           */
+          onGenerate={(values) => {
+            holdRequest({ kind: "image", values });
             openAuth("signup");
           }}
         />
@@ -124,7 +143,7 @@ export function ImageStudio({ modelId }: ImageStudioProps) {
 
   return (
     <>
-      <ImageFeed cells={cells} onRemove={remove} />
+      <ImageFeed generations={generations} onRemove={remove} />
       <Composer modelId={modelId} onGenerate={generate} />
     </>
   );

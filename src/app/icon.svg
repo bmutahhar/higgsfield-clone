@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!--
+    The tab mark. Same placeholder glyph as components/layout/logo-mark.tsx —
+    the design system's no-reconstruction rule means Higgsfield's real logo is
+    never redrawn here, so this stays in lockstep with that file and both get
+    swapped together when the licensed asset arrives.
+
+    Two departures from logo-mark, both forced by 16px: the ground is filled
+    rather than a 35%-opacity outline (a hairline dissolves, and a filled tile
+    survives a light tab strip as well as a dark one), and currentColor is
+    resolved to real values because a favicon has no inherited colour.
+
+    Geometry is chosen so every edge lands on a whole pixel at 16px: the stems
+    span units 8-12 and 20-24 of 32, the bar 14-18.
+  -->
+  <rect width="32" height="32" rx="8" fill="#030304"/>
+  <path d="M10 10v12M22 10v12M10 16h12" fill="none" stroke="#d1fe17" stroke-width="4" stroke-linecap="round"/>
+</svg>

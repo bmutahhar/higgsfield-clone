@@ -2,14 +2,15 @@
 
 import { useState } from "react";
 
-import { HistoryPanel } from "@/components/studio/history-panel";
 import { HowItWorks } from "@/components/studio/how-it-works";
 import { MotionLibrary } from "@/components/studio/motion-library";
 import { PaneToolbar } from "@/components/studio/pane-toolbar";
 import { PresetLightbox } from "@/components/studio/preset-lightbox";
 import { QTabs } from "@/components/studio/q-tabs";
+import { VideoHistory } from "@/components/studio/video-history";
 import { PANE_TABS, type PaneTab } from "@/config/genjutsu";
 import type { Preset } from "@/config/presets";
+import type { Generation } from "@/types/generation.types";
 
 /**
  * The right column. Owns which tab is showing and which preset — if any — is
@@ -21,10 +22,13 @@ import type { Preset } from "@/config/presets";
 export function StudioPane({
   tab,
   onTabChange,
+  generations,
   onGate,
 }: {
   tab: PaneTab;
   onTabChange: (next: PaneTab) => void;
+  /** This studio's own output, newest first. Rendered by the History tab. */
+  generations: Generation[];
   onGate: () => void;
 }) {
   const [expanded, setExpanded] = useState<Preset | null>(null);
@@ -71,7 +75,11 @@ export function StudioPane({
           ) : (
             <div className="hf-scrollbar-none min-h-0 flex-1 overflow-y-auto">
               {tab === "history" ? (
-                <HistoryPanel />
+                <VideoHistory
+                  generations={generations}
+                  zoom={zoom}
+                  layout={layout}
+                />
               ) : (
                 <MotionLibrary onOpen={setExpanded} onRecreate={onGate} />
               )}
