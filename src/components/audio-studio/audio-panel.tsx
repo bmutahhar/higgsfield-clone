@@ -1,5 +1,6 @@
 "use client";
 
+import { AudioSheetHeader } from "@/components/audio-studio/audio-sheet-header";
 import { AUDIO_TABS, type AudioMode } from "@/config/audio";
 import { cn } from "@/lib/cn";
 
@@ -27,8 +28,16 @@ export function AudioPanel({
   children: React.ReactNode;
 }) {
   return (
-    <aside className="flex h-full min-h-0 w-85.5 shrink-0 flex-col pb-4">
-      <div className="flex max-h-full min-h-0 flex-col overflow-hidden rounded-q-600 border border-q-subtle bg-q-panel">
+    /*
+     * One element, two shapes. Below `md` the panel fills the viewport as a
+     * sheet; at `md` it becomes the 342px column with its own card. A second
+     * component tree would have drifted from this one by the first change to
+     * either side.
+     */
+    <aside className="fixed inset-0 z-50 flex flex-col bg-q-page md:relative md:inset-auto md:z-auto md:h-full md:min-h-0 md:w-85.5 md:shrink-0 md:flex-col md:bg-transparent md:pb-4">
+      <AudioSheetHeader />
+
+      <div className="flex max-h-full min-h-0 flex-1 flex-col overflow-hidden md:flex-none md:rounded-q-600 md:border md:border-q-subtle md:bg-q-panel">
         <div
           role="tablist"
           aria-label="Audio mode"
