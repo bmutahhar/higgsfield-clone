@@ -11,9 +11,16 @@ export interface CreditCostProps {
   net: number;
 }
 
-/** Credits print without a trailing `.0`: 6.5 stays 6.5, 11.0 becomes 11. */
+/**
+ * Credits print without trailing zeros: 6.5 stays 6.5, 11.0 becomes 11.
+ *
+ * Two decimal places, not one. The video and image surfaces charge in whole
+ * and half credits, where one place was enough — audio charges 0.15 for its
+ * cheapest model, and rounding that to a single place would quote the price
+ * back as 0.2 and make the cheapest option look dearer than it is.
+ */
 function credits(n: number): string {
-  return n.toFixed(1).replace(/\.0$/, "");
+  return n.toFixed(2).replace(/0+$/, "").replace(/\.$/, "");
 }
 
 /**

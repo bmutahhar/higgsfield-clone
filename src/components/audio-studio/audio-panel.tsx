@@ -79,7 +79,20 @@ export function AudioPanel({
           })}
         </div>
 
-        {children}
+        {/*
+          The panel owns both halves of the ARIA pairing. Keying it on the mode
+          remounts the form on every tab change, which is what stops one tab's
+          field values leaking into the next one's.
+        */}
+        <div
+          key={mode}
+          role="tabpanel"
+          id={`audio-panel-${mode}`}
+          aria-labelledby={`audio-tab-${mode}`}
+          className="flex min-h-0 flex-1 flex-col"
+        >
+          {children}
+        </div>
       </div>
     </aside>
   );
