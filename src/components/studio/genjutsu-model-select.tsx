@@ -51,8 +51,21 @@ export function GenjutsuModelSelect({
       >
         <span className="flex min-w-0 flex-col items-start gap-1">
           <span className="text-q-caption-m text-q-muted">Model</span>
-          <span className="truncate text-q-label-sm font-medium text-q-fg">
-            {active?.name ?? "Select a model"}
+          <span className="flex min-w-0 items-center gap-1.5">
+            <span className="truncate text-q-label-sm font-medium text-q-fg">
+              {active?.name ?? "Select a model"}
+            </span>
+            {/*
+              The model's own mark, in brand. Same glyph the picker rows use,
+              so the trigger and the list agree on what each model looks like.
+            */}
+            {active && (
+              <Icon
+                name={active.icon}
+                size={14}
+                className="shrink-0 text-q-brand"
+              />
+            )}
           </span>
         </span>
         <Icon

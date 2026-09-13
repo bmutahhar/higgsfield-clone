@@ -311,7 +311,7 @@ export function GenerateForm({
               {message}
             </p>
           )}
-          <GenerateButton />
+          <GenerateButton list={model?.listCredits} net={model?.credits} />
         </div>
       </form>
 
