@@ -49,6 +49,33 @@ export const PRIMARY_NAV: NavLink[] = [
   { label: "Originals" },
 ];
 
+/**
+ * The navigation that replaces the link row below `md`. The live site does not
+ * shrink the row at that width, it drops it and hands navigation to five fixed
+ * tabs at the foot of the screen, so this is its own inventory rather than a
+ * slice of PRIMARY_NAV.
+ *
+ * Entries without an href are surfaces this clone has not built and render
+ * inert, the same way the row treats them. The live create button opens
+ * `/flow`, a creation hub with no equivalent here, so it points at the image
+ * studio instead.
+ */
+export interface MobileTab {
+  label: string;
+  href?: string;
+  icon: IconName;
+  /** The lime create button at the centre of the bar. */
+  primary?: boolean;
+}
+
+export const MOBILE_TABS: MobileTab[] = [
+  { label: "Home", href: "/", icon: "house" },
+  { label: "Community", icon: "users" },
+  { label: "Generate", href: "/ai/image", icon: "sparkle", primary: true },
+  { label: "Library", icon: "folder" },
+  { label: "Profile", icon: "circle-user" },
+];
+
 export interface ModelTile {
   name: string;
   blurb: string;

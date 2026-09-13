@@ -40,6 +40,31 @@ import { useCompactHeader } from "./use-compact-header";
  * scroll, so it gives its 16px back to the scroll container below instead —
  * same 300ms, and the two animate together.
  *
+ * Responsiveness has exactly one breakpoint, `md` (768px) — found by stepping
+ * the live header from 320 to 1440. Nothing else moves: between 768 and 1440
+ * the link row simply flexes and the action group keeps its 422px.
+ *
+ *                        >= 768         < 768
+ *   link row             visible        display:none
+ *   wordmark             hidden         visible, beside the mark
+ *   Instagram            hidden         36px glyph, first in the actions
+ *   Enterprise           visible        hidden
+ *   language             visible        hidden
+ *   Login                visible        hidden
+ *   Pricing, Sign up     visible        visible
+ *   actions gap          8px            4px
+ *
+ * The row is dropped, not squeezed to nothing, and the difference is not only
+ * paint: a zero-width `overflow-x-auto` row still holds all nineteen links in
+ * the tab order, so a keyboard would walk through nineteen invisible targets
+ * on its way to Sign up.
+ *
+ * Below md the live header is not sticky either — it scrolls off with the page
+ * and the tab bar at the foot of the screen carries navigation from there.
+ * Here the header is chrome in a body that does not scroll, so it has nowhere
+ * to go; it keeps its compact size instead, which is the same trade this file
+ * already makes on desktop for the same reason.
+ *
  * `relative` on the row is what the hover menus hang off: it makes the header
  * the containing block for their panels, which both keeps them clear of the
  * nav row's horizontal clipping and lets `top-full` track whatever height the
@@ -84,7 +109,9 @@ export function SiteHeader() {
         {/* Sized in CSS, not through the `size` prop, so the two states can
               animate into each other. */}
         <LogoMark className="size-8 transition-[width,height] duration-300 ease-[ease-in-out] group-data-compact:size-5 motion-reduce:duration-0" />
-        <span className="hidden font-display text-[16px] tracking-[-0.01em] sm:block">
+        {/* Live shows the wordmark only below md, where the row it would
+              otherwise crowd is gone — not above it, which is what this had. */}
+        <span className="font-display text-[18px] font-bold tracking-[-0.01em] md:hidden">
           Higgsfield
         </span>
       </Link>
@@ -97,7 +124,7 @@ export function SiteHeader() {
         reach the header's lower edge or the pointer crosses dead space on its
         way down to the panel and the menu closes under it.
       */}
-      <nav className="hf-scrollbar-none flex min-w-0 flex-1 items-center gap-0.5 self-stretch overflow-x-auto">
+      <nav className="hf-scrollbar-none hidden min-w-0 flex-1 items-center gap-0.5 self-stretch overflow-x-auto md:flex">
         {PRIMARY_NAV.map((link) => {
           const active = isActive(link.href);
           const content = (
@@ -144,24 +171,52 @@ export function SiteHeader() {
         })}
       </nav>
 
-      <div className="flex shrink-0 items-center gap-2">
+      {/* `ml-auto` is inert while the row is there to take the slack, and is
+            what holds the actions against the right edge once it is not. */}
+      <div className="ml-auto flex shrink-0 items-center gap-1 md:gap-2">
+        {/*
+          Mobile-only on the live site, and a real outbound link there. Lucide
+          v1 dropped its brand marks and the design system forbids redrawing a
+          logo it has no file for, so this takes the footer's neutral glyph and
+          names the platform in its label.
+        */}
+        <a
+          href="https://www.instagram.com/higgsfield.ai"
+          target="_blank"
+          rel="noreferrer"
+          aria-label="Higgsfield on Instagram"
+          className={cn(
+            BUTTON,
+            "w-9 justify-center bg-transparent px-0 text-white group-data-compact:w-6 group-data-compact:px-0 hover:text-lime md:hidden",
+          )}
+        >
+          <Icon name="camera" size={20} />
+        </a>
+
         <Link
           href="/pricing"
           className={cn(
             BUTTON,
-            "gap-1.5 bg-transparent px-2 text-lime group-data-compact:px-2",
+            "relative gap-1.5 bg-transparent px-2 text-lime group-data-compact:px-2",
           )}
         >
           <Icon name="flame" size={15} />
           Pricing
-          <span className="inline-flex h-4 items-center rounded-md bg-[#FF2D78] px-1.5 text-[10px] font-bold text-white">
+          {/*
+            Out of flow, centred on the pill and hanging 8px below it, which is
+            where the live chip sits. In flow it adds ~48px to the pill, and
+            that is the difference between the actions fitting beside the
+            wordmark on a 375px screen and running off the edge. `top-full`
+            tracks the pill through both header sizes.
+          */}
+          <span className="absolute top-full left-1/2 inline-flex h-4 -translate-x-1/2 -translate-y-2 items-center rounded-md bg-[#FF2D78] px-1.5 text-[10px] font-bold whitespace-nowrap text-white">
             30% OFF
           </span>
         </Link>
 
         <Link
           href="/pricing"
-          className={cn(BUTTON, "hidden bg-white/5 text-white lg:inline-flex")}
+          className={cn(BUTTON, "hidden bg-white/5 text-white md:inline-flex")}
         >
           <Icon name="sparkle" size={15} />
           Enterprise
@@ -172,7 +227,7 @@ export function SiteHeader() {
           aria-label="Language"
           className={cn(
             BUTTON,
-            "hidden w-9 justify-center px-0 text-[#A8A8A8] group-data-compact:w-6 group-data-compact:px-0 hover:text-primary lg:inline-flex",
+            "hidden w-9 justify-center px-0 text-[#A8A8A8] group-data-compact:w-6 group-data-compact:px-0 hover:text-primary md:inline-flex",
           )}
         >
           <Icon name="globe" size={17} />
@@ -187,7 +242,10 @@ export function SiteHeader() {
               onClick={() => {
                 openAuth("login");
               }}
-              className={cn(BUTTON, "bg-lime/8 text-lime")}
+              className={cn(
+                BUTTON,
+                "hidden bg-lime/8 text-lime md:inline-flex",
+              )}
             >
               Login
             </button>

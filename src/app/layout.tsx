@@ -6,6 +6,7 @@ import {
 } from "next/font/google";
 
 import { RouteProgress } from "@/components/layout/route-progress";
+import { MobileTabBar } from "@/components/marketing/mobile-tab-bar";
 import { PromoBanner } from "@/components/marketing/promo-banner";
 import { SiteHeader } from "@/components/marketing/site-header";
 import { AuthProvider } from "@/features/auth/auth-context";
@@ -100,6 +101,9 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
           <RouteProgress />
           <SiteHeader />
           {children}
+          {/* Below md the header's link row is gone and this carries
+              navigation in its place. See mobile-tab-bar.tsx. */}
+          <MobileTabBar />
         </AuthProvider>
       </body>
     </html>
