@@ -20,7 +20,7 @@ export function FeatureSplit() {
             details while everything else stays as filmed.
           </p>
           <div className="mt-6 flex gap-2.5">
-            <ButtonLink href="/video" pill size="lg">
+            <ButtonLink href="/ai/video" pill size="lg">
               Start generating
             </ButtonLink>
             <Button pill size="lg" variant="outline">
