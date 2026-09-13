@@ -14,7 +14,7 @@ export function AgentBanner() {
         </p>
         <div className="mt-7 flex justify-center">
           <ButtonLink
-            href="/explore"
+            href="/"
             pill
             size="lg"
             className="border-transparent bg-n-0 text-primary hover:bg-n-2 hover:text-primary"

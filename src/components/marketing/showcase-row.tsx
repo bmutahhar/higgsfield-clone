@@ -39,7 +39,7 @@ export function ShowcaseRow({
 
       <div className="mt-5 flex justify-center">
         <ButtonLink
-          href="/explore"
+          href="/"
           pill
           variant="secondary"
           iconRight="arrow-up-right"

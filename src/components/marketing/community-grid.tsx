@@ -42,7 +42,7 @@ export function CommunityGrid() {
 
       <div className="mt-6 flex justify-center">
         <ButtonLink
-          href="/explore"
+          href="/"
           pill
           variant="secondary"
           iconRight="arrow-up-right"

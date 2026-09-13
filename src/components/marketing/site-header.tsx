@@ -37,12 +37,9 @@ function NavBadge({ children }: { children: string }) {
 export function SiteHeader() {
   const pathname = usePathname();
 
-  // The live site treats the home page as the Explore surface, so Explore
-  // carries the active style at "/" too. Matched on the label, not the href:
-  // most entries point at /explore as a placeholder, so matching on href lit
-  // up the whole row.
-  const isActive = (link: { label: string; href: string }) =>
-    pathname === "/" ? link.label === "Explore" : pathname === link.href;
+  // Explore's href is "/" on the live site, so plain path matching is enough.
+  const isActive = (href?: string) =>
+    Boolean(href) && (pathname === href || pathname.startsWith(`${href}/`));
 
   return (
     <header className="sticky top-0 z-40 flex h-13 items-center gap-3 bg-panel px-4">
@@ -58,9 +55,31 @@ export function SiteHeader() {
       </Link>
 
       {/* The live row overflows horizontally rather than collapsing. */}
+      {/* The live row overflows horizontally rather than collapsing. Entries
+          for surfaces this clone has not built render inert, not as 404 links. */}
       <nav className="hf-scrollbar-none flex min-w-0 flex-1 items-center gap-0.5 overflow-x-auto">
         {PRIMARY_NAV.map((link) => {
-          const active = isActive(link);
+          const active = isActive(link.href);
+          const content = (
+            <>
+              {link.label}
+              {link.badge && <NavBadge>{link.badge}</NavBadge>}
+            </>
+          );
+
+          if (!link.href) {
+            return (
+              <span
+                key={link.label}
+                aria-disabled="true"
+                title={`${link.label} — not built in this clone`}
+                className={cn(NAV_LINK, "cursor-default text-[#A8A8A8]/45")}
+              >
+                {content}
+              </span>
+            );
+          }
+
           return (
             <Link
               key={link.label}
@@ -73,8 +92,7 @@ export function SiteHeader() {
                   : "text-[#A8A8A8] hover:bg-w-06 hover:text-primary",
               )}
             >
-              {link.label}
-              {link.badge && <NavBadge>{link.badge}</NavBadge>}
+              {content}
             </Link>
           );
         })}
@@ -111,12 +129,12 @@ export function SiteHeader() {
           <Icon name="globe" size={17} />
         </button>
 
-        <Link href="/explore" className={cn(BUTTON, "bg-lime/8 text-lime")}>
+        <Link href="/" className={cn(BUTTON, "bg-lime/8 text-lime")}>
           Login
         </Link>
 
         <Link
-          href="/explore"
+          href="/"
           className={cn(
             BUTTON,
             "bg-accent text-[#1A1A1A] hover:bg-accent-hover",

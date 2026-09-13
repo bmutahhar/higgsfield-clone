@@ -1,4 +1,4 @@
-import { PresetGrid } from "@/components/explore/preset-grid";
+import { PresetGrid } from "@/components/effects/preset-grid";
 import { HERO, PRESETS } from "@/config/media";
 
 import type { Metadata } from "next";

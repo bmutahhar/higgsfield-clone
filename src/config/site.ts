@@ -9,7 +9,8 @@ import type { IconName } from "@/components/core/icon";
 
 export interface NavLink {
   label: string;
-  href: string;
+  /** Omitted for surfaces this clone has not built — those render inert. */
+  href?: string;
   badge?: string;
 }
 
@@ -17,26 +18,32 @@ export interface NavLink {
  * The header's full link inventory, in the order the live site lists it. The
  * row overflows horizontally rather than collapsing.
  */
+/**
+ * The header's link inventory, in the live order, with the live paths. On the
+ * real site Explore IS the root — there is no /explore route. Entries without
+ * an href are surfaces this clone has not built; they render inert rather than
+ * linking to a 404.
+ */
 export const PRIMARY_NAV: NavLink[] = [
-  { label: "Explore", href: "/explore" },
-  { label: "Image", href: "/explore" },
-  { label: "Video", href: "/video" },
-  { label: "Audio", href: "/explore" },
-  { label: "MCP", href: "/explore" },
-  { label: "ChatGPT Plugin", href: "/explore", badge: "New" },
-  { label: "Genjutsu", href: "/explore", badge: "New" },
+  { label: "Explore", href: "/" },
+  { label: "Image", href: "/ai/image" },
+  { label: "Video", href: "/ai/video" },
+  { label: "Audio" },
+  { label: "MCP" },
+  { label: "ChatGPT Plugin", badge: "New" },
+  { label: "Genjutsu", href: "/ai/video?model=genjutsu", badge: "New" },
   { label: "Effects", href: "/effects", badge: "Free" },
-  { label: "Cinema Studio", href: "/explore" },
-  { label: "Marketing Studio", href: "/explore" },
-  { label: "Supercomputer", href: "/explore" },
-  { label: "3D Jutsu", href: "/explore", badge: "New" },
-  { label: "Edit", href: "/explore" },
-  { label: "Academy", href: "/explore" },
-  { label: "Community", href: "/explore" },
-  { label: "Contests", href: "/explore" },
-  { label: "Plugins", href: "/explore" },
-  { label: "Canvas", href: "/explore" },
-  { label: "Originals", href: "/explore" },
+  { label: "Cinema Studio" },
+  { label: "Marketing Studio" },
+  { label: "Supercomputer" },
+  { label: "3D Jutsu", badge: "New" },
+  { label: "Edit" },
+  { label: "Academy" },
+  { label: "Community" },
+  { label: "Contests" },
+  { label: "Plugins" },
+  { label: "Canvas" },
+  { label: "Originals" },
 ];
 
 export interface ModelTile {

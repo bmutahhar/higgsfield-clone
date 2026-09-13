@@ -19,10 +19,10 @@ interface NavEntry {
  * inert rather than linking to a 404.
  */
 const APP_NAV: NavEntry[] = [
-  { icon: "compass", label: "Explore", href: "/explore" },
-  { icon: "clapperboard", label: "Video", href: "/video" },
+  { icon: "compass", label: "Explore", href: "/" },
+  { icon: "clapperboard", label: "Video", href: "/ai/video" },
   { icon: "wand-2", label: "Effects", href: "/effects", badge: "New" },
-  { icon: "image", label: "Image" },
+  { icon: "image", label: "Image", href: "/ai/image" },
   { icon: "layers", label: "Edit" },
   { icon: "bot", label: "Supercomputer" },
 ];

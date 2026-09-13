@@ -37,7 +37,7 @@ export default async function ProjectPage({
   return (
     <div className="px-6 pt-4 pb-16">
       <div className="mb-4 flex items-center gap-2.5">
-        <Link href="/explore">
+        <Link href="/">
           <IconButton icon="arrow-left" label="Back" size="sm" tabIndex={-1} />
         </Link>
         <span className="text-body-sm text-muted">
