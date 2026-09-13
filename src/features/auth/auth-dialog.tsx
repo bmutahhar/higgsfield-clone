@@ -4,6 +4,9 @@ import { useEffect, useRef } from "react";
 
 import { Icon } from "@/components/core/icon";
 import { useAuth } from "@/features/auth/auth-context";
+import { EmailLoginStep } from "@/features/auth/steps/email-login";
+import { EmailSignupStep } from "@/features/auth/steps/email-signup";
+import { ResetStep } from "@/features/auth/steps/reset";
 import { RootStep } from "@/features/auth/steps/root";
 import { cn } from "@/lib/cn";
 
@@ -87,7 +90,9 @@ export function AuthDialog() {
       <div className="hf-scrollbar-none flex flex-1 flex-col items-center overflow-y-auto px-5 py-6 md:px-22 md:py-8">
         <div className="w-full">
           {step === "root" && <RootStep />}
-          {/* Task 11 adds the signup, login and reset steps. */}
+          {step === "signup" && <EmailSignupStep />}
+          {step === "login" && <EmailLoginStep />}
+          {step === "reset" && <ResetStep />}
         </div>
       </div>
     </dialog>
