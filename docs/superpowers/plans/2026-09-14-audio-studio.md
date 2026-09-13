@@ -4685,7 +4685,30 @@ full of layout."
 
 ---
 
-### Task 14: History — waveform tiles and playback
+### Task 14: History — per-tab renderers and playback
+
+> **Superseded in part — re-read spec §6.3 before writing any of this.**
+>
+> This task was written from a logged-out reading of the pane, where History is
+> auth-gated. Signed-in captures since have corrected it in ways the code blocks
+> below do **not** reflect:
+>
+> - **History is not one renderer.** Speech is a list of full-width rows grouped
+>   under date headings; Voice Change and Translate are a grid of 3:4 video
+>   tiles. Pick the renderer from the generation's `mode`.
+> - Rows are full-width, not a 720px centred column.
+> - The waveform is **mirrored about a horizontal centre line**, not
+>   bottom-aligned — `items-end` below is wrong.
+> - A row is three zones (avatar + voice/script · waveform · play + model +
+>   actions), not a stack with a metadata footer.
+> - The **voice name is the primary line**, the script the secondary one. The
+>   code below has it inverted.
+> - Actions are always visible, and there is **no elapsed/duration readout**.
+> - `waveformBars` takes the duration as well, so bar count tracks length.
+>
+> The pieces still correct: one `<audio>` per row, only one playing at a time,
+> the frame holding its size across every phase, and bars derived from the id.
+> Seed data already exists in `config/audio-fixtures.ts` (`audioSeedFor`).
 
 **Files:**
 

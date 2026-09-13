@@ -3,7 +3,9 @@
 **Route:** `/audio`
 **Date:** 2026-09-14
 **Status:** specified — not yet implemented
-**Reference:** `https://higgsfield.ai/audio`, inspected at 1440×900 and 375×812, logged out.
+**Reference:** `https://higgsfield.ai/audio`, inspected at 1440×900 and 375×812 logged
+out, plus signed-in captures of all three History tabs (2026-09-14). Anything
+measured only from a capture rather than the live DOM says so where it appears.
 
 ---
 
@@ -23,7 +25,9 @@ already share.
 - the model popover and the filters popover;
 - the right pane and both of its tabs (`History`, `How it works`), with a
   per-tab `How it works` surface;
-- History rendering audio as a waveform tile with inline playback;
+- History rendering **per tab**: speech as full-width waveform rows grouped by
+  date, the two video modes as a 3:4 tile grid (§6.3);
+- a seeded back catalogue on all three tabs, so no tab opens empty;
 - the logged-out gate, reusing the existing hold-request → auth → auto-resume flow;
 - the mobile sheet down to 375px.
 
@@ -47,16 +51,16 @@ Genjutsu spec. §14 covers the fallback.
 
 ## 2. Decisions taken
 
-| #   | Decision                                               | Rationale                                                                                                                                                                                                                                          |
-| --- | ------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| D1  | Route is `/audio`, not `/ai/audio`                     | Matches the reference and the `href` the live nav already points at. It still lives under `src/app/(studio)/`, so it inherits the studio layout, the `q-` ramp and `QueryProvider` unchanged.                                                      |
-| D2  | All three tabs validate and submit                     | The two secondary tabs are two-dropzone forms — they add schema branches and job plumbing, not new UI vocabulary. Shipping them inert would leave two thirds of the surface a façade.                                                              |
-| D3  | One discriminated-union schema keyed on `mode`         | The three tabs share almost no fields. A union narrows correctly at the one place it matters — the submit call — which is the same reason `PendingRequest` discriminates on `kind`. A flat schema with everything optional would validate nothing. |
-| D4  | Waveform bars are derived from the job id, not decoded | Fixtures are cross-origin; `decodeAudioData` is one missing CORS header away from a permanently empty tile. Deriving from the id is the trick `generation-jobs.server.ts` already uses to stay stateless, and it is deterministic across reloads.  |
-| D5  | Our own credit formula: `rate(model) × batch`          | The reference's cost is not linear in script length — 13 characters priced 0.1 and 17 priced 0.3 on the same model. Rather than ship a guess nobody can verify, the rate table lives in `config/audio.ts` where it is one edit to change.          |
-| D6  | `GenerationAsset` gains `duration`                     | A waveform tile must reserve its width before the file loads, for the same reason `w`/`h` exist on `Generation` for images. Optional, so image and video are untouched.                                                                            |
-| D7  | Every visual state is CSS                              | `CLAUDE.md` forbids React state for visual state. Only genuinely-stateful things (active tab, selected model, advanced-open, playback position, pane tab) become React state.                                                                      |
-| D8  | The mobile sheet is the same components, not a fork    | Below `md` the panel becomes a full-screen sheet and the batch stepper relocates into the CTA footer. Both are container/order changes, expressible in classes. A second component tree would drift.                                               |
+| #   | Decision                                                                                | Rationale                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| --- | --------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| D1  | Route is `/audio`, not `/ai/audio`                                                      | Matches the reference and the `href` the live nav already points at. It still lives under `src/app/(studio)/`, so it inherits the studio layout, the `q-` ramp and `QueryProvider` unchanged.                                                                                                                                                                                                                                                                  |
+| D2  | All three tabs validate and submit                                                      | The two secondary tabs are two-dropzone forms — they add schema branches and job plumbing, not new UI vocabulary. Shipping them inert would leave two thirds of the surface a façade.                                                                                                                                                                                                                                                                          |
+| D3  | One discriminated-union schema keyed on `mode`                                          | The three tabs share almost no fields. A union narrows correctly at the one place it matters — the submit call — which is the same reason `PendingRequest` discriminates on `kind`. A flat schema with everything optional would validate nothing.                                                                                                                                                                                                             |
+| D4  | Waveform bars are derived from the job id, not decoded; the duration sets the bar count | Fixtures are cross-origin; `decodeAudioData` is one missing CORS header away from a permanently empty tile. Deriving from the id is the trick `generation-jobs.server.ts` already uses to stay stateless, and it is deterministic across reloads. The contour is therefore synthetic — so the duration drives how many bars are drawn, or a one-second clip and a ten-second one would render at identical length, which reads as a bug next to the reference. |
+| D5  | Our own credit formula: `rate(model) × batch`                                           | The reference's cost is not linear in script length — 13 characters priced 0.1 and 17 priced 0.3 on the same model. Rather than ship a guess nobody can verify, the rate table lives in `config/audio.ts` where it is one edit to change.                                                                                                                                                                                                                      |
+| D6  | `GenerationAsset` gains `duration`                                                      | A waveform tile must reserve its width before the file loads, for the same reason `w`/`h` exist on `Generation` for images. Optional, so image and video are untouched.                                                                                                                                                                                                                                                                                        |
+| D7  | Every visual state is CSS                                                               | `CLAUDE.md` forbids React state for visual state. Only genuinely-stateful things (active tab, selected model, advanced-open, playback position, pane tab) become React state.                                                                                                                                                                                                                                                                                  |
+| D8  | The mobile sheet is the same components, not a fork                                     | Below `md` the panel becomes a full-screen sheet and the batch stepper relocates into the CTA footer. Both are container/order changes, expressible in classes. A second component tree would drift.                                                                                                                                                                                                                                                           |
 
 ---
 
@@ -770,62 +774,119 @@ copy the reference's animation.
 
 ### 6.3 History
 
-The pane's other tab, and the reason `duration` joins `GenerationAsset`.
+**Re-measured 2026-09-14 from a signed-in capture.** The original text in this
+section was written logged out, where History is auth-gated, and it was wrong in
+six ways. What follows replaces it.
 
-Layout is a single column of tiles, `flex flex-col gap-2`, max-width 720px centred
-— audio has no aspect ratio, so the masonry the image feed uses buys nothing here.
+The single most important correction: **History is not one renderer.** The tab
+decides the view.
 
-**Tile:**
+| Panel tab      | History renders                                        |
+| -------------- | ------------------------------------------------------ |
+| Text to Speech | a list of full-width rows, grouped under date headings |
+| Voice Change   | a grid of 3:4 video tiles                              |
+| Translate      | the same grid                                          |
+
+That follows from what each mode produces. Speech produces a file with no frame;
+the other two hand back an edited video. Picking the renderer from
+`mode` — carried on the generation's own settings — is the whole of it.
+
+#### 6.3.1 Text to Speech — rows
+
+Grouped by calendar day, newest group first, under a plain heading
+(`March 6, 2026`) in `text-q-heading-sm`. Rows fill the pane's width; there is
+no centred column.
+
+Each row is three zones, not a stack:
 
 ```
-<article class="flex flex-col gap-3 rounded-q-300 border border-q-subtle
-                bg-q-w-05 p-3 transition-colors hover:border-q-default">
-  <div class="flex items-center gap-3">
-    <PlayButton />                       ← size-10, rounded-q-full, bg-q-card-strong
-    <Waveform />                         ← flex-1, h-10
-    <span class="shrink-0 text-q-caption-l tabular-nums text-q-soft">
-      {elapsed} / {duration}</span>
-  </div>
-  <p class="line-clamp-2 text-q-caption-l text-q-soft">{prompt}</p>
-  <div class="flex items-center gap-2 text-q-caption-xs font-medium text-q-soft">
-    {model} · {format} · {sampleRate}
-  </div>
-</article>
+article  flex w-full items-center gap-4 rounded-q-300 bg-q-w-05 p-3
+├── ~25%  flex items-center gap-3
+│   ├── Avatar        ← 40px, rounded-q-300, the voice's gradient
+│   └── flex flex-col
+│       ├── {voice.name}   ← text-q-menu text-q-fg      ← the primary line
+│       └── {prompt}       ← text-q-caption-l text-q-soft, truncate
+├── ~50%  Waveform          ← fills the middle, mirrored about its centre
+└── ~25%  flex items-center gap-3 justify-end
+    ├── Play / Pause  ← sits beside the model name, not at the far left
+    ├── {model.name}  ← text-q-menu text-q-fg, with its glyph
+    └── Like · Copy · Download · ⋯   ← always visible
 ```
 
-**Waveform** — a row of bars, `flex h-10 items-end gap-px`, each bar
-`w-0.5 rounded-full`. Played bars are `bg-q-brand`, unplayed `bg-q-w-20`; the split
-is a percentage, so it is one inline `style` on a wrapper, commented like the
-slider fill.
+The six corrections, spelled out because each one is a thing the earlier draft
+got backwards:
 
-Per D4, heights come from the job id, not from the file:
+1. **Rows are full-width.** Not a 720px centred column.
+2. **Generations group under date headings.** Not one flat list.
+3. **The waveform is mirrored about a horizontal centre line** — bars grow up
+   _and_ down from the middle. Not `items-end`.
+4. **Three zones, not a stack.** The metadata does not sit under the waveform.
+5. **The voice name is the primary line**, the script the grey secondary one.
+   The earlier draft had it inverted.
+6. **Actions are always visible**, not revealed on `group-hover`. And there is
+   **no elapsed / duration readout** — drop the `0:00 / 0:07`.
 
-```ts
-// lib/waveform.ts — pure, no I/O, unit-tested
-export function waveformBars(id: string, count = 64): number[];
+**On the waveform's shape.** The reference draws real amplitude: a one-word
+take is a short quiet bulge, a full sentence is dense and sustained. Ours is
+derived from the job id per D4, which means contour is synthetic. Left alone
+that would draw a one-second clip and a ten-second one at identical length,
+which is a visible tell. So `waveformBars` takes the duration as well and uses
+it to set the **bar count**: length reads true even though the contour does not.
+Bars are ~1px wide with ~1px gaps — on the order of 150–200 of them across a
+wide row, not the 64 the earlier draft assumed.
+
+#### 6.3.2 Voice Change and Translate — a grid
+
+```
+div  grid gap-1
+└── article  group relative aspect-[3/4] overflow-hidden rounded-q-300
+    ├── <video poster>            ← fills the tile, object-cover
+    ├── SelectionCircle           ← top-left, an empty ring
+    ├── PlayButton                ← centred, ~64px, at rest
+    ├── ActionRail                ← right edge, vertical: ⋯ · copy · download · like
+    └── VoicePill                 ← bottom-left: a mic glyph and a chevron
 ```
 
-A small deterministic hash over the id, normalised to `0.15–1`. Same id, same
-picture, every reload and every machine — and no CORS surface.
+- Tiles are **3:4**, measured; roughly 444px wide on a 1739px viewport.
+- The gap is a hairline, about **4px** — far tighter than the row list's.
+- The grid does **not** stretch to fill the pane. Tiles hold their width and
+  the row is left-aligned, which is what a zoom control implies; treat the
+  column width as the zoom variable, as the image feed already does.
+- **At rest** a tile shows the centred play button. **On hover** the action rail
+  appears at the right edge. That is the `feed-tile` hover pattern we already
+  have — reuse it rather than writing a second one.
 
-**Playback** — one `<audio>` element per tile, `preload="metadata"`. Only one plays
-at a time: starting one pauses the rest. Clicking the waveform seeks. `duration`
-from the store holds the tile's layout before metadata loads; once the real
-`loadedmetadata` fires, prefer the element's value.
+#### 6.3.3 The toolbar toggle — unresolved
 
-**Pending tiles.** A job that has not landed renders the same frame with the
-waveform replaced by a shimmer and the time replaced by the phase label —
-`Processing…` then `Generating…`, from the existing `GenerationPhase`. The tile
-keeps its height throughout, so nothing below it moves when the asset lands. This
-is exactly what `pending-tile.tsx` does for images; follow it.
+On the two video tabs only, a switch appears in the toolbar between the
+segmented control and `Filters`. It is absent on Text to Speech.
 
-**Empty state.** No generations and the user has switched to History deliberately:
-centre a `studio-empty-state` with a line of copy and nothing else. When History is
-empty the pane opens on `How it works` instead, which is why the reference shows
-that tab first when logged out.
+**We do not know what it does.** A before/after comparison of the input and
+output clip is the obvious guess for two modes that both transform a supplied
+video, but that is a guess. Render it in the right place with the right styling,
+wire it to nothing, and resolve it the next time someone is signed in. Do not
+invent a behaviour for it.
 
-**Row actions** — on `group-hover`, a trailing cluster: download, copy prompt,
-delete. Delete calls the store's existing `remove`.
+#### 6.3.4 Seeded state
+
+All three tabs open with a back catalogue, from `config/audio-fixtures.ts`. An
+empty tab is the one state that demonstrates nothing — it cannot show the row
+layout, the date grouping, or the fact that the video tabs are a grid at all.
+Speech is seeded across at least two calendar days so the grouping has something
+to group.
+
+#### 6.3.5 Pending tiles and empty state
+
+A job that has not landed renders in its mode's own shape — a row with the
+waveform replaced by a shimmer, or a tile with the poster replaced by one —
+holding the phase label from `GenerationPhase`. The frame keeps its exact size
+throughout, so nothing below moves when the asset lands.
+
+With the catalogue seeded, a genuinely empty History only occurs signed out;
+that case is the gate in §10.
+
+**Row actions.** Like, copy, download and a `⋯` menu, always visible. Delete
+lives in the `⋯` menu and calls the store's existing `remove`.
 
 ---
 
