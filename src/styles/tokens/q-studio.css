@@ -695,3 +695,86 @@
     rgba(255, 255, 255, 0) 100%
   );
 }
+
+/*
+ * The business cards' hairline. Same masked-edge trick as .q-hairline-plan,
+ * but raked 225deg instead of straight down, so the light reads as coming from
+ * the top-right corner rather than from above. The two sit side by side when
+ * you switch tabs, and the difference is visible.
+ */
+.q-hairline-plan-diag {
+  padding: 1px;
+  background: linear-gradient(
+    225deg,
+    rgba(255, 255, 255, 0.15) 0%,
+    rgba(255, 255, 255, 0.1) 18%,
+    rgba(255, 255, 255, 0.04) 42%,
+    rgba(255, 255, 255, 0) 76%
+  );
+  mask:
+    linear-gradient(#fff, #fff) content-box exclude,
+    linear-gradient(#fff, #fff);
+  -webkit-mask:
+    linear-gradient(#fff, #fff) content-box,
+    linear-gradient(#fff, #fff);
+  -webkit-mask-composite: xor;
+}
+
+/* ---- Business card grounds ---- */
+.q-plan-team {
+  background-image: linear-gradient(#1f2022 0%, #222420 55%, #272a20 100%);
+}
+
+.q-plan-scale {
+  background-image: linear-gradient(
+    #121d23 0%,
+    #152026 45%,
+    #1d282e 75%,
+    #273238 100%
+  );
+}
+
+.q-plan-enterprise {
+  background-image: linear-gradient(
+    #1f2024 0%,
+    #232428 40%,
+    #343539 75%,
+    #48494d 100%
+  );
+}
+
+/*
+ * The mobile pricing surface is a standalone offer page, not a page with
+ * chrome: the live site injects `#header, #footer { display: none }` when it
+ * mounts, and gives the surface its own close button instead.
+ *
+ * Reproduced here as one scoped rule rather than injected CSS. `:has()` keys
+ * off the surface's own marker, so it only fires on the route that renders it
+ * and only under the same 768px breakpoint that swaps the trees. The desktop
+ * tree is in the DOM at the same time (both are rendered, CSS picks one), so
+ * this must be width-gated as well as presence-gated.
+ */
+@media (max-width: 767px) {
+  body:has([data-pricing-mobile]) [data-site-chrome] {
+    display: none !important;
+  }
+}
+
+/*
+ * The mobile pick's body. It sits inside a coloured collar, so it needs its
+ * own opaque ground or the collar shows straight through it — a background
+ * *image* alone is not enough. Colour and wash together, in one class, so
+ * tailwind-merge cannot drop one of a bg-color/bg-image pair.
+ */
+.q-pick-body {
+  background-color: var(--q-bg-secondary);
+}
+
+.q-pick-body--lime {
+  background-color: var(--q-bg-secondary);
+  background-image: radial-gradient(
+    80% 80% at 100% 100%,
+    rgba(209, 254, 23, 0.2) 0%,
+    rgba(0, 0, 0, 0) 100%
+  );
+}

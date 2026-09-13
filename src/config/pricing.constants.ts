@@ -456,21 +456,60 @@ export const PLANS: Plan[] = [
 
 /* ---------------------------------------------------------------- Business */
 
+/*
+ * The business cards are not a restyle of the individual ones. They swap the
+ * credit slider for a seat stepper, carry three extra sections (admin,
+ * security, unlimited models), and re-colour: Team's discount badge is lime
+ * with a grey strike-through, Scale's is pink with a pink strike. Their
+ * hairline runs 225deg rather than straight down.
+ */
+export interface BusinessSection {
+  title: string;
+  rows: string[];
+}
+
 export interface BusinessPlan {
   id: "team" | "scale" | "enterprise";
   name: string;
   tagline: string;
   tone: "team" | "scale" | "enterprise";
   ctaLabel: string;
+  /** Enterprise says "Contact sales" and shows a partner note under it. */
+  ctaNote?: string;
   bestValue?: boolean;
+  discount?: { percent: number; tone: "lime" | "pink" };
   /** Enterprise has no stepper and no arithmetic. */
   seats?: { min: number; max: number; default: number; creditsPerSeat: number };
   pricePerSeat?: { monthly: number; annual: number };
-  discount?: number;
   annualSaving?: number;
+  /** "5,000 credits in total/mo" vs "12,500 credits/mo" — the copy differs. */
+  creditsLabel: (credits: number) => string;
+  /** Enterprise replaces the whole credits block with fixed copy. */
+  creditsFixed?: { headline: string; rows: string[] };
   membersLabel: string;
   features: string[];
+  unlimited: { title: string; rows: ModelRow[] };
+  sections: BusinessSection[];
 }
+
+/* Every business plan shares these five. */
+const BUSINESS_FEATURES = [
+  "Access to all features & models",
+  "Shared workspace & credit pool for your team",
+  "Early access to advanced AI features",
+  "Access to Seedance 2.5",
+  "Access to Supercomputer",
+];
+
+const SECURITY: BusinessSection = {
+  title: "Security & Compliance",
+  rows: [
+    "Indemnification",
+    "No training on your data",
+    "SOC 2 security (coming soon)",
+    "Personal AI Educator",
+  ],
+};
 
 export const BUSINESS_PLANS: BusinessPlan[] = [
   {
@@ -478,56 +517,165 @@ export const BUSINESS_PLANS: BusinessPlan[] = [
     name: "Team",
     tagline: "For agencies and small teams to create faster",
     tone: "team",
-    ctaLabel: "Get Team",
+    ctaLabel: "Get Team Annual",
+    discount: { percent: 18, tone: "lime" },
     seats: { min: 2, max: 9, default: 5, creditsPerSeat: 1000 },
     pricePerSeat: { monthly: 79, annual: 65 },
-    discount: 18,
     annualSaving: 168,
+    creditsLabel: (credits) => `${formatCredits(credits)} credits in total/mo`,
     membersLabel: "2 to 9 members in one shared workspace",
-    features: [
-      "Access to all features & models",
-      "Shared workspace & credit pool for your team",
-      "Early access to advanced AI features",
-      "Access to Seedance 2.5",
-      "Access to Supercomputer",
+    features: BUSINESS_FEATURES,
+    unlimited: {
+      title: "Unlimited models",
+      rows: [
+        {
+          name: "Nano Banana Pro",
+          badges: [muted("No unlimited")],
+          included: false,
+        },
+        {
+          name: "Seedream 5.0 Pro",
+          badges: [muted("No unlimited")],
+          included: false,
+        },
+        { name: "Kling 3.0", badges: [muted("No unlimited")], included: false },
+      ],
+    },
+    sections: [
+      {
+        title: "Admin & Control",
+        rows: [
+          "Basic analytics & priority support",
+          "Admin spend control",
+          "Priority queue",
+          "SSO",
+          "Delegated top-up access",
+        ],
+      },
+      SECURITY,
     ],
   },
+
   {
     id: "scale",
     name: "Scale",
     tagline: "Designed for growing creative teams",
     tone: "scale",
-    ctaLabel: "Get Scale",
+    ctaLabel: "Get Scale Annual",
     bestValue: true,
+    discount: { percent: 30, tone: "pink" },
     seats: { min: 5, max: 15, default: 5, creditsPerSeat: 2500 },
     pricePerSeat: { monthly: 215, annual: 150 },
-    discount: 30,
     annualSaving: 228,
+    creditsLabel: (credits) => `${formatCredits(credits)} credits/mo`,
     membersLabel: "5 to 15 members in one shared workspace",
-    features: [
-      "Access to all features & models",
-      "Shared workspace & credit pool for your team",
-      "Early access to advanced AI features",
-      "Access to Seedance 2.5",
-      "Access to Supercomputer",
+    features: BUSINESS_FEATURES,
+    unlimited: {
+      title: "Unlimited models",
+      rows: [
+        {
+          name: "Nano Banana Pro",
+          badges: [spec("2K"), unlimited("7-day unlimited")],
+          included: true,
+        },
+        {
+          name: "Seedream 5.0 Pro",
+          badges: [spec("2K"), unlimited("7-day unlimited")],
+          included: true,
+        },
+        {
+          name: "Kling 3.0",
+          badges: [unlimited("7-day unlimited")],
+          included: true,
+        },
+      ],
+    },
+    sections: [
+      {
+        title: "Admin & Control",
+        rows: [
+          "Detailed analytics & priority support",
+          "Admin spend control",
+          "Priority queue for faster task processing",
+          "Basic SSO",
+          "Delegated top-up access",
+        ],
+      },
+      SECURITY,
     ],
   },
+
   {
     id: "enterprise",
     name: "Enterprise",
     tagline: "For organizations needing personalisation & security",
     tone: "enterprise",
     ctaLabel: "Contact sales",
+    ctaNote: "Best offers for Higgsfield\u2019s partners",
+    creditsLabel: () => "Custom credits per seat/mo",
+    creditsFixed: {
+      headline: "Custom credits per seat/mo",
+      rows: [
+        "= Unlimited seats",
+        "= Custom model access",
+        "= Volume rollover credits",
+      ],
+    },
     membersLabel: "Unlimited members & Dedicated capacity (SLA)",
-    features: [
-      "Access to all features & models",
-      "Shared workspace & credit pool for your team",
-      "Early access to advanced AI features",
-      "Access to Seedance 2.5",
-      "Access to Supercomputer",
+    features: BUSINESS_FEATURES,
+    unlimited: {
+      title: "Unlimited resources",
+      rows: [
+        {
+          name: "Volume discounts per model",
+          badges: [access("Included")],
+          included: true,
+        },
+        {
+          name: "Custom credits per seat",
+          badges: [access("Included")],
+          included: true,
+        },
+        {
+          name: "Unlimited number of seats",
+          badges: [access("Included")],
+          included: true,
+        },
+        {
+          name: "Custom capacity & SLA",
+          badges: [access("Included")],
+          included: true,
+        },
+      ],
+    },
+    sections: [
+      {
+        title: "Admin & Control",
+        rows: [
+          "Detailed analytics & priority support",
+          "Admin spend control",
+          "Priority queue for faster task processing",
+          "Custom SSO",
+          "Delegated top-up access",
+        ],
+      },
+      SECURITY,
     ],
   },
 ];
+
+/**
+ * The two derived lines under a business plan's credit total. Both fall out of
+ * the total, not the seat count: an image costs 2 credits and a Kling 3.0
+ * video about 6, which is what reproduces the live "2,500 images / 833 videos"
+ * at five Team seats.
+ */
+export function businessDerived(credits: number) {
+  return {
+    images: Math.round(credits / 2),
+    videos: Math.floor(credits / 6),
+  };
+}
 
 /* --------------------------------------------------------------- Page copy */
 

@@ -73,6 +73,7 @@ export function SiteHeader() {
   return (
     <header
       ref={headerRef}
+      data-site-chrome
       className="group relative z-60 flex h-13 shrink-0 items-center gap-3 bg-panel px-4 transition-[height] duration-300 ease-[ease-in-out] data-compact:h-9 motion-reduce:duration-0"
     >
       <Link

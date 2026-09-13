@@ -17,7 +17,10 @@ const SOCIAL: { icon: IconName; label: string }[] = [
 
 export function SiteFooter() {
   return (
-    <footer className="mt-20 border-t border-hairline bg-panel">
+    <footer
+      data-site-chrome
+      className="mt-20 border-t border-hairline bg-panel"
+    >
       <div className="px-4 py-12 lg:px-6">
         <h2 className="text-display-3 uppercase">AI-native creative suite</h2>
 

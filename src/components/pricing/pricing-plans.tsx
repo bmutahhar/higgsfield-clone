@@ -8,9 +8,14 @@ import {
   AudienceTabs,
 } from "@/components/pricing/audience-tabs";
 import { BillingSwitch } from "@/components/pricing/billing-switch";
+import { BusinessCard } from "@/components/pricing/business-card";
+import { FaqList } from "@/components/pricing/faq-list";
 import { PlanCard } from "@/components/pricing/plan-card";
+import { PlanCta } from "@/components/pricing/plan-cta";
+import { FAQ } from "@/config/pricing-faq.constants";
 import {
   type BillingPeriod,
+  BUSINESS_PLANS,
   PLANS,
   PRICING_COPY,
 } from "@/config/pricing.constants";
@@ -32,7 +37,12 @@ export function PricingPlans() {
 
   return (
     <section className="flex w-full flex-col items-center">
-      <div className="flex w-full max-w-[var(--q-pricing-column)] flex-col gap-10 pt-6">
+      {/*
+       * px-4 below xl, flush at xl. Above 1280 the 1064px column is
+       * narrower than the container anyway, so the gutter would only
+       * eat into the cards.
+       */}
+      <div className="flex w-full max-w-[var(--q-pricing-column)] flex-col gap-10 px-4 pt-6 xl:px-0">
         <header className="flex flex-col gap-3">
           <h1 className="text-q-title text-white">{PRICING_COPY.title}</h1>
           <p className="text-q-body-sm font-medium text-q-soft">
@@ -85,9 +95,11 @@ export function PricingPlans() {
                 ))}
               </div>
             ) : (
-              <p className="py-20 text-center text-sm text-q-soft">
-                Business plans — coming in the next pass.
-              </p>
+              <div className="grid w-full grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-3 xl:gap-4">
+                {BUSINESS_PLANS.map((plan) => (
+                  <BusinessCard key={plan.id} plan={plan} period={period} />
+                ))}
+              </div>
             )}
           </div>
 
@@ -109,6 +121,35 @@ export function PricingPlans() {
           <p className="flex flex-col gap-1 px-2 text-center text-xs leading-[18px] whitespace-pre-line text-q-soft">
             {PRICING_COPY.disclaimer}
           </p>
+        </div>
+
+        {/*
+         * The FAQ swaps with the audience tab rather than staying put — eight
+         * consumer questions against thirteen procurement ones. It lives here,
+         * under the same state, for that reason.
+         */}
+        <section className="flex flex-col items-center gap-8 pt-15 pb-10">
+          <h2 className="text-center text-4xl leading-11 font-bold text-white">
+            Frequently Asked Questions
+          </h2>
+          <FaqList items={FAQ[audience]} />
+        </section>
+
+        <div className="hidden items-center justify-center gap-4 sm:flex">
+          <p className="text-q-body-sm font-medium text-white">
+            Are you ready?
+          </p>
+          <PlanCta
+            tone="lime"
+            className="w-auto px-2.5"
+            onClick={() =>
+              document
+                .querySelector("#pricing-plans")
+                ?.scrollIntoView({ behavior: "smooth", block: "start" })
+            }
+          >
+            Choose your plan
+          </PlanCta>
         </div>
       </div>
     </section>

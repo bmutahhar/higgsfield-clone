@@ -14,7 +14,10 @@ export function PromoBanner() {
   if (dismissed) return null;
 
   return (
-    <div className="relative flex h-9 items-center justify-center gap-3 bg-accent px-10 text-n-0">
+    <div
+      data-site-chrome
+      className="relative flex h-9 items-center justify-center gap-3 bg-accent px-10 text-n-0"
+    >
       <Icon name="tag" size={15} className="hidden sm:block" />
       <span className="truncate text-body-sm font-medium">
         Get an additional discount on premium plans after signing up
