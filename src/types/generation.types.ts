@@ -1,4 +1,8 @@
 import type {
+  AudioGenerationValues,
+  AudioSettings,
+} from "@/schemas/audio-generation";
+import type {
   ImageGenerationValues,
   ImageSettings,
 } from "@/schemas/image-generation";
@@ -28,6 +32,12 @@ export interface GenerationAsset {
    * asset is its own poster.
    */
   poster?: string;
+  /**
+   * Seconds. Audio only — a waveform row has no aspect ratio to size itself
+   * from, so this does the job `w`/`h` do for a picture, and it also sets how
+   * many bars are drawn so length reads true.
+   */
+  duration?: number;
 }
 
 /**
@@ -45,7 +55,13 @@ export type GenerationStatus =
   | { id: string; status: "generating" }
   | { id: string; status: "ready"; asset: GenerationAsset };
 
-/** The surfaces that produce generations. Video and audio are not built yet. */
+/**
+ * The medium a generation is, which is not the same axis as the surface that
+ * made it — `GenerationSettings` below discriminates on the surface.
+ *
+ * Voice Change and Translate are audio surfaces that hand back a video; they
+ * are `audio` here, because that is the studio whose history they belong in.
+ */
 export type GenerationKind = "image" | "video" | "audio";
 
 /**
@@ -56,13 +72,18 @@ export type GenerationKind = "image" | "video" | "audio";
  * way narrowing to one surface's settings is a single check the compiler
  * understands, without having to prove that two independent fields agree.
  *
- * Audio joins here when it exists.
  */
 export type GenerationSettings =
   | { kind: "image"; values: ImageSettings }
   | { kind: "video"; values: VideoSettings }
   | { kind: "video-edit"; values: Omit<VideoEditValues, "prompt"> }
-  | { kind: "video-motion"; values: Omit<VideoMotionValues, "prompt"> };
+  | { kind: "video-motion"; values: Omit<VideoMotionValues, "prompt"> }
+  /*
+   * One arm for all three audio modes rather than three. The values are
+   * already a union discriminated on `mode`, so a reader narrows once here and
+   * again on the mode — and the History pane picks its renderer off that mode.
+   */
+  | { kind: "audio"; values: AudioSettings };
 
 /**
  * One generation, from the moment it is accepted to long after it lands.
@@ -108,7 +129,13 @@ export type Generation =
       status: Exclude<GenerationPhase, "ready">;
       src?: undefined;
     })
-  | (GenerationBase & { status: "ready"; src: string; poster?: string });
+  | (GenerationBase & {
+      status: "ready";
+      src: string;
+      poster?: string;
+      /** Seconds. Audio only — see `GenerationAsset.duration`. */
+      duration?: number;
+    });
 
 /**
  * A generation whose asset has landed.
@@ -124,7 +151,7 @@ export type ReadyGeneration = Extract<Generation, { status: "ready" }>;
  *
  * A union rather than one shape with a loose payload: narrowing on `kind` is
  * what keeps each surface's values typed by its own schema at the one place it
- * matters — the call that finally runs them. Audio joins here when it exists.
+ * matters — the call that finally runs them.
  *
  * Three things want precisely this shape, which is why it is one type and not
  * three: the request handed to `enqueue`, a request parked while someone signs
@@ -134,7 +161,8 @@ export type GenerationRequest =
   | { kind: "image"; values: ImageGenerationValues }
   | { kind: "video"; values: VideoGenerationValues }
   | { kind: "video-edit"; values: VideoEditValues }
-  | { kind: "video-motion"; values: VideoMotionValues };
+  | { kind: "video-motion"; values: VideoMotionValues }
+  | { kind: "audio"; values: AudioGenerationValues };
 
 /**
  * Values handed to a composer to load — what Recreate and Reuse send.
@@ -148,4 +176,5 @@ export type ComposerDraft =
   | { kind: "image"; values: Partial<ImageGenerationValues> }
   | { kind: "video"; values: Partial<VideoGenerationValues> }
   | { kind: "video-edit"; values: Partial<VideoEditValues> }
-  | { kind: "video-motion"; values: Partial<VideoMotionValues> };
+  | { kind: "video-motion"; values: Partial<VideoMotionValues> }
+  | { kind: "audio"; values: Partial<AudioGenerationValues> };

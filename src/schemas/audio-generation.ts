@@ -4,6 +4,7 @@ import {
   ADVANCED_DEFAULTS,
   AUDIO_MODELS,
   audioModelById,
+  DEFAULT_DUB_MODEL_ID,
   LANGUAGES,
   MAX_ATTACHMENTS,
   MAX_BATCH,
@@ -82,14 +83,23 @@ const ttsSchema = z.object({
  * fields. The form legitimately holds `null` while someone is still attaching;
  * a non-nullable field would make the panel's resting state a type error.
  */
+/*
+ * These two tabs offer no model picker, but every generation still has to be
+ * attributable — the store credits one, and history labels it. So the field is
+ * present and defaulted rather than absent: a record with no model is a record
+ * whose provenance is gone, and "the panel did not ask" is not the same as
+ * "nothing produced it".
+ */
 const voiceChangeSchema = z.object({
   mode: z.literal("voice-change"),
+  modelId: z.enum(MODEL_IDS),
   voice: attachment.nullable(),
   clip: attachment.nullable(),
 });
 
 const translateSchema = z.object({
   mode: z.literal("translate"),
+  modelId: z.enum(MODEL_IDS),
   clip: attachment.nullable(),
   language: z.enum(LANGUAGE_IDS),
 });
@@ -146,6 +156,29 @@ export type AudioGenerationValues = z.infer<typeof audioGenerationSchema>;
 export type AdvancedFormValues = z.infer<typeof advancedSchema>;
 export type TtsValues = Extract<AudioGenerationValues, { mode: "tts" }>;
 
+/**
+ * Distributes over a union instead of collapsing it.
+ *
+ * A bare `Omit<A | B, K>` flattens the union into a single object holding only
+ * the keys both members share — which would turn the three audio modes into
+ * one shapeless record and lose the `mode` narrowing entirely.
+ */
+type DistributiveOmit<T, K extends PropertyKey> = T extends unknown
+  ? Omit<T, K>
+  : never;
+
+/**
+ * A generation's recipe: everything the panel submitted except the script,
+ * which the record carries in its own right.
+ *
+ * The same contract `ImageSettings` and `VideoSettings` keep, and derived from
+ * the schema rather than restated — a field added above is a compile error at
+ * every call site that builds one.
+ *
+ * Only the speech arm loses a key; the other two never had a script to drop.
+ */
+export type AudioSettings = DistributiveOmit<AudioGenerationValues, "script">;
+
 /** The panel's opening state. Script is empty, so it starts invalid by design. */
 export function ttsDefaults(modelId: string): TtsValues {
   const model = audioModelById(modelId);
@@ -170,6 +203,20 @@ export function ttsDefaults(modelId: string): TtsValues {
         ADVANCED_DEFAULTS.outputFormat as AdvancedFormValues["outputFormat"],
     },
   };
+}
+
+/** Opening values for Voice Change. Both attachments start empty and required. */
+export function voiceChangeDefaults(
+  modelId: string = DEFAULT_DUB_MODEL_ID,
+): Extract<AudioGenerationValues, { mode: "voice-change" }> {
+  return { mode: "voice-change", modelId, voice: null, clip: null };
+}
+
+/** Opening values for Translate. */
+export function translateDefaults(
+  modelId: string = DEFAULT_DUB_MODEL_ID,
+): Extract<AudioGenerationValues, { mode: "translate" }> {
+  return { mode: "translate", modelId, clip: null, language: "en" };
 }
 
 /*
@@ -200,12 +247,14 @@ export const audioGenerationRequestSchema = z.discriminatedUnion("mode", [
   z.object({
     kind: z.literal("audio"),
     mode: z.literal("voice-change"),
+    modelId: z.enum(MODEL_IDS),
     voice: fileMeta,
     clip: fileMeta,
   }),
   z.object({
     kind: z.literal("audio"),
     mode: z.literal("translate"),
+    modelId: z.enum(MODEL_IDS),
     clip: fileMeta,
     language: z.enum(LANGUAGE_IDS),
   }),
@@ -248,6 +297,7 @@ export function toAudioRequest(
     return {
       kind: "audio",
       mode: "voice-change",
+      modelId: values.modelId,
       voice: meta(values.voice!),
       clip: meta(values.clip!),
     };
@@ -256,6 +306,7 @@ export function toAudioRequest(
   return {
     kind: "audio",
     mode: "translate",
+    modelId: values.modelId,
     clip: meta(values.clip!),
     language: values.language,
   };

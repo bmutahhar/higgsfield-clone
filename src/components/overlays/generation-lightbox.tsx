@@ -4,6 +4,7 @@ import {
   type LightboxDetail,
   MediaLightbox,
 } from "@/components/overlays/media-lightbox";
+import { audioModelById, LANGUAGES } from "@/config/audio";
 import { MODES } from "@/config/genjutsu";
 import { modelById } from "@/config/image-studio";
 import { videoModelById } from "@/config/models";
@@ -66,6 +67,33 @@ function detailsFor(settings: GenerationSettings): LightboxDetail[] {
             : "From character image"
           : "Off",
       },
+    ];
+  }
+
+  if (settings.kind === "audio") {
+    const values = settings.values;
+    const name = audioModelById(values.modelId)?.name ?? values.modelId;
+
+    if (values.mode === "translate") {
+      const language =
+        LANGUAGES.find((entry) => entry.id === values.language)?.name ??
+        values.language;
+      return [
+        { label: "Model", value: name },
+        { label: "Language", value: language },
+      ];
+    }
+
+    if (values.mode === "voice-change") {
+      return [{ label: "Model", value: name }];
+    }
+
+    return [
+      { label: "Model", value: name },
+      { label: "Batch", value: String(values.batch) },
+      { label: "Format", value: values.advanced.outputFormat },
+      { label: "Sample rate", value: values.advanced.sampleRate },
+      { label: "Attachments", value: String(values.attachments.length) },
     ];
   }
 

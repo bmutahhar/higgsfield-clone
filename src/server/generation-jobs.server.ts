@@ -1,8 +1,10 @@
 import "server-only";
 
+import { AUDIO_FIXTURES } from "@/config/audio-fixtures";
 import { ASPECT_RATIOS } from "@/config/image-studio";
 import { PRESETS } from "@/config/media";
 import { HIGGSFIELD_PRESETS } from "@/config/presets";
+import type { AudioGenerationRequest } from "@/schemas/audio-generation";
 import type { ImageGenerationValues } from "@/schemas/image-generation";
 import type { VideoEditRequest } from "@/schemas/video-edit";
 import type { VideoGenerationRequest } from "@/schemas/video-generation";
@@ -60,9 +62,13 @@ const GENERATING_MS = 1600;
  * The nonce keeps ids unique; the letter says which pool the asset comes from,
  * which is what lets one stateless reader serve both surfaces.
  */
-type JobKind = "image" | "video";
-const KIND_TAG: Record<JobKind, string> = { image: "g", video: "v" };
-const ID_PATTERN = /^([gv])([0-9a-z]+)\.([0-9a-z]+)\.[0-9a-z]+$/;
+type JobKind = "image" | "video" | "audio";
+const KIND_TAG: Record<JobKind, string> = {
+  image: "g",
+  video: "v",
+  audio: "a",
+};
+const ID_PATTERN = /^([gva])([0-9a-z]+)\.([0-9a-z]+)\.[0-9a-z]+$/;
 
 function encodeId(kind: JobKind, readyAt: number, assetIndex: number): string {
   const nonce = Math.random().toString(36).slice(2, 10);
@@ -79,11 +85,10 @@ function decodeId(
   const assetIndex = Number.parseInt(match[3], 36);
   if (!Number.isFinite(readyAt) || !Number.isFinite(assetIndex)) return null;
 
-  return {
-    kind: match[1] === "v" ? "video" : "image",
-    readyAt,
-    assetIndex,
-  };
+  const kind: JobKind =
+    match[1] === "v" ? "video" : match[1] === "a" ? "audio" : "image";
+
+  return { kind, readyAt, assetIndex };
 }
 
 /** `Auto` has no ratio of its own, so it renders in the feed's usual portrait. */
@@ -168,19 +173,77 @@ export function createMotionJobs(values: VideoMotionRequest): GenerationJob[] {
   ];
 }
 
+/*
+ * Audio sits between the two: slower than an image, faster than a clip. The
+ * stagger stays wider than the client's poll interval for the same reason the
+ * image path's does — otherwise a batch's deadlines all fall inside one
+ * interval and the rows land as a clump instead of one at a time.
+ */
+const AUDIO_BASE_MS = 4200;
+const AUDIO_STAGGER_MS = 400;
+const AUDIO_JITTER_MS = 200;
+const AUDIO_GENERATING_MS = 2400;
+
+/** Speech has no frame; the two video modes render as 3:4 tiles. */
+const SPEECH_FRAME = { w: 1, h: 1 };
+const DUB_FRAME = { w: 3, h: 4 };
+
+export function createAudioJobs(
+  values: AudioGenerationRequest,
+): GenerationJob[] {
+  const now = Date.now();
+  /* Only speech batches; the other two modes are one job each. */
+  const count = values.mode === "tts" ? values.batch : 1;
+  const frame = values.mode === "tts" ? SPEECH_FRAME : DUB_FRAME;
+  const prompt =
+    values.mode === "tts"
+      ? values.script
+      : values.mode === "translate"
+        ? `Dubbed into ${values.language}`
+        : "Voice change";
+
+  return Array.from({ length: count }, (_, index) => ({
+    id: encodeId(
+      "audio",
+      now +
+        AUDIO_BASE_MS +
+        index * AUDIO_STAGGER_MS +
+        Math.round(Math.random() * AUDIO_JITTER_MS),
+      Math.floor(Math.random() * AUDIO_FIXTURES.length),
+    ),
+    ...frame,
+    prompt,
+  }));
+}
+
 /** `null` for anything that is not a job id this service could have issued. */
 export function readJob(id: string): GenerationStatus | null {
   const decoded = decodeId(id);
   if (!decoded) return null;
 
-  const video = decoded.kind === "video";
+  const window =
+    decoded.kind === "video"
+      ? VIDEO_GENERATING_MS
+      : decoded.kind === "audio"
+        ? AUDIO_GENERATING_MS
+        : GENERATING_MS;
+
   const remaining = decoded.readyAt - Date.now();
-  if (remaining > (video ? VIDEO_GENERATING_MS : GENERATING_MS)) {
-    return { id, status: "processing" };
-  }
+  if (remaining > window) return { id, status: "processing" };
   if (remaining > 0) return { id, status: "generating" };
 
-  if (video) {
+  if (decoded.kind === "audio") {
+    const fixture = AUDIO_FIXTURES[decoded.assetIndex % AUDIO_FIXTURES.length];
+    return {
+      id,
+      status: "ready",
+      /* The duration is what lets a waveform size itself before the file
+         loads, and what sets how many bars it draws. */
+      asset: { url: fixture.url, duration: fixture.duration },
+    };
+  }
+
+  if (decoded.kind === "video") {
     const preset =
       HIGGSFIELD_PRESETS[decoded.assetIndex % HIGGSFIELD_PRESETS.length];
     return {

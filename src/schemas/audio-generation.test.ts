@@ -108,7 +108,7 @@ describe("text to speech", () => {
 });
 
 describe("voice change", () => {
-  const base = { mode: "voice-change" as const };
+  const base = { mode: "voice-change" as const, modelId: "elevenlabs-v3" };
 
   it("needs both a voice and a clip", () => {
     expect(
@@ -145,6 +145,7 @@ describe("translate", () => {
     expect(
       audioGenerationSchema.safeParse({
         mode: "translate",
+        modelId: "seed-speech",
         clip: file("c.mp4"),
         language: "es",
       }).success,
@@ -155,6 +156,7 @@ describe("translate", () => {
     expect(
       audioGenerationSchema.safeParse({
         mode: "translate",
+        modelId: "seed-speech",
         clip: null,
         language: "es",
       }).success,
@@ -165,6 +167,7 @@ describe("translate", () => {
     expect(
       audioGenerationSchema.safeParse({
         mode: "translate",
+        modelId: "seed-speech",
         clip: file("c.mp4"),
         language: "kl",
       }).success,
@@ -192,6 +195,7 @@ describe("toAudioRequest", () => {
       toAudioRequest(
         valid({
           mode: "voice-change",
+          modelId: "elevenlabs-v3",
           voice: file("v.wav"),
           clip: file("c.mp4"),
         }),

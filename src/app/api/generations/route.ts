@@ -1,8 +1,10 @@
+import { audioGenerationRequestSchema } from "@/schemas/audio-generation";
 import { imageGenerationSchema } from "@/schemas/image-generation";
 import { videoEditRequestSchema } from "@/schemas/video-edit";
 import { videoGenerationRequestSchema } from "@/schemas/video-generation";
 import { videoMotionRequestSchema } from "@/schemas/video-motion";
 import {
+  createAudioJobs,
   createEditJobs,
   createJobs,
   createMotionJobs,
@@ -30,6 +32,25 @@ export async function POST(request: Request) {
     typeof body === "object" && body !== null && "kind" in body
       ? body.kind
       : "image";
+
+  if (kind === "audio") {
+    /*
+     * One schema for all three audio tabs, discriminated on `mode` — so
+     * unlike video there is no `surface` field to read: the mode already says
+     * which arm to check against, and the union does the branching.
+     */
+    const parsed = audioGenerationRequestSchema.safeParse(body);
+    if (!parsed.success) {
+      return Response.json(
+        { error: "Invalid generation request", issues: parsed.error.issues },
+        { status: 422 },
+      );
+    }
+    return Response.json(
+      { jobs: createAudioJobs(parsed.data) },
+      { status: 202 },
+    );
+  }
 
   if (kind === "video") {
     /*

@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { useShallow } from "zustand/react/shallow";
 
+import { AUDIO_HISTORY } from "@/config/audio-fixtures";
 import { IMAGE_HISTORY } from "@/config/image-fixtures";
 import { VIDEO_HISTORY } from "@/config/video-fixtures";
 import type {
@@ -66,7 +67,35 @@ const VIDEO_SEED: Generation[] = VIDEO_HISTORY.map((clip, index) => ({
   createdAt: -index,
 }));
 
-const SEED: Generation[] = [...IMAGE_SEED, ...VIDEO_SEED];
+/*
+ * The audio studio's back catalogue, covering all three of its tabs.
+ *
+ * Speech, Voice Change and Translate all file under `audio` — the studio owns
+ * the kind — and the History pane picks a renderer off the mode inside the
+ * settings: rows for speech, a 3:4 tile grid for the two that hand back video.
+ * An unseeded tab is the one state that demonstrates neither.
+ */
+const AUDIO_SEED: Generation[] = AUDIO_HISTORY.map((entry) => ({
+  id: entry.id,
+  kind: "audio",
+  modelId: entry.settings.modelId,
+  status: "ready",
+  prompt: entry.prompt,
+  w: entry.w,
+  h: entry.h,
+  src: entry.src,
+  poster: entry.poster,
+  duration: entry.duration,
+  settings: { kind: "audio", values: entry.settings },
+  /*
+   * Real timestamps, unlike the other two surfaces' `-index`: this history
+   * groups under date headings, and a negative epoch would file every row
+   * under January 1970.
+   */
+  createdAt: entry.createdAt,
+}));
+
+const SEED: Generation[] = [...IMAGE_SEED, ...VIDEO_SEED, ...AUDIO_SEED];
 
 /**
  * A generation's recipe: what was submitted, minus the prompt.
@@ -77,6 +106,12 @@ const SEED: Generation[] = [...IMAGE_SEED, ...VIDEO_SEED];
  */
 function recipe<T extends { prompt: string }>(values: T): Omit<T, "prompt"> {
   const { prompt: _prompt, ...rest } = values;
+  return rest;
+}
+
+/** The same, for the one surface whose prompt is spelled `script`. */
+function script<T extends { script: string }>(values: T): Omit<T, "script"> {
+  const { script: _script, ...rest } = values;
   return rest;
 }
 
@@ -153,14 +188,27 @@ export const useGenerationStore = create<GenerationState>()((set, get) => ({
           ? { kind: "video", values: recipe(request.values) }
           : request.kind === "video-edit"
             ? { kind: "video-edit", values: recipe(request.values) }
-            : {
-                kind: "video-motion",
-                /*
-                 * The motion form has no prompt, so there is nothing to strip.
-                 * Its whole value is the recipe.
-                 */
-                values: request.values,
-              };
+            : request.kind === "video-motion"
+              ? {
+                  kind: "video-motion",
+                  /*
+                   * The motion form has no prompt, so there is nothing to
+                   * strip. Its whole value is the recipe.
+                   */
+                  values: request.values,
+                }
+              : {
+                  kind: "audio",
+                  /*
+                   * Audio's prompt field is called `script`, and only the
+                   * speech arm has one — so `recipe` does not fit, and
+                   * stripping has to narrow on the mode first.
+                   */
+                  values:
+                    request.values.mode === "tts"
+                      ? script(request.values)
+                      : request.values,
+                };
 
     set((state) => ({
       generations: [
@@ -172,7 +220,12 @@ export const useGenerationStore = create<GenerationState>()((set, get) => ({
            * record's says which feed shows it, and an edit belongs in the video
            * history beside everything else.
            */
-          kind: request.kind === "image" ? "image" : "video",
+          kind:
+            request.kind === "image"
+              ? "image"
+              : request.kind === "audio"
+                ? "audio"
+                : "video",
           modelId: request.values.modelId,
           // Accepted, not yet started: the first thing the service reports.
           status: "processing",
@@ -206,6 +259,11 @@ export const useGenerationStore = create<GenerationState>()((set, get) => ({
               // Video assets carry a still to hold the frame until the clip
               // decodes; an image asset is its own poster and sends none.
               poster: status.asset.poster,
+              /*
+               * Audio has no frame to size a row from, so the duration does
+               * that job — and sets how many waveform bars are drawn.
+               */
+              duration: status.asset.duration,
             }
           : { ...current, status: status.status, src: undefined };
 

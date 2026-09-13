@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { AUDIO_MODELS, voiceById, VOICES } from "@/config/audio";
 import {
   AUDIO_FIXTURES,
-  AUDIO_SEED,
+  AUDIO_HISTORY,
   audioSeedFor,
 } from "@/config/audio-fixtures";
 
@@ -25,13 +25,15 @@ describe("the seeded back catalogue", () => {
   });
 
   it("uses ids that are unique", () => {
-    expect(new Set(AUDIO_SEED.map((s) => s.id)).size).toBe(AUDIO_SEED.length);
+    expect(new Set(AUDIO_HISTORY.map((s) => s.id)).size).toBe(
+      AUDIO_HISTORY.length,
+    );
   });
 
   it("names only models the catalogue knows", () => {
     const ids = new Set(AUDIO_MODELS.map((m) => m.id));
-    for (const entry of AUDIO_SEED) {
-      expect(ids.has(entry.modelId)).toBe(true);
+    for (const entry of AUDIO_HISTORY) {
+      expect(ids.has(entry.settings.modelId)).toBe(true);
     }
   });
 
@@ -78,7 +80,7 @@ describe("the seeded back catalogue", () => {
     expect(audioSeedFor("tts").map((e) => e.createdAt)).toEqual(
       audioSeedFor("tts").map((e) => e.createdAt),
     );
-    for (const entry of AUDIO_SEED) {
+    for (const entry of AUDIO_HISTORY) {
       expect(Number.isFinite(entry.createdAt)).toBe(true);
       expect(entry.createdAt).toBeGreaterThan(0);
     }

@@ -1,5 +1,10 @@
-import type { AudioMode } from "@/config/audio";
+import {
+  ADVANCED_DEFAULTS,
+  type AudioMode,
+  audioModelById,
+} from "@/config/audio";
 import { HIGGSFIELD_PRESETS } from "@/config/presets";
+import type { AudioSettings } from "@/schemas/audio-generation";
 
 /*
  * Stand-in media for the audio surface, and the back catalogue the three
@@ -39,30 +44,59 @@ export const AUDIO_FIXTURES: readonly AudioFixture[] = [
 ];
 
 /**
- * One pre-seeded generation, in the three shapes the pane has to render.
+ * One pre-seeded generation.
  *
- * Deliberately *not* a `Generation`. This module describes the fixture; the
- * store decides how to turn it into a record, which keeps the seed data
- * readable and stops it from having to track every field the store's own type
- * grows.
+ * Carries the recipe that supposedly made it, exactly as the image and video
+ * histories do, so a tile's Recreate has something real to load back into the
+ * panel rather than an empty form.
  */
 export interface AudioSeed {
   id: string;
-  mode: AudioMode;
-  modelId: string;
-  /** Text-to-speech only — history rows lead with the voice. */
-  voiceId?: string;
-  /** The script for speech; a short label for the two video modes. */
-  prompt: string;
   /** Audio file for speech, video file for the other two. */
   src: string;
   /** Video modes only: the still that holds the frame until the clip decodes. */
   poster?: string;
+  /** Seconds — what sizes a waveform row before its file loads. */
   duration: number;
   /** 1×1 for speech, which has no frame; 3:4 for the video modes. */
   w: number;
   h: number;
+  prompt: string;
+  /** Text-to-speech only — history rows lead with the voice. */
+  voiceId?: string;
+  /** What produced it. Always a combination the panel could actually submit. */
+  settings: AudioSettings;
   createdAt: number;
+}
+
+/**
+ * A model from the catalogue, by id. Throws rather than falling back, so a
+ * typo here fails at import instead of quietly crediting another model.
+ */
+function catalogue(id: string): string {
+  if (!audioModelById(id)) {
+    throw new Error(`Seeded audio history names an unknown model: ${id}`);
+  }
+  return id;
+}
+
+/** A speech recipe the schema would accept, with the model's own sample rate. */
+function speechSettings(modelId: string): AudioSettings {
+  const model = audioModelById(catalogue(modelId));
+  return {
+    mode: "tts",
+    modelId,
+    batch: 1,
+    attachments: [],
+    voiceDetails: "",
+    advanced: {
+      ...ADVANCED_DEFAULTS,
+      sampleRate: (model?.sampleRates.includes(ADVANCED_DEFAULTS.sampleRate)
+        ? ADVANCED_DEFAULTS.sampleRate
+        : (model?.sampleRates[0] ?? ADVANCED_DEFAULTS.sampleRate)) as never,
+      outputFormat: ADVANCED_DEFAULTS.outputFormat as never,
+    },
+  };
 }
 
 /*
@@ -76,6 +110,24 @@ export interface AudioSeed {
  */
 const day = (iso: string, hour: number) =>
   new Date(`${iso}T${String(hour).padStart(2, "0")}:00:00Z`).getTime();
+
+/*
+ * One stamp per seeded entry, in the order they are listed. Spread across
+ * several days so the speech tab's date grouping has more than one heading to
+ * draw, and so the two video tabs are not all filed under the same afternoon.
+ */
+const STAMPS = [
+  day("2026-09-12", 14),
+  day("2026-09-12", 11),
+  day("2026-09-10", 17),
+  day("2026-09-06", 9),
+  day("2026-09-12", 16),
+  day("2026-09-11", 13),
+  day("2026-09-08", 10),
+  day("2026-09-12", 15),
+  day("2026-09-09", 12),
+  day("2026-09-05", 18),
+];
 
 /** 3:4, measured off the reference's Voice Change and Translate tiles. */
 const VIDEO_FRAME = { w: 3, h: 4 };
@@ -93,126 +145,150 @@ const preset = (index: number) => {
  * reviewer nothing: it cannot show the row layout, the date grouping, or the
  * fact that the two video tabs render a grid rather than a list.
  */
-export const AUDIO_SEED: readonly AudioSeed[] = [
+const ENTRIES: Omit<AudioSeed, "createdAt">[] = [
   /* ---- Text to Speech: rows, grouped by day ---- */
   {
     id: "seed-tts-1",
-    mode: "tts",
-    modelId: "elevenlabs-v3",
-    voiceId: "marisol",
-    prompt:
-      "The fog rolled in just after midnight, and the harbour went quiet.",
     src: AUDIO_FIXTURES[0].url,
     duration: AUDIO_FIXTURES[0].duration,
     w: 1,
     h: 1,
-    createdAt: day("2026-09-12", 14),
+    prompt:
+      "The fog rolled in just after midnight, and the harbour went quiet.",
+    voiceId: "marisol",
+    settings: speechSettings("elevenlabs-v3"),
   },
   {
     id: "seed-tts-2",
-    mode: "tts",
-    modelId: "seed-audio-1",
-    voiceId: "rowan",
-    prompt: "Warm, calm male voice. Unhurried pace, slight gravel.",
     src: AUDIO_FIXTURES[1].url,
     duration: AUDIO_FIXTURES[1].duration,
     w: 1,
     h: 1,
-    createdAt: day("2026-09-12", 11),
+    prompt: "Warm, calm male voice. Unhurried pace, slight gravel.",
+    voiceId: "rowan",
+    settings: speechSettings("seed-audio-1"),
   },
   {
     id: "seed-tts-3",
-    mode: "tts",
-    modelId: "minimax-speech-2-8-hd",
-    voiceId: "ingrid",
-    prompt: "Chapter one. Everything I am about to tell you is true.",
     src: AUDIO_FIXTURES[2].url,
     duration: AUDIO_FIXTURES[2].duration,
     w: 1,
     h: 1,
-    createdAt: day("2026-09-10", 17),
+    prompt: "Chapter one. Everything I am about to tell you is true.",
+    voiceId: "ingrid",
+    settings: speechSettings("minimax-speech-2-8-hd"),
   },
   {
     id: "seed-tts-4",
-    mode: "tts",
-    modelId: "seed-speech",
-    voiceId: "bo",
-    prompt: "Thanks for listening. We will be back on Thursday.",
     src: AUDIO_FIXTURES[3].url,
     duration: AUDIO_FIXTURES[3].duration,
     w: 1,
     h: 1,
-    createdAt: day("2026-09-06", 9),
+    prompt: "Thanks for listening. We will be back on Thursday.",
+    voiceId: "bo",
+    settings: speechSettings("seed-speech"),
   },
 
   /* ---- Voice Change: a 3:4 video grid ---- */
   {
     id: "seed-vc-1",
-    mode: "voice-change",
-    modelId: "elevenlabs-v3",
-    prompt: "Recast in Rowan",
     ...preset(0),
     duration: 8,
     ...VIDEO_FRAME,
-    createdAt: day("2026-09-12", 16),
+    prompt: "Recast in Rowan",
+    settings: {
+      mode: "voice-change",
+      modelId: catalogue("elevenlabs-v3"),
+      voice: null,
+      clip: null,
+    },
   },
   {
     id: "seed-vc-2",
-    mode: "voice-change",
-    modelId: "seed-audio-1",
-    prompt: "Recast in Marisol",
     ...preset(1),
     duration: 6,
     ...VIDEO_FRAME,
-    createdAt: day("2026-09-11", 13),
+    prompt: "Recast in Marisol",
+    settings: {
+      mode: "voice-change",
+      modelId: catalogue("seed-audio-1"),
+      voice: null,
+      clip: null,
+    },
   },
   {
     id: "seed-vc-3",
-    mode: "voice-change",
-    modelId: "elevenlabs-v3",
-    prompt: "Recast in Caspian",
     ...preset(2),
     duration: 11,
     ...VIDEO_FRAME,
-    createdAt: day("2026-09-08", 10),
+    prompt: "Recast in Caspian",
+    settings: {
+      mode: "voice-change",
+      modelId: catalogue("elevenlabs-v3"),
+      voice: null,
+      clip: null,
+    },
   },
 
   /* ---- Translate: the same grid, different labels ---- */
   {
     id: "seed-tr-1",
-    mode: "translate",
-    modelId: "seed-speech",
-    prompt: "Dubbed into Spanish",
     ...preset(3),
     duration: 9,
     ...VIDEO_FRAME,
-    createdAt: day("2026-09-12", 15),
+    prompt: "Dubbed into Spanish",
+    settings: {
+      mode: "translate",
+      modelId: catalogue("seed-speech"),
+      clip: null,
+      language: "es",
+    },
   },
   {
     id: "seed-tr-2",
-    mode: "translate",
-    modelId: "seed-speech",
-    prompt: "Dubbed into Japanese",
     ...preset(4),
     duration: 7,
     ...VIDEO_FRAME,
-    createdAt: day("2026-09-09", 12),
+    prompt: "Dubbed into Japanese",
+    settings: {
+      mode: "translate",
+      modelId: catalogue("seed-speech"),
+      clip: null,
+      language: "ja",
+    },
   },
   {
     id: "seed-tr-3",
-    mode: "translate",
-    modelId: "seed-speech",
-    prompt: "Dubbed into German",
     ...preset(5),
     duration: 12,
     ...VIDEO_FRAME,
-    createdAt: day("2026-09-05", 18),
+    prompt: "Dubbed into German",
+    settings: {
+      mode: "translate",
+      modelId: catalogue("seed-speech"),
+      clip: null,
+      language: "de",
+    },
   },
 ];
 
+export const AUDIO_HISTORY: readonly AudioSeed[] = ENTRIES.map(
+  (entry, index) => ({
+    ...entry,
+    /*
+     * Stamped here rather than per entry so the dates stay in one list, and
+     * fixed rather than offset from `Date.now()`: this history groups by
+     * calendar day, and a date computed at module load is evaluated once on the
+     * server and again in the browser — a request served either side of local
+     * midnight would render two different headings.
+     */
+    createdAt: STAMPS[index % STAMPS.length],
+  }),
+);
+
 /** The seed for one tab, newest first — the order the pane renders. */
 export function audioSeedFor(mode: AudioMode): AudioSeed[] {
-  return AUDIO_SEED.filter((entry) => entry.mode === mode).sort(
+  return AUDIO_HISTORY.filter((entry) => entry.settings.mode === mode).sort(
     (a, b) => b.createdAt - a.createdAt,
   );
 }

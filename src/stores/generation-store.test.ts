@@ -43,9 +43,18 @@ describe("seeded history", () => {
     }
   });
 
+  /*
+   * The image and video seeds use `-index`, which is only a sort key. The
+   * audio seed uses real past dates, because its history groups under date
+   * headings and a negative epoch would file every row under January 1970.
+   *
+   * Both satisfy the thing that actually matters, which is what this asserts:
+   * nothing seeded outranks something generated now.
+   */
   it("sorts below anything generated this session", () => {
+    const now = Date.now();
     for (const generation of state().generations) {
-      expect(generation.createdAt).toBeLessThanOrEqual(0);
+      expect(generation.createdAt).toBeLessThan(now);
     }
   });
 });

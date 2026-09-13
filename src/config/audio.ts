@@ -63,6 +63,14 @@ export const AUDIO_MODELS: readonly AudioModel[] = [
 
 export const DEFAULT_AUDIO_MODEL_ID = "seed-audio-1";
 
+/**
+ * Credited to Voice Change and Translate, which offer no model picker.
+ *
+ * ElevenLabs is the one in the catalogue whose blurb is about delivery rather
+ * than synthesis, which is what both of those modes actually do.
+ */
+export const DEFAULT_DUB_MODEL_ID = "elevenlabs-v3";
+
 /** `undefined` rather than a throw: a stale saved draft should degrade. */
 export function audioModelById(id: string): AudioModel | undefined {
   return AUDIO_MODELS.find((model) => model.id === id);
