@@ -4,8 +4,10 @@ import { useState } from "react";
 import { useMutation, useQueries } from "@tanstack/react-query";
 
 import { ImageFeed } from "@/components/feed/image-feed";
+import { StudioEmptyState } from "@/components/feed/studio-empty-state";
 import { Composer } from "@/components/image-studio/composer";
 import { FEED_ITEMS } from "@/config/image-studio";
+import { useAuth } from "@/features/auth/auth-context";
 import {
   fetchGeneration,
   requestGeneration,
@@ -34,6 +36,7 @@ export interface ImageStudioProps {
 }
 
 export function ImageStudio({ modelId }: ImageStudioProps) {
+  const { user, openAuth } = useAuth();
   const [jobs, setJobs] = useState<GenerationJob[]>([]);
   const [history, setHistory] = useState(FEED_ITEMS);
 
@@ -93,6 +96,30 @@ export function ImageStudio({ modelId }: ImageStudioProps) {
   function remove(ids: string[]) {
     setJobs((prev) => prev.filter((job) => !ids.includes(job.id)));
     setHistory((prev) => prev.filter((item) => !ids.includes(item.id)));
+  }
+
+  /*
+   * Signed out there is nothing of yours to show, and the live studio puts a
+   * hero here rather than someone else's generations. The composer stays, and
+   * submitting from it opens the dialog.
+   *
+   * This return sits below every hook above — useState, useMutation and
+   * useQueries all run unconditionally — because returning earlier would change
+   * the hook order across the signed-in/signed-out transition and React would
+   * throw.
+   */
+  if (!user) {
+    return (
+      <>
+        <StudioEmptyState />
+        <Composer
+          modelId={modelId}
+          onGenerate={() => {
+            openAuth("signup");
+          }}
+        />
+      </>
+    );
   }
 
   return (
