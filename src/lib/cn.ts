@@ -1,5 +1,47 @@
 import { type ClassValue, clsx } from "clsx";
-import { twMerge } from "tailwind-merge";
+import { extendTailwindMerge } from "tailwind-merge";
+
+/*
+ * tailwind-merge has to know our theme, not just Tailwind's defaults.
+ *
+ * Without this it cannot tell a custom font-size from a custom text colour —
+ * both are `text-*` — so it treats `text-body-sm` and `text-lime` as
+ * conflicting and silently drops the first. The class never reaches the DOM
+ * and the element quietly inherits body's 15px instead. The same applies to
+ * our custom radii and shadows.
+ */
+const FONT_SIZES = [
+  "display-1",
+  "display-2",
+  "display-3",
+  "h1",
+  "h2",
+  "h3",
+  "h4",
+  "body-lg",
+  "body",
+  "body-sm",
+  "caption",
+  "micro",
+  "label",
+  "eyebrow",
+  "mono",
+];
+
+const RADII = ["control", "card", "media", "panel", "modal", "thumb"];
+
+const SHADOWS = ["e1", "e2", "e3", "e4", "ring", "glow"];
+
+const twMerge = extendTailwindMerge({
+  extend: {
+    classGroups: {
+      "font-size": [{ text: FONT_SIZES }],
+      rounded: [{ rounded: RADII }],
+      "shadow-color": [],
+      shadow: [{ shadow: SHADOWS }],
+    },
+  },
+});
 
 /**
  * Join class names, with later Tailwind utilities winning over earlier ones.

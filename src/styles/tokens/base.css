@@ -184,3 +184,12 @@ dialog::backdrop {
   backdrop-filter: blur(6px);
   animation: hf-fade var(--dur-base) var(--ease-standard) both;
 }
+
+/* Horizontal rails scroll but do not show a track. */
+.hf-scrollbar-none {
+  scrollbar-width: none;
+}
+
+.hf-scrollbar-none::-webkit-scrollbar {
+  display: none;
+}

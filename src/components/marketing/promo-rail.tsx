@@ -28,7 +28,7 @@ export function PromoRail() {
   }
 
   return (
-    <section className="hf-scrollbar overflow-x-auto pb-2">
+    <section className="hf-scrollbar-none overflow-x-auto pb-2">
       <div className="flex min-w-max gap-3 px-4 lg:px-6">
         {HERO.map((item) => (
           <article

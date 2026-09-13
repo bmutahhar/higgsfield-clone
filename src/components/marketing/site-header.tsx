@@ -3,97 +3,128 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { Badge } from "@/components/core/badge";
-import { ButtonLink } from "@/components/core/button-link";
 import { Icon } from "@/components/core/icon";
-import { Wordmark } from "@/components/layout/wordmark";
+import { LogoMark } from "@/components/layout/logo-mark";
 import { PRIMARY_NAV } from "@/config/site";
 import { cn } from "@/lib/cn";
 
-/**
- * Sticky glass header. The live site leads with an abstract logo mark; the
- * design system's no-reconstruction rule means no mark was drawn, so the
- * wordmark stands in as plain display type.
+/*
+ * Measured against the live header rather than eyeballed. The values below are
+ * taken from its computed styles, so a few sit outside the design system's
+ * token set and are written as exact literals:
+ *
+ *   row        52px tall, solid #0F1113, no blur
+ *   nav link   14px/500, 4px 8px, radius 8, #A8A8A8 idle
+ *   active     lime text — not white, which is what this had before
+ *   buttons    36px tall, radius 10 (control radius, NOT pills), 0 12px
+ *   badges     10px/700, radius 6, lime at 20% on lime text
  */
+
+const NAV_LINK =
+  "inline-flex h-7 shrink-0 items-center gap-1.5 rounded-lg px-2 py-1 text-[14px] font-medium whitespace-nowrap transition-colors duration-[140ms] ease-snap motion-reduce:duration-0 focus-visible:shadow-ring focus-visible:outline-none";
+
+const BUTTON =
+  "inline-flex h-9 shrink-0 items-center gap-2 rounded-control px-3 text-[14px] font-medium whitespace-nowrap transition-colors duration-[140ms] ease-snap motion-reduce:duration-0 focus-visible:shadow-ring focus-visible:outline-none";
+
+function NavBadge({ children }: { children: string }) {
+  return (
+    <span className="inline-flex h-4 items-center rounded-md bg-lime/20 px-1.5 text-[10px] font-bold text-lime">
+      {children}
+    </span>
+  );
+}
+
 export function SiteHeader() {
   const pathname = usePathname();
 
+  // The live site treats the home page as the Explore surface, so Explore
+  // carries the active style at "/" too. Matched on the label, not the href:
+  // most entries point at /explore as a placeholder, so matching on href lit
+  // up the whole row.
+  const isActive = (link: { label: string; href: string }) =>
+    pathname === "/" ? link.label === "Explore" : pathname === link.href;
+
   return (
-    <header
-      className={cn(
-        "sticky top-0 z-40 flex h-14 items-center gap-5 border-b border-hairline px-4 lg:px-6",
-        "bg-page/72 backdrop-blur-[20px] backdrop-saturate-[1.4]",
-      )}
-    >
-      <Link href="/" className="shrink-0">
-        <Wordmark className="text-body-lg" />
-      </Link>
-
-      <nav className="hidden min-w-0 items-center gap-4 xl:flex">
-        {PRIMARY_NAV.map((link) => (
-          <Link
-            key={link.label}
-            href={link.href}
-            className={cn(
-              "inline-flex items-center gap-1.5 text-body-sm font-medium whitespace-nowrap",
-              "transition-colors duration-[140ms]",
-              pathname === link.href
-                ? "text-primary"
-                : "text-secondary hover:text-primary",
-            )}
-          >
-            {link.label}
-            {link.badge && (
-              <Badge tone="neutral" className="h-4 px-1.5">
-                {link.badge}
-              </Badge>
-            )}
-          </Link>
-        ))}
-      </nav>
-
-      <span className="flex-1" />
-
-      {/* The live site hangs the discount pill below the bar; inline keeps it
-          from being clipped by the 56px chrome height. */}
+    <header className="sticky top-0 z-40 flex h-13 items-center gap-3 bg-panel px-4">
       <Link
-        href="/pricing"
-        className="hidden items-center gap-1.5 text-body-sm font-medium text-lime md:inline-flex"
+        href="/"
+        className="flex shrink-0 items-center gap-2 text-[#F7F7F8]"
+        aria-label="Higgsfield home"
       >
-        <Icon name="flame" size={15} />
-        Pricing
-        <span className="ml-0.5 rounded-full bg-[#FF2D78] px-1.5 py-px text-[9px] font-bold tracking-wide text-white">
-          30% OFF
+        <LogoMark />
+        <span className="hidden font-display text-[16px] tracking-[-0.01em] sm:block">
+          Higgsfield
         </span>
       </Link>
 
-      <Link
-        href="/pricing"
-        className="hidden items-center gap-1.5 text-body-sm font-medium text-secondary hover:text-primary lg:inline-flex"
-      >
-        <Icon name="sparkle" size={15} />
-        Enterprise
-      </Link>
+      {/* The live row overflows horizontally rather than collapsing. */}
+      <nav className="hf-scrollbar-none flex min-w-0 flex-1 items-center gap-0.5 overflow-x-auto">
+        {PRIMARY_NAV.map((link) => {
+          const active = isActive(link);
+          return (
+            <Link
+              key={link.label}
+              href={link.href}
+              aria-current={active ? "page" : undefined}
+              className={cn(
+                NAV_LINK,
+                active
+                  ? "text-lime"
+                  : "text-[#A8A8A8] hover:bg-w-06 hover:text-primary",
+              )}
+            >
+              {link.label}
+              {link.badge && <NavBadge>{link.badge}</NavBadge>}
+            </Link>
+          );
+        })}
+      </nav>
 
-      <button
-        type="button"
-        aria-label="Language"
-        className="hidden text-muted hover:text-primary lg:inline-flex"
-      >
-        <Icon name="globe" size={17} />
-      </button>
+      <div className="flex shrink-0 items-center gap-2">
+        <Link
+          href="/pricing"
+          className={cn(BUTTON, "gap-1.5 bg-transparent px-2 text-lime")}
+        >
+          <Icon name="flame" size={15} />
+          Pricing
+          <span className="inline-flex h-4 items-center rounded-md bg-[#FF2D78] px-1.5 text-[10px] font-bold text-white">
+            30% OFF
+          </span>
+        </Link>
 
-      <span className="hidden h-5 w-px bg-hairline lg:block" />
+        <Link
+          href="/pricing"
+          className={cn(BUTTON, "hidden bg-white/5 text-white lg:inline-flex")}
+        >
+          <Icon name="sparkle" size={15} />
+          Enterprise
+        </Link>
 
-      <Link
-        href="/explore"
-        className="text-body-sm font-medium text-primary hover:text-lime"
-      >
-        Login
-      </Link>
-      <ButtonLink href="/explore" size="sm" pill>
-        Sign up
-      </ButtonLink>
+        <button
+          type="button"
+          aria-label="Language"
+          className={cn(
+            BUTTON,
+            "hidden w-9 justify-center px-0 text-[#A8A8A8] hover:text-primary lg:inline-flex",
+          )}
+        >
+          <Icon name="globe" size={17} />
+        </button>
+
+        <Link href="/explore" className={cn(BUTTON, "bg-lime/8 text-lime")}>
+          Login
+        </Link>
+
+        <Link
+          href="/explore"
+          className={cn(
+            BUTTON,
+            "bg-accent text-[#1A1A1A] hover:bg-accent-hover",
+          )}
+        >
+          Sign up
+        </Link>
+      </div>
     </header>
   );
 }

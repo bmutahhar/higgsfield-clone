@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
+    unoptimized: true,
     // Higgsfield serves stills through their own cdn-cgi image transform and
     // mp4 loops straight from the CDN origin. See src/config/media.ts.
     remotePatterns: [

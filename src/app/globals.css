@@ -9,7 +9,13 @@
 @import "../styles/tokens/radius.css";
 @import "../styles/tokens/elevation.css";
 @import "../styles/tokens/motion.css";
-@import "../styles/tokens/base.css";
+/*
+ * base.css carries element rules (notably `a { color: ... }`). It must go into
+ * Tailwind's base layer: an unlayered stylesheet beats every layered one
+ * regardless of specificity, so imported plainly it silently overrode the text
+ * colour utility on every single anchor in the app.
+ */
+@import "../styles/tokens/base.css" layer(base);
 
 /*
  * Every token above is projected into Tailwind's theme here, so components are

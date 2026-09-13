@@ -13,6 +13,10 @@ export interface NavLink {
   badge?: string;
 }
 
+/**
+ * The header's full link inventory, in the order the live site lists it. The
+ * row overflows horizontally rather than collapsing.
+ */
 export const PRIMARY_NAV: NavLink[] = [
   { label: "Explore", href: "/explore" },
   { label: "Image", href: "/explore" },
@@ -21,6 +25,18 @@ export const PRIMARY_NAV: NavLink[] = [
   { label: "MCP", href: "/explore" },
   { label: "ChatGPT Plugin", href: "/explore", badge: "New" },
   { label: "Genjutsu", href: "/explore", badge: "New" },
+  { label: "Effects", href: "/effects", badge: "Free" },
+  { label: "Cinema Studio", href: "/explore" },
+  { label: "Marketing Studio", href: "/explore" },
+  { label: "Supercomputer", href: "/explore" },
+  { label: "3D Jutsu", href: "/explore", badge: "New" },
+  { label: "Edit", href: "/explore" },
+  { label: "Academy", href: "/explore" },
+  { label: "Community", href: "/explore" },
+  { label: "Contests", href: "/explore" },
+  { label: "Plugins", href: "/explore" },
+  { label: "Canvas", href: "/explore" },
+  { label: "Originals", href: "/explore" },
 ];
 
 export interface ModelTile {
